@@ -60,7 +60,7 @@ For more information, please visit the Spring Kafka website at:
 Here are some ways for you to get involved in the community:
 
 * Get involved with the Spring community on the Spring Community Forums.  Please help out on the [StackOverflow](http://stackoverflow.com/questions/tagged/spring-kafka) by responding to questions and joining the debate.
-* Create [GitHub issues](https://github.com/spring-projects/spring-kafka/issues) for bugs and new features and comment and vote on the ones that you are interested in.  
+* Create [GitHub issues](https://github.com/spring-projects/spring-kafka/issues) for bugs and new features and comment and vote on the ones that you are interested in.
 * Github is for social coding: if you want to write code, we encourage contributions through pull requests from [forks of this repository](http://help.github.com/forking/).  If you want to contribute code this way, please reference a JIRA ticket as well covering the specific issue you are addressing.
 * Watch for upcoming articles on Spring by [subscribing](http://www.springsource.org/node/feed) to springframework.org
 
@@ -83,3 +83,9 @@ None of these is essential for a pull request, but they will all help.
 # License
 
 Spring Kafka is released under the terms of the Apache Software License Version 2.0 (see license.txt).
+
+# Code of Conduct
+
+This project adheres to the Contributor Covenant link:CODE_OF_CONDUCT.adoc[code of conduct].
+By participating, you  are expected to uphold this code. Please report unacceptable behavior to
+spring-code-of-conduct@pivotal.io.
