@@ -29,6 +29,7 @@ import org.springframework.kafka.listener.MessageListener;
  *
  * @author Stephane Nicoll
  * @author Gary Russell
+ *
  * @see MessageListener
  * @see AcknowledgingMessageListener
  */

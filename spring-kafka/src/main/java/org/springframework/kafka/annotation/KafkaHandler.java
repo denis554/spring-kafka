@@ -37,6 +37,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
  * must be able to select exactly one method based on the payload type.</b>
  *
  * @author Gary Russell
+ *
  * @see EnableKafka
  * @see KafkaListener
  * @see KafkaListenerAnnotationBeanPostProcessor

@@ -38,6 +38,7 @@ import org.springframework.util.Assert;
  *
  * @author Stephane Nicoll
  * @author Gary Russell
+ *
  * @see MethodKafkaListenerEndpoint
  * @see org.springframework.kafka.config.SimpleKafkaListenerEndpoint
  */
@@ -162,7 +163,6 @@ public abstract class AbstractKafkaListenerEndpoint<K, V>
 	/**
 	 * Set the group for the corresponding listener container.
 	 * @param group the group.
-	 * @since 1.5
 	 */
 	public void setGroup(String group) {
 		this.group = group;

@@ -240,6 +240,7 @@ import org.springframework.context.annotation.Import;
  *
  * @author Stephane Nicoll
  * @author Gary Russell
+ *
  * @see KafkaListener
  * @see KafkaListenerAnnotationBeanPostProcessor
  * @see org.springframework.kafka.listener.KafkaListenerEndpointRegistrar

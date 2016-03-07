@@ -33,6 +33,7 @@ import org.springframework.kafka.listener.KafkaListenerEndpointRegistry;
  *
  * @author Stephane Nicoll
  * @author Gary Russell
+ *
  * @see KafkaListenerAnnotationBeanPostProcessor
  * @see KafkaListenerEndpointRegistry
  * @see EnableKafka

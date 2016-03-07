@@ -30,6 +30,7 @@ import java.lang.annotation.Target;
  * (or class), implicitly generating this container annotation.
  *
  * @author Gary Russell
+ *
  * @see KafkaListener
  */
 @Target({ ElementType.TYPE, ElementType.METHOD, ElementType.ANNOTATION_TYPE })

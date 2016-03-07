@@ -32,8 +32,6 @@ public class MultiMethodKafkaListenerEndpoint<K, V> extends MethodKafkaListenerE
 
 	private final List<Method> methods;
 
-	private DelegatingInvocableHandler delegatingHandler;
-
 	public MultiMethodKafkaListenerEndpoint(List<Method> methods, Object bean) {
 		this.methods = methods;
 		setBean(bean);
@@ -46,8 +44,9 @@ public class MultiMethodKafkaListenerEndpoint<K, V> extends MethodKafkaListenerE
 			invocableHandlerMethods.add(getMessageHandlerMethodFactory()
 					.createInvocableHandlerMethod(getBean(), method));
 		}
-		this.delegatingHandler = new DelegatingInvocableHandler(invocableHandlerMethods, getBean());
-		return new HandlerAdapter(this.delegatingHandler);
+		DelegatingInvocableHandler delegatingHandler =
+				new DelegatingInvocableHandler(invocableHandlerMethods, getBean());
+		return new HandlerAdapter(delegatingHandler);
 	}
 
 }
