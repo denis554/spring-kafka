@@ -37,6 +37,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -57,6 +58,7 @@ import org.springframework.kafka.test.utils.KafkaTestUtils;
 
 /**
  * @author Gary Russell
+ * @author Artem Bilan
  *
  */
 public class ConcurrentMessageListenerContainerTests {
@@ -150,9 +152,32 @@ public class ConcurrentMessageListenerContainerTests {
 	@Test
 	public void testDefinedPartitions() throws Exception {
 		logger.info("Start auto parts");
-		Map<String, Object> props = KafkaTestUtils.consumerProps("test3", "true", embeddedKafka);
+		final Map<String, Object> props = KafkaTestUtils.consumerProps("test3", "true", embeddedKafka);
 		TopicPartition topic1Partition0 = new TopicPartition(topic3, 0);
-		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<>(props);
+
+		final CountDownLatch initialConsumersLatch = new CountDownLatch(2);
+
+		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<Integer, String>(props) {
+
+			@Override
+			public Consumer<Integer, String> createConsumer() {
+				return new KafkaConsumer<Integer, String>(props) {
+
+					@Override
+					public ConsumerRecords<Integer, String> poll(long timeout) {
+						try {
+							return super.poll(timeout);
+						}
+						finally {
+							initialConsumersLatch.countDown();
+						}
+					}
+
+				};
+			}
+
+		};
+
 		ConcurrentMessageListenerContainer<Integer, String> container1 =
 				new ConcurrentMessageListenerContainer<>(cf, topic1Partition0);
 		final CountDownLatch latch1 = new CountDownLatch(2);
@@ -163,10 +188,11 @@ public class ConcurrentMessageListenerContainerTests {
 				logger.info("auto part: " + message);
 				latch1.countDown();
 			}
+
 		});
 		container1.setBeanName("b1");
 		container1.start();
-		Thread.sleep(1000);
+
 		TopicPartition topic1Partition1 = new TopicPartition(topic3, 1);
 		ConcurrentMessageListenerContainer<Integer, String> container2 =
 				new ConcurrentMessageListenerContainer<>(cf, topic1Partition1);
@@ -178,10 +204,13 @@ public class ConcurrentMessageListenerContainerTests {
 				logger.info("auto part: " + message);
 				latch2.countDown();
 			}
+
 		});
 		container2.setBeanName("b2");
 		container2.start();
-		Thread.sleep(1000);
+
+		assertTrue(initialConsumersLatch.await(20, TimeUnit.SECONDS));
+
 		Map<String, Object> senderProps = KafkaTestUtils.senderProps(embeddedKafka);
 		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<Integer, String>(senderProps);
 		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
@@ -191,7 +220,9 @@ public class ConcurrentMessageListenerContainerTests {
 		template.convertAndSend(0, "baz");
 		template.convertAndSend(2, "qux");
 		template.flush();
+
 		assertTrue(latch1.await(60, TimeUnit.SECONDS));
+		assertTrue(latch2.await(60, TimeUnit.SECONDS));
 		container1.stop();
 		container2.stop();
 

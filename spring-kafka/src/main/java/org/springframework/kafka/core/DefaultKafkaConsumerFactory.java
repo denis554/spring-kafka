@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 
 /**
@@ -41,7 +42,7 @@ public class DefaultKafkaConsumerFactory<K, V> implements ConsumerFactory<K, V> 
 
 	@Override
 	public boolean isAutoCommit() {
-		Object auto = this.configs.get("enable.auto.commit");
+		Object auto = this.configs.get(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG);
 		return auto instanceof Boolean ? (Boolean) auto
 				: auto instanceof String ? Boolean.valueOf((String) auto) : false;
 	}
