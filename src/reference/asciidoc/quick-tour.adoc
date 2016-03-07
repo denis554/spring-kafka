@@ -71,7 +71,8 @@ public void testAutoCommit() throws Exception {
 
 private KafkaMessageListenerContainer<Integer, String> createContainer() {
     Map<String, Object> props = consumerProps();
-    DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<Integer, String>(props);
+    DefaultKafkaConsumerFactory<Integer, String> cf =
+                             new DefaultKafkaConsumerFactory<Integer, String>(props);
     KafkaMessageListenerContainer<Integer, String> container =
                                       new KafkaMessageListenerContainer<>(cf, topic1);
     return container;
@@ -79,7 +80,8 @@ private KafkaMessageListenerContainer<Integer, String> createContainer() {
 
 private KafkaTemplate<Integer, String> createTemplate() {
     Map<String, Object> senderProps = senderProps();
-    ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<Integer, String>(senderProps);
+    ProducerFactory<Integer, String> pf =
+              new DefaultKafkaProducerFactory<Integer, String>(senderProps);
     KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
     return template;
 }
@@ -116,13 +118,10 @@ A similar example but with Spring configuration in Java:
 [source,java]
 ----
 @Autowired
-public Listener listener;
+private Listener listener;
 
 @Autowired
-public KafkaTemplate<Integer, String> template;
-
-@Autowired
-public KafkaListenerEndpointRegistry registry;
+private KafkaTemplate<Integer, String> template;
 
 @Test
 public void testSimple() throws Exception {
@@ -136,10 +135,10 @@ public void testSimple() throws Exception {
 public class Config {
 
     @Bean
-    public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<Integer, String>>
+    KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<Integer, String>>
                         kafkaListenerContainerFactory() {
         SimpleKafkaListenerContainerFactory<Integer, String> factory =
-                            new SimpleKafkaListenerContainerFactory<>();
+                                new SimpleKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         return factory;
     }
@@ -149,7 +148,6 @@ public class Config {
         return new DefaultKafkaConsumerFactory<>(consumerConfigs());
     }
 
-    @Bean
     public Map<String, Object> consumerConfigs() {
         Map<String, Object> props = new HashMap<>();
         props.put("bootstrap.servers", embeddedKafka.getBrokersAsString());
@@ -167,7 +165,6 @@ public class Config {
         return new DefaultKafkaProducerFactory<>(producerConfigs());
     }
 
-    @Bean
     public Map<String, Object> producerConfigs() {
         Map<String, Object> props = new HashMap<>();
         props.put("bootstrap.servers", embeddedKafka.getBrokersAsString());
