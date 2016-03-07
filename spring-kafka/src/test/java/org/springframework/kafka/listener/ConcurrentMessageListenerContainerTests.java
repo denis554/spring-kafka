@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.springframework.kafka.listener;
 
 import static org.hamcrest.Matchers.anyOf;
@@ -82,7 +83,7 @@ public class ConcurrentMessageListenerContainerTests {
 	public void testAutoCommit() throws Exception {
 		logger.info("Start auto");
 		Map<String, Object> props = consumerProps("test1", "true");
-		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<Integer, String>(props);
+		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<>(props);
 		ConcurrentMessageListenerContainer<Integer, String> container =
 				new ConcurrentMessageListenerContainer<>(cf, topic1);
 		final CountDownLatch latch = new CountDownLatch(4);
@@ -99,7 +100,7 @@ public class ConcurrentMessageListenerContainerTests {
 		container.start();
 		waitForAssignment(container, embeddedKafka.getPartitionsPerTopic());
 		Map<String, Object> senderProps = senderProps();
-		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<Integer, String>(senderProps);
+		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<>(senderProps);
 		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
 		template.setDefaultTopic(topic1);
 		template.convertAndSend(0, "foo");
@@ -117,7 +118,7 @@ public class ConcurrentMessageListenerContainerTests {
 	public void testAfterListenCommit() throws Exception {
 		logger.info("Start manual");
 		Map<String, Object> props = consumerProps("test2", "false");
-		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<Integer, String>(props);
+		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<>(props);
 		ConcurrentMessageListenerContainer<Integer, String> container =
 				new ConcurrentMessageListenerContainer<>(cf, topic2);
 		final CountDownLatch latch = new CountDownLatch(4);
@@ -134,7 +135,7 @@ public class ConcurrentMessageListenerContainerTests {
 		container.start();
 		waitForAssignment(container, embeddedKafka.getPartitionsPerTopic());
 		Map<String, Object> senderProps = senderProps();
-		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<Integer, String>(senderProps);
+		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<>(senderProps);
 		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
 		template.setDefaultTopic(topic2);
 		template.convertAndSend(0, "foo");
@@ -152,7 +153,7 @@ public class ConcurrentMessageListenerContainerTests {
 		logger.info("Start auto parts");
 		Map<String, Object> props = consumerProps("test3", "true");
 		TopicPartition topic1Partition0 = new TopicPartition(topic3, 0);
-		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<Integer, String>(props);
+		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<>(props);
 		ConcurrentMessageListenerContainer<Integer, String> container1 =
 				new ConcurrentMessageListenerContainer<>(cf, topic1Partition0);
 		final CountDownLatch latch1 = new CountDownLatch(2);
@@ -183,7 +184,7 @@ public class ConcurrentMessageListenerContainerTests {
 		container2.start();
 		Thread.sleep(1000);
 		Map<String, Object> senderProps = senderProps();
-		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<Integer, String>(senderProps);
+		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<>(senderProps);
 		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
 		template.setDefaultTopic(topic3);
 		template.convertAndSend(0, "foo");
@@ -242,12 +243,15 @@ public class ConcurrentMessageListenerContainerTests {
 	public void testManualCommit() throws Exception {
 		testManualCommitGuts(AckMode.MANUAL, topic4);
 		testManualCommitGuts(AckMode.MANUAL_IMMEDIATE, topic5);
+		// to be sure the commits worked ok so run the tests again and the second tests start at the committed offset.
+		testManualCommitGuts(AckMode.MANUAL, topic4);
+		testManualCommitGuts(AckMode.MANUAL_IMMEDIATE, topic5);
 	}
 
 	private void testManualCommitGuts(AckMode ackMode, String topic) throws Exception {
 		logger.info("Start " + ackMode);
 		Map<String, Object> props = consumerProps("test4", "false");
-		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<Integer, String>(props);
+		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<>(props);
 		ConcurrentMessageListenerContainer<Integer, String> container =
 				new ConcurrentMessageListenerContainer<>(cf, topic);
 		final CountDownLatch latch = new CountDownLatch(4);
@@ -267,7 +271,7 @@ public class ConcurrentMessageListenerContainerTests {
 		container.start();
 		waitForAssignment(container, embeddedKafka.getPartitionsPerTopic());
 		Map<String, Object> senderProps = senderProps();
-		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<Integer, String>(senderProps);
+		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<>(senderProps);
 		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
 		template.setDefaultTopic(topic);
 		template.convertAndSend(0, "foo");
@@ -284,14 +288,14 @@ public class ConcurrentMessageListenerContainerTests {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testConcurrencyWithPartitions() {
-		TopicPartition[] topic1PartitionS = new TopicPartition[] {
-			new TopicPartition(topic1, 0),
-			new TopicPartition(topic1, 1),
-			new TopicPartition(topic1, 2),
-			new TopicPartition(topic1, 3),
-			new TopicPartition(topic1, 4),
-			new TopicPartition(topic1, 5),
-			new TopicPartition(topic1, 6)
+		TopicPartition[] topic1PartitionS = new TopicPartition[]{
+				new TopicPartition(topic1, 0),
+				new TopicPartition(topic1, 1),
+				new TopicPartition(topic1, 2),
+				new TopicPartition(topic1, 3),
+				new TopicPartition(topic1, 4),
+				new TopicPartition(topic1, 5),
+				new TopicPartition(topic1, 6)
 		};
 		ConsumerFactory<Integer, String> cf = mock(ConsumerFactory.class);
 		Consumer<Integer, String> consumer = mock(Consumer.class);
@@ -316,7 +320,8 @@ public class ConcurrentMessageListenerContainerTests {
 		});
 		container.setConcurrency(3);
 		container.start();
-		List<KafkaMessageListenerContainer<Integer, String>> containers = (List<KafkaMessageListenerContainer<Integer, String>>) new DirectFieldAccessor(
+		List<KafkaMessageListenerContainer<Integer, String>> containers =
+				(List<KafkaMessageListenerContainer<Integer, String>>) new DirectFieldAccessor(
 				container).getPropertyValue("containers");
 		assertEquals(3, containers.size());
 		for (int i = 0; i < 3; i++) {
@@ -330,7 +335,7 @@ public class ConcurrentMessageListenerContainerTests {
 	public void testListenerException() throws Exception {
 		logger.info("Start exception");
 		Map<String, Object> props = consumerProps("test1", "true");
-		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<Integer, String>(props);
+		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<>(props);
 		ConcurrentMessageListenerContainer<Integer, String> container =
 				new ConcurrentMessageListenerContainer<>(cf, topic6);
 		final CountDownLatch latch = new CountDownLatch(4);
@@ -348,7 +353,7 @@ public class ConcurrentMessageListenerContainerTests {
 		container.start();
 		waitForAssignment(container, embeddedKafka.getPartitionsPerTopic());
 		Map<String, Object> senderProps = senderProps();
-		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<Integer, String>(senderProps);
+		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<>(senderProps);
 		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
 		template.setDefaultTopic(topic6);
 		template.convertAndSend(0, "foo");

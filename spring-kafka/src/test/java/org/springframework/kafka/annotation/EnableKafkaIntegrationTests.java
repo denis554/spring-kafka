@@ -96,7 +96,6 @@ public class EnableKafkaIntegrationTests {
 		assertTrue(this.listener.latch4.await(10, TimeUnit.SECONDS));
 		assertEquals("foo", this.listener.record.value());
 		assertNotNull(this.listener.ack);
-		this.listener.ack.acknowledge();
 	}
 
 	private void waitListening(String id) throws InterruptedException {
@@ -225,6 +224,7 @@ public class EnableKafkaIntegrationTests {
 		@KafkaListener(id="qux", topics = "annotated4", containerFactory = "kafkaManualAckListenerContainerFactory")
 		public void listen4(@Payload String foo, Acknowledgment ack) {
 			this.ack = ack;
+			this.ack.acknowledge();
 			this.latch4.countDown();
 		}
 
