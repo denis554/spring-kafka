@@ -117,7 +117,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 	 * @param topicPartitions the topics/partitions; duplicates are eliminated.
 	 */
 	KafkaMessageListenerContainer(ConsumerFactory<K, V> consumerFactory, String[] topics, Pattern topicPattern,
-	                              TopicPartition[] topicPartitions) {
+			TopicPartition[] topicPartitions) {
 		this.consumerFactory = consumerFactory;
 		this.topics = topics;
 		this.topicPattern = topicPattern;
@@ -203,7 +203,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 
 	private class ListenerConsumer implements SchedulingAwareRunnable {
 
-		private final Log logger = LogFactory.getLog(this.getClass());
+		private final Log logger = LogFactory.getLog(ListenerConsumer.class);
 
 		private final CommitCallback callback = new CommitCallback();
 
@@ -221,7 +221,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 
 		private final long recentOffset;
 
-		private final boolean autoCommit = consumerFactory.isAutoCommit();
+		private final boolean autoCommit = KafkaMessageListenerContainer.this.consumerFactory.isAutoCommit();
 
 		private Thread consumerThread;
 
@@ -230,35 +230,35 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 		private volatile Collection<TopicPartition> assignedPartitions;
 
 		public ListenerConsumer(MessageListener<K, V> listener, AcknowledgingMessageListener<K, V> ackListener,
-		                        ContainerOffsetResetStrategy resetStrategy, long recentOffset) {
+				ContainerOffsetResetStrategy resetStrategy, long recentOffset) {
 			Assert.state(!(getAckMode().equals(AckMode.MANUAL) || getAckMode().equals(AckMode.MANUAL_IMMEDIATE))
 					|| !this.autoCommit,
 					"Consumer cannot be configured for auto commit for ackMode " + getAckMode());
-			Consumer<K, V> consumer = consumerFactory.createConsumer();
+			Consumer<K, V> consumer = KafkaMessageListenerContainer.this.consumerFactory.createConsumer();
 			ConsumerRebalanceListener rebalanceListener = new ConsumerRebalanceListener() {
 
 				@Override
 				public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
-					logger.info("partitions revoked:" + partitions);
+					KafkaMessageListenerContainer.this.logger.info("partitions revoked:" + partitions);
 				}
 
 				@Override
 				public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
-					assignedPartitions = partitions;
-					logger.info("partitions assigned:" + partitions);
+					ListenerConsumer.this.assignedPartitions = partitions;
+					KafkaMessageListenerContainer.this.logger.info("partitions assigned:" + partitions);
 				}
 
 			};
-			if (partitions == null) {
-				if (topicPattern != null) {
-					consumer.subscribe(topicPattern, rebalanceListener);
+			if (KafkaMessageListenerContainer.this.partitions == null) {
+				if (KafkaMessageListenerContainer.this.topicPattern != null) {
+					consumer.subscribe(KafkaMessageListenerContainer.this.topicPattern, rebalanceListener);
 				}
 				else {
-					consumer.subscribe(Arrays.asList(topics), rebalanceListener);
+					consumer.subscribe(Arrays.asList(KafkaMessageListenerContainer.this.topics), rebalanceListener);
 				}
 			}
 			else {
-				List<TopicPartition> topicPartitions = Arrays.asList(partitions);
+				List<TopicPartition> topicPartitions = Arrays.asList(KafkaMessageListenerContainer.this.partitions);
 				this.definedPartitions = topicPartitions;
 				consumer.assign(topicPartitions);
 			}
@@ -280,26 +280,26 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 			int count = 0;
 			long last = System.currentTimeMillis();
 			long now;
-			if (isRunning() && definedPartitions != null) {
+			if (isRunning() && this.definedPartitions != null) {
 				initPartitionsIfNeeded();
 			}
 			final AckMode ackMode = getAckMode();
 			while (isRunning()) {
 				try {
-					if (logger.isTraceEnabled()) {
-						logger.trace("Polling...");
+					if (this.logger.isTraceEnabled()) {
+						this.logger.trace("Polling...");
 					}
-					ConsumerRecords<K, V> records = consumer.poll(getPollTimeout());
+					ConsumerRecords<K, V> records = this.consumer.poll(getPollTimeout());
 					if (records != null) {
 						count += records.count();
-						if (logger.isDebugEnabled()) {
-							logger.debug("Received: " + records.count() + " records");
+						if (this.logger.isDebugEnabled()) {
+							this.logger.debug("Received: " + records.count() + " records");
 						}
 						Iterator<ConsumerRecord<K, V>> iterator = records.iterator();
 						while (iterator.hasNext()) {
 							final ConsumerRecord<K, V> record = iterator.next();
 							invokeListener(record);
-							if (!autoCommit && ackMode.equals(AckMode.RECORD)) {
+							if (!this.autoCommit && ackMode.equals(AckMode.RECORD)) {
 								this.consumer.commitAsync(
 										Collections.singletonMap(new TopicPartition(record.topic(), record.partition()),
 												new OffsetAndMetadata(record.offset() + 1)), this.callback);
@@ -338,35 +338,35 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 						}
 					}
 					else {
-						if (logger.isDebugEnabled()) {
-							logger.debug("No records");
+						if (this.logger.isDebugEnabled()) {
+							this.logger.debug("No records");
 						}
 					}
 				}
 				catch (WakeupException e) {
-					;
+					// No-op. Continue process
 				}
 				catch (Exception e) {
 					if (getErrorHandler() != null) {
 						getErrorHandler().handle(e, null);
 					}
 					else {
-						logger.error("Container exception", e);
+						this.logger.error("Container exception", e);
 					}
 				}
 			}
-			if (offsets.size() > 0) {
+			if (this.offsets.size() > 0) {
 				commitIfNecessary();
 			}
 			try {
 				this.consumer.unsubscribe();
 			}
 			catch (WakeupException e) {
-				;
+				// No-op. Continue process
 			}
 			this.consumer.close();
-			if (logger.isInfoEnabled()) {
-				logger.info("Consumer stopped");
+			if (this.logger.isInfoEnabled()) {
+				this.logger.info("Consumer stopped");
 			}
 		}
 
@@ -381,18 +381,18 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 								updateManualOffset(record);
 							}
 							else if (getAckMode().equals(AckMode.MANUAL_IMMEDIATE)) {
-								if (Thread.currentThread().equals(consumerThread)) {
+								if (Thread.currentThread().equals(ListenerConsumer.this.consumerThread)) {
 									Map<TopicPartition, OffsetAndMetadata> commits = Collections.singletonMap(
 											new TopicPartition(record.topic(), record.partition()),
 											new OffsetAndMetadata(record.offset() + 1));
-									if (logger.isDebugEnabled()) {
-										logger.debug("Committing: " + commits);
+									if (ListenerConsumer.this.logger.isDebugEnabled()) {
+										ListenerConsumer.this.logger.debug("Committing: " + commits);
 									}
-									consumer.commitAsync(commits, callback);
+									ListenerConsumer.this.consumer.commitAsync(commits, ListenerConsumer.this.callback);
 								}
 								else {
 									throw new IllegalStateException(
-											"With MANUAL_IMMEDIATE ack mode, acknowledget must be invoked on the "
+											"With MANUAL_IMMEDIATE ack mode, acknowledge() must be invoked on the "
 													+ "consumer thread");
 								}
 							}
@@ -405,7 +405,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 					});
 				}
 				else {
-					listener.onMessage(record);
+					this.listener.onMessage(record);
 				}
 			}
 			catch (Exception e) {
@@ -413,7 +413,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 					getErrorHandler().handle(e, record);
 				}
 				else {
-					logger.error("Listener threw an exception and no error handler for " + record, e);
+					this.logger.error("Listener threw an exception and no error handler for " + record, e);
 				}
 			}
 		}
@@ -438,8 +438,8 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 				for (TopicPartition topicPartition : this.definedPartitions) {
 					long newOffset = this.consumer.position(topicPartition) - this.recentOffset;
 					this.consumer.seek(topicPartition, newOffset);
-					if (logger.isDebugEnabled()) {
-						logger.debug("Reset " + topicPartition + " to offset " + newOffset);
+					if (this.logger.isDebugEnabled()) {
+						this.logger.debug("Reset " + topicPartition + " to offset " + newOffset);
 					}
 				}
 			}
@@ -483,8 +483,8 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 				}
 			}
 			this.offsets.clear();
-			if (logger.isDebugEnabled()) {
-				logger.debug("Committing: " + commits);
+			if (this.logger.isDebugEnabled()) {
+				this.logger.debug("Committing: " + commits);
 			}
 			if (!commits.isEmpty()) {
 				this.consumer.commitAsync(commits, this.callback);
@@ -494,7 +494,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 
 	private static final class CommitCallback implements OffsetCommitCallback {
 
-		private final Log logger = LogFactory.getLog(OffsetCommitCallback.class);
+		private static final Log logger = LogFactory.getLog(OffsetCommitCallback.class);
 
 		@Override
 		public void onComplete(Map<TopicPartition, OffsetAndMetadata> offsets, Exception exception) {
