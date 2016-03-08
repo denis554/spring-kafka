@@ -43,12 +43,12 @@ public abstract class AbstractAdaptableMessageListener<K, V> implements MessageL
 	/**
 	 * Kafka {@link MessageListener} entry point.
 	 * <p>
-	 * Delegates the message to the target listener method, with appropriate conversion of the message argument. In case
-	 * of an exception, the {@link #handleListenerException(Throwable)} method will be invoked.
+	 * Delegates the message to the target listener method, with appropriate conversion of the message argument.
+	 * In case of an exception, the {@link #handleListenerException(Throwable)} method will be invoked.
 	 * <p>
 	 * @param record the incoming Kafka {@link ConsumerRecord}.
 	 * @see #handleListenerException
-	 * @see #onMessage(ConsumerRecord, org.springframework.kafka.listener.Acknowledgment)
+	 * @see AcknowledgingMessageListener#onMessage(ConsumerRecord, org.springframework.kafka.support.Acknowledgment)
 	 */
 	@Override
 	public void onMessage(ConsumerRecord<K, V> record) {
