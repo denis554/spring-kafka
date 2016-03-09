@@ -101,7 +101,7 @@ public class ConcurrentMessageListenerContainerTests {
 		container.setBeanName("testAuto");
 		container.start();
 		ContainerTestUtils.waitForAssignment(container, embeddedKafka.getPartitionsPerTopic());
-		Map<String, Object> senderProps = KafkaTestUtils.senderProps(embeddedKafka);
+		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
 		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<Integer, String>(senderProps);
 		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
 		template.setDefaultTopic(topic1);
@@ -135,7 +135,7 @@ public class ConcurrentMessageListenerContainerTests {
 		container.setBeanName("testBatch");
 		container.start();
 		ContainerTestUtils.waitForAssignment(container, embeddedKafka.getPartitionsPerTopic());
-		Map<String, Object> senderProps = KafkaTestUtils.senderProps(embeddedKafka);
+		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
 		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<Integer, String>(senderProps);
 		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
 		template.setDefaultTopic(topic2);
@@ -211,7 +211,7 @@ public class ConcurrentMessageListenerContainerTests {
 
 		assertTrue(initialConsumersLatch.await(20, TimeUnit.SECONDS));
 
-		Map<String, Object> senderProps = KafkaTestUtils.senderProps(embeddedKafka);
+		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
 		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<Integer, String>(senderProps);
 		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
 		template.setDefaultTopic(topic3);
@@ -300,7 +300,7 @@ public class ConcurrentMessageListenerContainerTests {
 		container.setBeanName("test" + ackMode);
 		container.start();
 		ContainerTestUtils.waitForAssignment(container, embeddedKafka.getPartitionsPerTopic());
-		Map<String, Object> senderProps = KafkaTestUtils.senderProps(embeddedKafka);
+		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
 		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<Integer, String>(senderProps);
 		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
 		template.setDefaultTopic(topic);
@@ -382,7 +382,7 @@ public class ConcurrentMessageListenerContainerTests {
 		container.setBeanName("testException");
 		container.start();
 		ContainerTestUtils.waitForAssignment(container, embeddedKafka.getPartitionsPerTopic());
-		Map<String, Object> senderProps = KafkaTestUtils.senderProps(embeddedKafka);
+		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
 		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<Integer, String>(senderProps);
 		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
 		template.setDefaultTopic(topic6);

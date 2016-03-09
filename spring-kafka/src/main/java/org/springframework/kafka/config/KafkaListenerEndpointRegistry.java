@@ -136,7 +136,7 @@ public class KafkaListenerEndpointRegistry implements DisposableBean, SmartLifec
 	 */
 	@SuppressWarnings("unchecked")
 	public void registerListenerContainer(KafkaListenerEndpoint endpoint, KafkaListenerContainerFactory<?> factory,
-	                                      boolean startImmediately) {
+			boolean startImmediately) {
 		Assert.notNull(endpoint, "Endpoint must not be null");
 		Assert.notNull(factory, "Factory must not be null");
 

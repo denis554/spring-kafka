@@ -233,7 +233,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 
 		private long last;
 
-		public ListenerConsumer(MessageListener<K, V> listener, AcknowledgingMessageListener<K, V> ackListener,
+		ListenerConsumer(MessageListener<K, V> listener, AcknowledgingMessageListener<K, V> ackListener,
 				ContainerOffsetResetStrategy resetStrategy, long recentOffset) {
 			Assert.state(!(getAckMode().equals(AckMode.MANUAL) || getAckMode().equals(AckMode.MANUAL_IMMEDIATE))
 					|| !this.autoCommit,

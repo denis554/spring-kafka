@@ -343,12 +343,9 @@ public class KafkaListenerAnnotationBeanPostProcessor<K, V>
 				factory = this.beanFactory.getBean(containerFactoryBeanName, KafkaListenerContainerFactory.class);
 			}
 			catch (NoSuchBeanDefinitionException ex) {
-				throw new BeanInitializationException("Could not register Kafka listener endpoint on [" +
-				                                      adminTarget + "] for bean " + beanName + ", no "
-				                                      + KafkaListenerContainerFactory.class.getSimpleName() +
-				                                      " with id '" +
-				                                      containerFactoryBeanName +
-				                                      "' was found in the application context", ex);
+				throw new BeanInitializationException("Could not register Kafka listener endpoint on [" + adminTarget
+						+ "] for bean " + beanName + ", no " + KafkaListenerContainerFactory.class.getSimpleName()
+						+ " with id '" + containerFactoryBeanName + "' was found in the application context", ex);
 			}
 		}
 
@@ -399,8 +396,8 @@ public class KafkaListenerAnnotationBeanPostProcessor<K, V>
 				pattern = Pattern.compile((String) resolved);
 			}
 			else {
-				throw new IllegalStateException("topicPattern must resolve to a Pattern or String, not "
-				                                + resolved.getClass());
+				throw new IllegalStateException(
+						"topicPattern must resolve to a Pattern or String, not " + resolved.getClass());
 			}
 		}
 		return pattern;
@@ -408,12 +405,12 @@ public class KafkaListenerAnnotationBeanPostProcessor<K, V>
 
 	private List<org.apache.kafka.common.TopicPartition> resolveTopicPartitionsList(TopicPartition topicPartition) {
 		Object topic = resolveExpression(topicPartition.topic());
-		Assert.state(topic instanceof String, "topic in @TopicPartition must resolve to a String, not "
-		                                      + topic.getClass());
+		Assert.state(topic instanceof String,
+				"topic in @TopicPartition must resolve to a String, not " + topic.getClass());
 		Assert.state(StringUtils.hasText((String) topic), "topic in @TopicPartition must not be empty");
 		String[] partitions = topicPartition.partitions();
-		Assert.state(partitions.length > 0, "At least one partition required in @TopicPartition for topic '"
-		                                    + topic + "'");
+		Assert.state(partitions.length > 0,
+				"At least one partition required in @TopicPartition for topic '" + topic + "'");
 		List<org.apache.kafka.common.TopicPartition> result = new ArrayList<>();
 		if (partitions.length > 0) {
 			for (int i = 0; i < partitions.length; i++) {
@@ -453,8 +450,8 @@ public class KafkaListenerAnnotationBeanPostProcessor<K, V>
 			}
 		}
 		if (resolvedValue instanceof String) {
-			Assert.state(StringUtils.hasText((String) resolvedValue), "partition in @TopicPartition for topic '"
-			                                                          + topic + "' cannot be empty");
+			Assert.state(StringUtils.hasText((String) resolvedValue),
+					"partition in @TopicPartition for topic '" + topic + "' cannot be empty");
 			result.add(new org.apache.kafka.common.TopicPartition(topic, Integer.valueOf((String) resolvedValue)));
 		}
 		else if (resolvedValue instanceof Integer[]) {

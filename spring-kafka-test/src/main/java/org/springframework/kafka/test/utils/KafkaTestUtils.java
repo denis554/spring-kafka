@@ -47,7 +47,7 @@ public final class KafkaTestUtils {
 	 * @param embeddedKafka a {@link KafkaEmbedded} instance.
 	 * @return the properties.
 	 */
-	public static Map<String, Object> senderProps(KafkaEmbedded embeddedKafka) {
+	public static Map<String, Object> producerProps(KafkaEmbedded embeddedKafka) {
 		return senderProps(embeddedKafka.getBrokersAsString());
 	}
 

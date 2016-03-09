@@ -68,7 +68,7 @@ public class KafkaTemplateTests {
 		container.setBeanName("templateTests");
 		container.start();
 		ContainerTestUtils.waitForAssignment(container, embeddedKafka.getPartitionsPerTopic());
-		Map<String, Object> senderProps = KafkaTestUtils.senderProps(embeddedKafka);
+		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
 		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<Integer, String>(senderProps);
 		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
 		template.setDefaultTopic(TEMPLATE_TOPIC);
