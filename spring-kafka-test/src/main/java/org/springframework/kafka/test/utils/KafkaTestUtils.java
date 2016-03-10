@@ -19,6 +19,9 @@ package org.springframework.kafka.test.utils;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.producer.ProducerConfig;
+
 import org.springframework.kafka.test.rule.KafkaEmbedded;
 
 /**
@@ -53,25 +56,29 @@ public final class KafkaTestUtils {
 
 	public static Map<String, Object> consumerProps(String brokers, String group, String autoCommit) {
 		Map<String, Object> props = new HashMap<>();
-		props.put("bootstrap.servers", brokers);
-		props.put("group.id", group);
-		props.put("enable.auto.commit", autoCommit);
-		props.put("auto.commit.interval.ms", "100");
-		props.put("session.timeout.ms", "15000");
-		props.put("key.deserializer", "org.apache.kafka.common.serialization.IntegerDeserializer");
-		props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+		props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokers);
+		props.put(ConsumerConfig.GROUP_ID_CONFIG, group);
+		props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, autoCommit);
+		props.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "100");
+		props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, "15000");
+		props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
+				"org.apache.kafka.common.serialization.IntegerDeserializer");
+		props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+				"org.apache.kafka.common.serialization.StringDeserializer");
 		return props;
 	}
 
 	public static Map<String, Object> senderProps(String brokers) {
 		Map<String, Object> props = new HashMap<>();
-		props.put("bootstrap.servers", brokers);
-		props.put("retries", 0);
-		props.put("batch.size", 16384);
-		props.put("linger.ms", 1);
-		props.put("buffer.memory", 33554432);
-		props.put("key.serializer", "org.apache.kafka.common.serialization.IntegerSerializer");
-		props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+		props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokers);
+		props.put(ProducerConfig.RETRIES_CONFIG, 0);
+		props.put(ProducerConfig.BATCH_SIZE_CONFIG, 16384);
+		props.put(ProducerConfig.LINGER_MS_CONFIG, 1);
+		props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, 33554432);
+		props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+				"org.apache.kafka.common.serialization.IntegerSerializer");
+		props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+				"org.apache.kafka.common.serialization.StringSerializer");
 		return props;
 	}
 

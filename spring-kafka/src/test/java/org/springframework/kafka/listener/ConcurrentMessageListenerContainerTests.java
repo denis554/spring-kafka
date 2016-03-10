@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -225,7 +226,7 @@ public class ConcurrentMessageListenerContainerTests {
 		container1.stop();
 		container2.stop();
 
-		props.put("auto.offset.reset", "earliest");
+		props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 		cf = new DefaultKafkaConsumerFactory<>(props);
 		// reset earliest
 		ConcurrentMessageListenerContainer<Integer, String> resettingContainer =
@@ -245,7 +246,7 @@ public class ConcurrentMessageListenerContainerTests {
 		resettingContainer.stop();
 		assertThat(latch3.getCount(), equalTo(0L));
 
-		props.put("auto.offset.reset", "earliest");
+		props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 		cf = new DefaultKafkaConsumerFactory<>(props);
 		// reset minusone
 		resettingContainer = new ConcurrentMessageListenerContainer<>(cf, topic1Partition0, topic1Partition1);
