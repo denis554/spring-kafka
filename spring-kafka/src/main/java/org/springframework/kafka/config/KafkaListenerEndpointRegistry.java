@@ -64,7 +64,7 @@ import org.springframework.util.StringUtils;
  */
 public class KafkaListenerEndpointRegistry implements DisposableBean, SmartLifecycle, ApplicationContextAware {
 
-	protected final Log logger = LogFactory.getLog(getClass());
+	protected final Log logger = LogFactory.getLog(getClass()); //NOSONAR
 
 	private final Map<String, MessageListenerContainer> listenerContainers =
 			new ConcurrentHashMap<String, MessageListenerContainer>();

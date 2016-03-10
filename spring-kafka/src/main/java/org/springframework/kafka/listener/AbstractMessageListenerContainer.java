@@ -33,7 +33,7 @@ import org.springframework.util.Assert;
 public abstract class AbstractMessageListenerContainer<K, V>
 		implements MessageListenerContainer, BeanNameAware, SmartLifecycle {
 
-	protected final Log logger = LogFactory.getLog(this.getClass());
+	protected final Log logger = LogFactory.getLog(this.getClass()); //NOSONAR
 
 	public enum AckMode {
 		/**

@@ -34,7 +34,7 @@ import org.apache.kafka.clients.producer.RecordMetadata;
  */
 public class KafkaTemplate<K, V> implements KafkaOperations<K, V> {
 
-	protected final Log logger = LogFactory.getLog(this.getClass());
+	protected final Log logger = LogFactory.getLog(this.getClass()); //NOSONAR
 
 	private final ProducerFactory<K, V> producerFactory;
 

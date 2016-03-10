@@ -43,7 +43,7 @@ public class HandlerAdapter {
 		this.delegatingHandler = delegatingHandler;
 	}
 
-	public Object invoke(Message<?> message, Object... providedArgs) throws Exception {
+	public Object invoke(Message<?> message, Object... providedArgs) throws Exception { //NOSONAR
 		if (this.invokerHandlerMethod != null) {
 			return this.invokerHandlerMethod.invoke(message, providedArgs);
 		}

@@ -55,7 +55,7 @@ public class DefaultKafkaProducerFactory<K, V> implements ProducerFactory<K, V>,
 	}
 
 	@Override
-	public void destroy() throws Exception {
+	public void destroy() throws Exception { //NOSONAR
 		CloseSafeProducer<K, V> producer = this.producer;
 		this.producer = null;
 		if (producer != null) {

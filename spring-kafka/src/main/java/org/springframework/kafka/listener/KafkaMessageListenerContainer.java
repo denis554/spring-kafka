@@ -119,7 +119,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 	KafkaMessageListenerContainer(ConsumerFactory<K, V> consumerFactory, String[] topics, Pattern topicPattern,
 			TopicPartition[] topicPartitions) {
 		this.consumerFactory = consumerFactory;
-		this.topics = topics;
+		this.topics = topics == null ? null : Arrays.asList(topics).toArray(new String[topics.length]);
 		this.topicPattern = topicPattern;
 		this.partitions = topicPartitions == null ? null : new LinkedHashSet<>(Arrays.asList(topicPartitions))
 				.toArray(new TopicPartition[topicPartitions.length]);
@@ -229,6 +229,10 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 
 		private volatile Collection<TopicPartition> assignedPartitions;
 
+		private int count;
+
+		private long last;
+
 		public ListenerConsumer(MessageListener<K, V> listener, AcknowledgingMessageListener<K, V> ackListener,
 				ContainerOffsetResetStrategy resetStrategy, long recentOffset) {
 			Assert.state(!(getAckMode().equals(AckMode.MANUAL) || getAckMode().equals(AckMode.MANUAL_IMMEDIATE))
@@ -277,9 +281,8 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 		@Override
 		public void run() {
 			this.consumerThread = Thread.currentThread();
-			int count = 0;
-			long last = System.currentTimeMillis();
-			long now;
+			this.count = 0;
+			this.last = System.currentTimeMillis();
 			if (isRunning() && this.definedPartitions != null) {
 				initPartitionsIfNeeded();
 			}
@@ -291,7 +294,6 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 					}
 					ConsumerRecords<K, V> records = this.consumer.poll(getPollTimeout());
 					if (records != null) {
-						count += records.count();
 						if (this.logger.isDebugEnabled()) {
 							this.logger.debug("Received: " + records.count() + " records");
 						}
@@ -306,35 +308,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 							}
 						}
 						if (!this.autoCommit) {
-							if (ackMode.equals(AckMode.BATCH)) {
-								if (!records.isEmpty()) {
-									this.consumer.commitAsync(this.callback);
-								}
-							}
-							else if (!ackMode.equals(AckMode.MANUAL_IMMEDIATE)) {
-								if (!ackMode.equals(AckMode.MANUAL)) {
-									updatePendingOffsets(records);
-								}
-								boolean countExceeded = count >= getAckCount();
-								if (ackMode.equals(AckMode.COUNT) && countExceeded) {
-									commitIfNecessary();
-									count = 0;
-								}
-								else {
-									now = System.currentTimeMillis();
-									boolean elapsed = now - last > getAckTime();
-									if (ackMode.equals(AckMode.TIME) && elapsed) {
-										commitIfNecessary();
-										last = now;
-									}
-									else if ((ackMode.equals(AckMode.COUNT_TIME) || ackMode.equals(AckMode.MANUAL))
-											&& (elapsed || countExceeded)) {
-										commitIfNecessary();
-										last = now;
-										count = 0;
-									}
-								}
-							}
+							processCommits(ackMode, records);
 						}
 					}
 					else {
@@ -373,7 +347,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 		private void invokeListener(final ConsumerRecord<K, V> record) {
 			try {
 				if (this.acknowledgingMessageListener != null) {
-					this.acknowledgingMessageListener.onMessage(record, new Acknowledgment() {
+					this.acknowledgingMessageListener.onMessage(record, new Acknowledgment() { //NOSONAR - long anon.
 
 						@Override
 						public void acknowledge() {
@@ -419,6 +393,40 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 				}
 				else {
 					this.logger.error("Listener threw an exception and no error handler for " + record, e);
+				}
+			}
+		}
+
+		private void processCommits(final AckMode ackMode, ConsumerRecords<K, V> records) {
+			this.count += records.count();
+			long now;
+			if (ackMode.equals(AckMode.BATCH)) {
+				if (!records.isEmpty()) {
+					this.consumer.commitAsync(this.callback);
+				}
+			}
+			else if (!ackMode.equals(AckMode.MANUAL_IMMEDIATE)) {
+				if (!ackMode.equals(AckMode.MANUAL)) {
+					updatePendingOffsets(records);
+				}
+				boolean countExceeded = this.count >= getAckCount();
+				if (ackMode.equals(AckMode.COUNT) && countExceeded) {
+					commitIfNecessary();
+					this.count = 0;
+				}
+				else {
+					now = System.currentTimeMillis();
+					boolean elapsed = now - this.last > getAckTime();
+					if (ackMode.equals(AckMode.TIME) && elapsed) {
+						commitIfNecessary();
+						this.last = now;
+					}
+					else if ((ackMode.equals(AckMode.COUNT_TIME) || ackMode.equals(AckMode.MANUAL))
+							&& (elapsed || countExceeded)) {
+						commitIfNecessary();
+						this.last = now;
+						this.count = 0;
+					}
 				}
 			}
 		}

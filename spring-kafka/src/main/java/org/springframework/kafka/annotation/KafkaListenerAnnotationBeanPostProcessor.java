@@ -216,12 +216,12 @@ public class KafkaListenerAnnotationBeanPostProcessor<K, V>
 
 			@Override
 			public void doWith(Method method) throws IllegalArgumentException, IllegalAccessException {
-				for (KafkaListener KafkaListener : findListenerAnnotations(method)) {
-					processKafkaListener(KafkaListener, method, bean, beanName);
+				for (KafkaListener kafkaListener : findListenerAnnotations(method)) {
+					processKafkaListener(kafkaListener, method, bean, beanName);
 				}
 				if (hasClassLevelListeners) {
-					KafkaHandler KafkaHandler = AnnotationUtils.findAnnotation(method, KafkaHandler.class);
-					if (KafkaHandler != null) {
+					KafkaHandler kafkaHandler = AnnotationUtils.findAnnotation(method, KafkaHandler.class);
+					if (kafkaHandler != null) {
 						multiMethods.add(method);
 					}
 				}
@@ -279,15 +279,16 @@ public class KafkaListenerAnnotationBeanPostProcessor<K, V>
 		}
 	}
 
-	protected void processKafkaListener(KafkaListener KafkaListener, Method method, Object bean, String beanName) {
+	protected void processKafkaListener(KafkaListener kafkaListener, Method method, Object bean, String beanName) {
 		Method methodToUse = checkProxy(method, bean);
 		MethodKafkaListenerEndpoint<K, V> endpoint = new MethodKafkaListenerEndpoint<K, V>();
 		endpoint.setMethod(methodToUse);
 		endpoint.setBeanFactory(this.beanFactory);
-		processListener(endpoint, KafkaListener, bean, methodToUse, beanName);
+		processListener(endpoint, kafkaListener, bean, methodToUse, beanName);
 	}
 
-	private Method checkProxy(Method method, Object bean) {
+	private Method checkProxy(Method methodArg, Object bean) {
+		Method method = methodArg;
 		if (AopUtils.isJdkDynamicProxy(bean)) {
 			try {
 				// Found a @KafkaListener method on the target class for this JDK proxy ->
@@ -312,7 +313,7 @@ public class KafkaListenerAnnotationBeanPostProcessor<K, V>
 						"but not found in any interface(s) for bean JDK proxy. Either " +
 						"pull the method up to an interface or switch to subclass (CGLIB) " +
 						"proxies by setting proxy-target-class/proxyTargetClass " +
-						"attribute to 'true'", method.getName(), method.getDeclaringClass().getSimpleName()));
+						"attribute to 'true'", method.getName(), method.getDeclaringClass().getSimpleName()), ex);
 			}
 		}
 		return method;
@@ -354,9 +355,9 @@ public class KafkaListenerAnnotationBeanPostProcessor<K, V>
 		this.registrar.registerEndpoint(endpoint, factory);
 	}
 
-	private String getEndpointId(KafkaListener KafkaListener) {
-		if (StringUtils.hasText(KafkaListener.id())) {
-			return resolve(KafkaListener.id());
+	private String getEndpointId(KafkaListener kafkaListener) {
+		if (StringUtils.hasText(kafkaListener.id())) {
+			return resolve(kafkaListener.id());
 		}
 		else {
 			return "org.springframework.kafka.KafkaListenerEndpointContainer#" + this.counter.getAndIncrement();
@@ -507,8 +508,8 @@ public class KafkaListenerAnnotationBeanPostProcessor<K, V>
 
 		private MessageHandlerMethodFactory messageHandlerMethodFactory;
 
-		public void setMessageHandlerMethodFactory(MessageHandlerMethodFactory KafkaHandlerMethodFactory1) {
-			this.messageHandlerMethodFactory = KafkaHandlerMethodFactory1;
+		public void setMessageHandlerMethodFactory(MessageHandlerMethodFactory kafkaHandlerMethodFactory1) {
+			this.messageHandlerMethodFactory = kafkaHandlerMethodFactory1;
 		}
 
 		@Override

@@ -88,7 +88,7 @@ public class MessagingMessageConverter<K, V> implements MessageConverter<K, V> {
 		}
 
 		@Override
-		public Map<String, Object> getRawHeaders() {
+		public Map<String, Object> getRawHeaders() { //NOSONAR - not useless, widening to public
 			return super.getRawHeaders();
 		}
 

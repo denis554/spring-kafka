@@ -123,7 +123,7 @@ public class KafkaEmbedded extends ExternalResource implements KafkaRule {
 	}
 
 	@Override
-	protected void before() throws Throwable {
+	protected void before() throws Exception { //NOSONAR
 		startZookeeper();
 		int zkConnectionTimeout = 6000;
 		int zkSessionTimeout = 6000;
@@ -288,7 +288,7 @@ public class KafkaEmbedded extends ExternalResource implements KafkaRule {
 		bounce(index, true);
 	}
 
-	public void restart(final int index) throws Exception {
+	public void restart(final int index) throws Exception { //NOSONAR
 
 		// retry restarting repeatedly, first attempts may fail
 
@@ -308,7 +308,7 @@ public class KafkaEmbedded extends ExternalResource implements KafkaRule {
 		retryTemplate.execute(new RetryCallback<Void, Exception>() {
 
 			@Override
-			public Void doWithRetry(RetryContext context) throws Exception {
+			public Void doWithRetry(RetryContext context) throws Exception { //NOSONAR
 				KafkaEmbedded.this.kafkaServers.get(index).startup();
 				return null;
 			}

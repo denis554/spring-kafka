@@ -37,7 +37,7 @@ public abstract class AbstractAdaptableMessageListener<K, V> implements MessageL
 			AcknowledgingMessageListener<K, V> {
 
 	/** Logger available to subclasses */
-	protected final Log logger = LogFactory.getLog(getClass());
+	protected final Log logger = LogFactory.getLog(getClass()); //NOSONAR
 
 
 	/**

@@ -72,7 +72,7 @@ public class DelegatingInvocableHandler {
 	 * or the method raised an exception.
 	 * @return the result of the invocation.
 	 */
-	public Object invoke(Message<?> message, Object... providedArgs) throws Exception {
+	public Object invoke(Message<?> message, Object... providedArgs) throws Exception { //NOSONAR
 		Class<? extends Object> payloadClass = message.getPayload().getClass();
 		InvocableHandlerMethod handler = getHandlerForPayload(payloadClass);
 		return handler.invoke(message, providedArgs);

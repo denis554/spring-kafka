@@ -47,15 +47,15 @@ public class ConcurrentMessageListenerContainer<K, V> extends AbstractMessageLis
 
 	private final Pattern topicPattern;
 
-	final List<KafkaMessageListenerContainer<K, V>> containers = new ArrayList<>();
+	private final List<KafkaMessageListenerContainer<K, V>> containers = new ArrayList<>();
 
 	private ContainerOffsetResetStrategy resetStrategy = ContainerOffsetResetStrategy.NONE;
 
 	private long recentOffset = 1;
 
-	TopicPartition[] partitions;
+	private TopicPartition[] partitions;
 
-	int concurrency = 1;
+	private int concurrency = 1;
 
 	/**
 	 * Construct an instance with the supplied configuration properties and specific
@@ -92,7 +92,7 @@ public class ConcurrentMessageListenerContainer<K, V> extends AbstractMessageLis
 		Assert.notNull(topics, "A list of topics must be provided");
 		Assert.noNullElements(topics, "The list of topics cannot contain null elements");
 		this.consumerFactory = consumerFactory;
-		this.topics = topics;
+		this.topics = Arrays.asList(topics).toArray(new String[topics.length]);
 		this.topicPattern = null;
 	}
 
