@@ -60,12 +60,14 @@ The `o.s.kafka.test.hamcrest.KafkaMatchers` provides the following matchers:
 ----
 /**
  * @param key the key
+ * @param <K> the type.
  * @return a Matcher that matches the key in a consumer record.
  */
 public static <K> Matcher<ConsumerRecord<K, ?>> hasKey(K key) { ... }
 
 /**
  * @param value the value.
+ * @param <V> the type.
  * @return a Matcher that matches the value in a consumer record.
  */
 public static <V> Matcher<ConsumerRecord<?, V>> hasValue(V value) { ... }
@@ -75,6 +77,31 @@ public static <V> Matcher<ConsumerRecord<?, V>> hasValue(V value) { ... }
  * @return a Matcher that matches the partition in a consumer record.
  */
 public static Matcher<ConsumerRecord<?, ?>> hasPartition(int partition) { ... }
+----
+
+==== AssertJ Conditions
+
+[source, java]
+----
+/**
+ * @param key the key
+ * @param <K> the type.
+ * @return a Condition that matches the key in a consumer record.
+ */
+public static <K> Condition<ConsumerRecord<K, ?>> key(K key) { ... }
+
+/**
+ * @param value the value.
+ * @param <V> the type.
+ * @return a Condition that matches the value in a consumer record.
+ */
+public static <V> Condition<ConsumerRecord<?, V>> value(V value) { ... }
+
+/**
+ * @param partition the partition.
+ * @return a Condition that matches the partition in a consumer record.
+ */
+public static Condition<ConsumerRecord<?, ?>> partition(int partition) { ... }
 ----
 
 ==== Example
@@ -129,5 +156,25 @@ public class KafkaTemplateTests {
         assertThat(received, hasValue("baz"));
     }
 
+}
+----
+
+The above uses the hamcrest matchers; with `AssertJ`, the final part looks like this...
+
+[source, java]
+----
+...
+        assertThat(records.poll(10, TimeUnit.SECONDS)).has(value("foo"));
+        template.syncConvertAndSend(0, 2, "bar");
+        ConsumerRecord<Integer, String> received = records.poll(10, TimeUnit.SECONDS);
+        assertThat(received).has(key(2));
+        assertThat(received).has(partition(0));
+        assertThat(received).has(value("bar"));
+        template.syncConvertAndSend(TEMPLATE_TOPIC, 0, 2, "baz");
+        received = records.poll(10, TimeUnit.SECONDS);
+        assertThat(received).has(key(2));
+        assertThat(received).has(partition(0));
+        assertThat(received).has(value("baz"));
+    }
 }
 ----
