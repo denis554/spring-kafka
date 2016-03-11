@@ -19,7 +19,7 @@ package org.springframework.kafka.listener;
 import org.springframework.kafka.core.KafkaException;
 
 /**
- * The listener specif {@link KafkaException} extension.
+ * The listener specific {@link KafkaException} extension.
  *
  * @author Gary Russell
  */

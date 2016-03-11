@@ -22,7 +22,7 @@ import java.util.concurrent.Future;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
 /**
- * The basic Kafka operation contract.
+ * The basic Kafka operations contract.
  *
  * @param <K> the key type.
  * @param <V> the value type.
@@ -156,7 +156,8 @@ public interface KafkaOperations<K, V> {
 	 * @throws ExecutionException execution exception while awaiting result.
 	 * @throws InterruptedException thread interrupted while awaiting result.
 	 */
-	RecordMetadata syncConvertAndSend(String topic, int partition, K key, V data) throws InterruptedException, ExecutionException;
+	RecordMetadata syncConvertAndSend(String topic, int partition, K key, V data)
+		throws InterruptedException, ExecutionException;
 
 	/**
 	 * Flush the producer.

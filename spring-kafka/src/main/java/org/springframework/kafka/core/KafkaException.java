@@ -19,7 +19,7 @@ package org.springframework.kafka.core;
 import org.springframework.core.NestedRuntimeException;
 
 /**
- * The Spring Kafka specif {@link NestedRuntimeException} implementation.
+ * The Spring Kafka specific {@link NestedRuntimeException} implementation.
  *
  * @author Gary Russell
  * @author Artem Bilan

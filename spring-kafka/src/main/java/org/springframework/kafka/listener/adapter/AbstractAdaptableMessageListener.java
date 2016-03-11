@@ -44,7 +44,7 @@ public abstract class AbstractAdaptableMessageListener<K, V> implements MessageL
 
 	/**
 	 * Kafka {@link MessageListener} entry point.
-	 * <p> Delegates the message to the target listener method, with appropriate conversion of the message argument.
+	 * <p> Delegate the message to the target listener method, with appropriate conversion of the message argument.
 	 * In case of an exception, the {@link #handleListenerException(Throwable)} method will be invoked.
 	 * @param record the incoming Kafka {@link ConsumerRecord}.
 	 * @see #handleListenerException
@@ -63,8 +63,7 @@ public abstract class AbstractAdaptableMessageListener<K, V> implements MessageL
 	/**
 	 * Handle the given exception that arose during listener execution.
 	 * The default implementation logs the exception at error level.
-	 * <p>
-	 * This method only applies when using a Kafka {@link MessageListener}. With
+	 * <p> This method only applies when using a Kafka {@link MessageListener}. With
 	 * {@link AcknowledgingMessageListener}, exceptions get handled by the
 	 * caller instead.
 	 * @param ex the exception to handle
