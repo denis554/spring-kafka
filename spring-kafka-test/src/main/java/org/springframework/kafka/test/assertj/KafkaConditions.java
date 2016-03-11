@@ -20,7 +20,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.assertj.core.api.Condition;
 
 /**
- * The AssertJ custom {@link Condition}s.
+ * AssertJ custom {@link Condition}s.
  *
  * @author Artem Bilan
  */

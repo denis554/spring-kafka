@@ -22,6 +22,7 @@ import org.hamcrest.DiagnosingMatcher;
 import org.hamcrest.Matcher;
 
 /**
+ * Hamcrest {@link Matcher}s utilities.
  *
  * @author Gary Russell
  *
