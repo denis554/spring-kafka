@@ -25,9 +25,12 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
+import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.kafka.support.LoggingProducerListener;
 import org.springframework.kafka.support.ProducerListener;
 import org.springframework.kafka.support.ProducerListenerInvokingCallback;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageHeaders;
 
 
 /**
@@ -88,28 +91,28 @@ public class KafkaTemplate<K, V> implements KafkaOperations<K, V> {
 	}
 
 	@Override
-	public Future<RecordMetadata>  send(V data) {
+	public Future<RecordMetadata> send(V data) {
 		return send(this.defaultTopic, data);
 	}
 
 	@Override
-	public Future<RecordMetadata>  send(K key, V data) {
+	public Future<RecordMetadata> send(K key, V data) {
 		return send(this.defaultTopic, key, data);
 	}
 
 	@Override
-	public Future<RecordMetadata>  send(int partition, K key, V data) {
+	public Future<RecordMetadata> send(int partition, K key, V data) {
 		return send(this.defaultTopic, partition, key, data);
 	}
 
 	@Override
-	public Future<RecordMetadata>  send(String topic, V data) {
+	public Future<RecordMetadata> send(String topic, V data) {
 		ProducerRecord<K, V> producerRecord = new ProducerRecord<>(topic, data);
 		return doSend(producerRecord);
 	}
 
 	@Override
-	public Future<RecordMetadata>  send(String topic, K key, V data) {
+	public Future<RecordMetadata> send(String topic, K key, V data) {
 		ProducerRecord<K, V> producerRecord = new ProducerRecord<>(topic, key, data);
 		return doSend(producerRecord);
 	}
@@ -121,11 +124,16 @@ public class KafkaTemplate<K, V> implements KafkaOperations<K, V> {
 	}
 
 	@Override
-	public Future<RecordMetadata>  send(String topic, int partition, K key, V data) {
+	public Future<RecordMetadata> send(String topic, int partition, K key, V data) {
 		ProducerRecord<K, V> producerRecord = new ProducerRecord<>(topic, partition, key, data);
 		return doSend(producerRecord);
 	}
 
+	@Override
+	public Future<RecordMetadata> send(Message<?> message) {
+		ProducerRecord<K, V> producerRecord = messageToProducerRecord(message);
+		return doSend(producerRecord);
+	}
 
 	@Override
 	public RecordMetadata syncSend(V data) throws InterruptedException, ExecutionException {
@@ -180,6 +188,19 @@ public class KafkaTemplate<K, V> implements KafkaOperations<K, V> {
 		return future.get();
 	}
 
+	@Override
+	public RecordMetadata syncSend(Message<?> message)
+			throws InterruptedException, ExecutionException {
+		Future<RecordMetadata> future = send(message);
+		flush();
+		return future.get();
+	}
+
+	@Override
+	public void flush() {
+		this.producer.flush();
+	}
+
 	/**
 	 * Send the producer record.
 	 * @param producerRecord the producer record.
@@ -211,9 +232,14 @@ public class KafkaTemplate<K, V> implements KafkaOperations<K, V> {
 		return future;
 	}
 
-	@Override
-	public void flush() {
-		this.producer.flush();
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private ProducerRecord<K, V> messageToProducerRecord(Message<?> message) {
+		MessageHeaders headers = message.getHeaders();
+		String topic = headers.get(KafkaHeaders.TOPIC, String.class);
+		Integer partition = headers.get(KafkaHeaders.PARTITION_ID, Integer.class);
+		Object key = headers.get(KafkaHeaders.MESSAGE_KEY);
+		Object payload = message.getPayload();
+		return new ProducerRecord(topic == null ? this.defaultTopic : topic, partition, key, payload);
 	}
 
 }
