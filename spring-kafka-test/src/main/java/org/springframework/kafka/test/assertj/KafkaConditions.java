@@ -23,6 +23,7 @@ import org.assertj.core.api.Condition;
  * AssertJ custom {@link Condition}s.
  *
  * @author Artem Bilan
+ * @author Gary Russell
  */
 public final class KafkaConditions {
 
@@ -68,7 +69,7 @@ public final class KafkaConditions {
 
 		@Override
 		public boolean matches(ConsumerRecord<K, ?> value) {
-			return value != null && value.key().equals(this.key);
+			return value != null && ((value.key() == null && this.key == null) || value.key().equals(this.key));
 		}
 
 	}
