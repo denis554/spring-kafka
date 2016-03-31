@@ -16,6 +16,8 @@
 
 package org.springframework.kafka.test.rule;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.io.File;
 import java.net.ServerSocket;
 import java.util.ArrayList;
@@ -24,11 +26,16 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import javax.net.ServerSocketFactory;
 
 import org.I0Itec.zkclient.ZkClient;
 import org.I0Itec.zkclient.exception.ZkInterruptedException;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.protocol.Errors;
 import org.apache.kafka.common.protocol.SecurityProtocol;
 import org.junit.rules.ExternalResource;
@@ -367,6 +374,26 @@ public class KafkaEmbedded extends ExternalResource implements KafkaRule {
 	@Override
 	public boolean isEmbedded() {
 		return true;
+	}
+
+	public void consumeFromAllEmbeddedTopics(Consumer<?, ?> consumer) throws Exception {
+		final CountDownLatch consumerLatch = new CountDownLatch(1);
+		consumer.subscribe(Arrays.asList(this.topics), new ConsumerRebalanceListener() {
+
+			@Override
+			public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
+			}
+
+			@Override
+			public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
+				consumerLatch.countDown();
+			}
+
+		});
+		consumer.poll(0); // force assignment
+		assertThat(consumerLatch.await(30, TimeUnit.SECONDS))
+			.as("Failed to be assigned partitions from the embedded topics")
+			.isTrue();
 	}
 
 }

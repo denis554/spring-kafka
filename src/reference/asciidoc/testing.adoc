@@ -52,6 +52,48 @@ public KafkaEmbedded(int count, boolean controlledShutdown, String... topics) { 
 public KafkaEmbedded(int count, boolean controlledShutdown, int partitions, String... topics) { ... }
 ----
 
+The embedded kafka class has a utility method allowing you to consume for all the topics it created:
+
+[source, java]
+----
+Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("testT", "false", embeddedKafka);
+DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<Integer, String>(
+        consumerProps);
+Consumer<Integer, String> consumer = cf.createConsumer();
+embeddedKafka.consumeFromAllEmbeddedTopics(consumer);
+----
+
+The `KafkaTestUtils` has some utility methods to fetch results from the consumer:
+
+[source, java]
+----
+/**
+ * Poll the consumer, expecting a single record for the specified topic.
+ * @param consumer the consumer.
+ * @param topic the topic.
+ * @return the record.
+ * @throws org.junit.ComparisonFailure if exactly one record is not received.
+ */
+public static <K, V> ConsumerRecord<K, V> getSingleRecord(Consumer<K, V> consumer, String topic) { ... }
+
+/**
+ * Poll the consumer for records.
+ * @param consumer the consumer.
+ * @return the records.
+ */
+public static <K, V> ConsumerRecords<K, V> getRecords(Consumer<K, V> consumer) { ... }
+----
+
+Usage:
+
+[source, java]
+----
+...
+template.syncSend(0, 2, "bar");
+ConsumerRecord<Integer, String> received = KafkaTestUtils.getSingleRecord(consumer, "topic");
+...
+----
+
 ==== Hamcrest Matchers
 
 The `o.s.kafka.test.hamcrest.KafkaMatchers` provides the following matchers:

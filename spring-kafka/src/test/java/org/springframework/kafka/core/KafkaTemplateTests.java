@@ -22,19 +22,15 @@ import static org.springframework.kafka.test.assertj.KafkaConditions.partition;
 import static org.springframework.kafka.test.assertj.KafkaConditions.value;
 
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import org.springframework.kafka.listener.ContainerTestUtils;
-import org.springframework.kafka.listener.KafkaMessageListenerContainer;
-import org.springframework.kafka.listener.MessageListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.kafka.support.ProducerListenerAdapter;
 import org.springframework.kafka.test.rule.KafkaEmbedded;
@@ -59,38 +55,27 @@ public class KafkaTemplateTests {
 		Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("testT", "false", embeddedKafka);
 		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<Integer, String>(
 				consumerProps);
-		KafkaMessageListenerContainer<Integer, String> container = new KafkaMessageListenerContainer<>(cf,
-				TEMPLATE_TOPIC);
-		final BlockingQueue<ConsumerRecord<Integer, String>> records = new LinkedBlockingQueue<>();
-		container.setMessageListener(new MessageListener<Integer, String>() {
+		Consumer<Integer, String> consumer = cf.createConsumer();
+		embeddedKafka.consumeFromAllEmbeddedTopics(consumer);
 
-			@Override
-			public void onMessage(ConsumerRecord<Integer, String> record) {
-				records.add(record);
-			}
-
-		});
-		container.setBeanName("templateTests");
-		container.start();
-		ContainerTestUtils.waitForAssignment(container, embeddedKafka.getPartitionsPerTopic());
 		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
 		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<Integer, String>(senderProps);
 		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
 		template.setDefaultTopic(TEMPLATE_TOPIC);
 		template.syncSend("foo");
-		assertThat(records.poll(10, TimeUnit.SECONDS)).has(value("foo"));
+		assertThat(KafkaTestUtils.getSingleRecord(consumer, TEMPLATE_TOPIC)).has(value("foo"));
 		template.syncSend(0, 2, "bar");
-		ConsumerRecord<Integer, String> received = records.poll(10, TimeUnit.SECONDS);
+		ConsumerRecord<Integer, String> received = KafkaTestUtils.getSingleRecord(consumer, TEMPLATE_TOPIC);
 		assertThat(received).has(key(2));
 		assertThat(received).has(partition(0));
 		assertThat(received).has(value("bar"));
 		template.syncSend(TEMPLATE_TOPIC, 0, 2, "baz");
-		received = records.poll(10, TimeUnit.SECONDS);
+		received = KafkaTestUtils.getSingleRecord(consumer, TEMPLATE_TOPIC);
 		assertThat(received).has(key(2));
 		assertThat(received).has(partition(0));
 		assertThat(received).has(value("baz"));
 		template.syncSend(TEMPLATE_TOPIC, 0, "qux");
-		received = records.poll(10, TimeUnit.SECONDS);
+		received = KafkaTestUtils.getSingleRecord(consumer, TEMPLATE_TOPIC);
 		assertThat(received).has(key((Integer) null));
 		assertThat(received).has(partition(0));
 		assertThat(received).has(value("qux"));
@@ -99,7 +84,7 @@ public class KafkaTemplateTests {
 				.setHeader(KafkaHeaders.PARTITION_ID, 0)
 				.setHeader(KafkaHeaders.MESSAGE_KEY, 2)
 				.build());
-		received = records.poll(10, TimeUnit.SECONDS);
+		received = KafkaTestUtils.getSingleRecord(consumer, TEMPLATE_TOPIC);
 		assertThat(received).has(key(2));
 		assertThat(received).has(partition(0));
 		assertThat(received).has(value("fiz"));
@@ -107,10 +92,12 @@ public class KafkaTemplateTests {
 				.setHeader(KafkaHeaders.PARTITION_ID, 0)
 				.setHeader(KafkaHeaders.MESSAGE_KEY, 2)
 				.build());
-		received = records.poll(10, TimeUnit.SECONDS);
+		received = KafkaTestUtils.getSingleRecord(consumer, TEMPLATE_TOPIC);
 		assertThat(received).has(key(2));
 		assertThat(received).has(partition(0));
 		assertThat(received).has(value("buz"));
+
+		consumer.close();
 	}
 
 	@Test
