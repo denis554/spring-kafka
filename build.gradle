@@ -152,6 +152,7 @@ project ('spring-kafka') {
 
 		testCompile project (":spring-kafka-test")
 		testCompile "org.assertj:assertj-core:$assertjVersion"
+		testCompile "org.springframework:spring-tx:$springVersion"
 	}
 }
 
