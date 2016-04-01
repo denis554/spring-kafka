@@ -157,7 +157,7 @@ public class EnableKafkaIntegrationTests {
 	public void testJson() throws Exception {
 		Foo foo = new Foo();
 		foo.setBar("bar");
-		kafkaJsonTemplate.convertAndSend(MessageBuilder.withPayload(foo)
+		kafkaJsonTemplate.send(MessageBuilder.withPayload(foo)
 				.setHeader(KafkaHeaders.TOPIC, "annotated10")
 				.setHeader(KafkaHeaders.PARTITION_ID, 0)
 				.setHeader(KafkaHeaders.MESSAGE_KEY, 2)
