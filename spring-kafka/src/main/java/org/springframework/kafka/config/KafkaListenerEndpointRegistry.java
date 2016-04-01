@@ -34,8 +34,10 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.SmartLifecycle;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.kafka.listener.MessageListenerContainer;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -62,7 +64,8 @@ import org.springframework.util.StringUtils;
  * @see MessageListenerContainer
  * @see KafkaListenerContainerFactory
  */
-public class KafkaListenerEndpointRegistry implements DisposableBean, SmartLifecycle, ApplicationContextAware {
+public class KafkaListenerEndpointRegistry implements DisposableBean, SmartLifecycle, ApplicationContextAware,
+		ApplicationListener<ContextRefreshedEvent> {
 
 	protected final Log logger = LogFactory.getLog(getClass()); //NOSONAR
 
@@ -72,6 +75,8 @@ public class KafkaListenerEndpointRegistry implements DisposableBean, SmartLifec
 	private int phase = Integer.MAX_VALUE;
 
 	private ConfigurableApplicationContext applicationContext;
+
+	private boolean contextRefreshed;
 
 
 	@Override
@@ -228,9 +233,7 @@ public class KafkaListenerEndpointRegistry implements DisposableBean, SmartLifec
 	@Override
 	public void start() {
 		for (MessageListenerContainer listenerContainer : getListenerContainers()) {
-			if (listenerContainer.isAutoStartup()) {
-				startIfNecessary(listenerContainer);
-			}
+			startIfNecessary(listenerContainer);
 		}
 	}
 
@@ -260,14 +263,22 @@ public class KafkaListenerEndpointRegistry implements DisposableBean, SmartLifec
 		return false;
 	}
 
+
+	@Override
+	public void onApplicationEvent(ContextRefreshedEvent event) {
+		if (event.getApplicationContext().equals(this.applicationContext)) {
+			this.contextRefreshed = true;
+		}
+	}
+
 	/**
 	 * Start the specified {@link MessageListenerContainer} if it should be started
 	 * on startup.
 	 * @param listenerContainer the listener container to start.
 	 * @see MessageListenerContainer#isAutoStartup()
 	 */
-	private static void startIfNecessary(MessageListenerContainer listenerContainer) {
-		if (listenerContainer.isAutoStartup()) {
+	private void startIfNecessary(MessageListenerContainer listenerContainer) {
+		if (this.contextRefreshed || listenerContainer.isAutoStartup()) {
 			listenerContainer.start();
 		}
 	}

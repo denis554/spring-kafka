@@ -42,6 +42,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.listener.AbstractMessageListenerContainer.AckMode;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
+import org.springframework.kafka.listener.MessageListenerContainer;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.kafka.support.converter.StringJsonMessageConverter;
@@ -122,6 +123,16 @@ public class EnableKafkaIntegrationTests {
 	}
 
 	@Test
+	public void testAutoStartup() throws Exception {
+		MessageListenerContainer listenerContainer = registry.getListenerContainer("manualStart");
+		assertThat(listenerContainer).isNotNull();
+		assertThat(listenerContainer.isRunning()).isFalse();
+		this.registry.start();
+		assertThat(listenerContainer.isRunning()).isTrue();
+		listenerContainer.stop();
+	}
+
+	@Test
 	public void testInterface() throws Exception {
 		template.send("annotated7", 0, "foo");
 		template.flush();
@@ -184,10 +195,19 @@ public class EnableKafkaIntegrationTests {
 
 		@Bean
 		public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<Integer, String>>
-		kafkaManualAckListenerContainerFactory() {
+				kafkaManualAckListenerContainerFactory() {
 			SimpleKafkaListenerContainerFactory<Integer, String> factory = new SimpleKafkaListenerContainerFactory<>();
 			factory.setConsumerFactory(manualConsumerFactory());
 			factory.setAckMode(AckMode.MANUAL_IMMEDIATE);
+			return factory;
+		}
+
+		@Bean
+		public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<Integer, String>>
+				kafkaAutoStartFalseListenerContainerFactory() {
+			SimpleKafkaListenerContainerFactory<Integer, String> factory = new SimpleKafkaListenerContainerFactory<>();
+			factory.setConsumerFactory(consumerFactory());
+			factory.setAutoStartup(false);
 			return factory;
 		}
 
@@ -274,6 +294,11 @@ public class EnableKafkaIntegrationTests {
 		private String topic;
 
 		private Foo foo;
+
+		@KafkaListener(id = "manualStart", topics = "manualStart",
+				containerFactory = "kafkaAutoStartFalseListenerContainerFactory")
+		public void manualStart(String foo) {
+		}
 
 		@KafkaListener(id = "foo", topics = "annotated1")
 		public void listen1(String foo) {
