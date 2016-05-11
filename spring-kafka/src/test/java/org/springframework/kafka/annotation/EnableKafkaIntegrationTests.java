@@ -187,7 +187,7 @@ public class EnableKafkaIntegrationTests {
 
 		@Bean
 		public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<Integer, String>>
-				kafkaListenerContainerFactory() {
+		kafkaListenerContainerFactory() {
 			SimpleKafkaListenerContainerFactory<Integer, String> factory = new SimpleKafkaListenerContainerFactory<>();
 			factory.setConsumerFactory(consumerFactory());
 			return factory;
@@ -195,7 +195,7 @@ public class EnableKafkaIntegrationTests {
 
 		@Bean
 		public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<Integer, String>>
-				kafkaJsonListenerContainerFactory() {
+		kafkaJsonListenerContainerFactory() {
 			SimpleKafkaListenerContainerFactory<Integer, String> factory = new SimpleKafkaListenerContainerFactory<>();
 			factory.setConsumerFactory(consumerFactory());
 			factory.setMessageConverter(new StringJsonMessageConverter());
@@ -204,7 +204,7 @@ public class EnableKafkaIntegrationTests {
 
 		@Bean
 		public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<Integer, String>>
-				kafkaManualAckListenerContainerFactory() {
+		kafkaManualAckListenerContainerFactory() {
 			SimpleKafkaListenerContainerFactory<Integer, String> factory = new SimpleKafkaListenerContainerFactory<>();
 			factory.setConsumerFactory(manualConsumerFactory());
 			factory.setAckMode(AckMode.MANUAL_IMMEDIATE);
@@ -213,7 +213,7 @@ public class EnableKafkaIntegrationTests {
 
 		@Bean
 		public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<Integer, String>>
-				kafkaAutoStartFalseListenerContainerFactory() {
+		kafkaAutoStartFalseListenerContainerFactory() {
 			SimpleKafkaListenerContainerFactory<Integer, String> factory = new SimpleKafkaListenerContainerFactory<>();
 			factory.setConsumerFactory(consumerFactory());
 			factory.setAutoStartup(false);
@@ -222,7 +222,7 @@ public class EnableKafkaIntegrationTests {
 
 		@Bean
 		public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<Integer, String>>
-				kafkaRebalanceListenerContainerFactory() {
+		kafkaRebalanceListenerContainerFactory() {
 			SimpleKafkaListenerContainerFactory<Integer, String> factory = new SimpleKafkaListenerContainerFactory<>();
 			factory.setConsumerFactory(consumerFactory());
 			factory.setConsumerRebalanceListener(consumerRebalanceListener());
@@ -366,9 +366,9 @@ public class EnableKafkaIntegrationTests {
 		}
 
 		@KafkaListener(id = "fiz", topicPartitions = {
-				@TopicPartition(topic = "annotated5", partitions = {"0", "1"}),
-				@TopicPartition(topic = "annotated6", partitions = {"0", "1"})
-			})
+				@TopicPartition(topic = "annotated5", partitions = { "0", "1" }),
+				@TopicPartition(topic = "annotated6", partitions = { "0", "1" })
+		})
 		public void listen5(ConsumerRecord<?, ?> record) {
 			this.record = record;
 			this.latch5.countDown();
