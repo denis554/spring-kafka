@@ -47,10 +47,6 @@ import org.springframework.retry.backoff.ExponentialBackOffPolicy;
 import org.springframework.retry.policy.SimpleRetryPolicy;
 import org.springframework.retry.support.RetryTemplate;
 
-import com.gs.collections.api.block.function.Function;
-import com.gs.collections.impl.list.mutable.FastList;
-import com.gs.collections.impl.utility.ListIterate;
-
 import kafka.admin.AdminUtils;
 import kafka.admin.AdminUtils$;
 import kafka.api.PartitionMetadata;
@@ -226,16 +222,11 @@ public class KafkaEmbedded extends ExternalResource implements KafkaRule {
 
 	@Override
 	public BrokerAddress[] getBrokerAddresses() {
-		return ListIterate.collect(this.kafkaServers,
-				new Function<KafkaServer, BrokerAddress>() {
-
-					@Override
-					public BrokerAddress valueOf(KafkaServer kafkaServer) {
-						return new BrokerAddress("127.0.0.1", kafkaServer.config().port());
-					}
-
-				})
-				.toArray(new BrokerAddress[this.kafkaServers.size()]);
+		List<BrokerAddress> addresses = new ArrayList<BrokerAddress>();
+		for (KafkaServer kafkaServer : this.kafkaServers) {
+			addresses.add(new BrokerAddress("127.0.0.1", kafkaServer.config().port()));
+		}
+		return addresses.toArray(new BrokerAddress[addresses.size()]);
 	}
 
 	@Override
@@ -359,16 +350,11 @@ public class KafkaEmbedded extends ExternalResource implements KafkaRule {
 
 	@Override
 	public String getBrokersAsString() {
-		return FastList.newList(Arrays.asList(getBrokerAddresses()))
-				.collect(new Function<BrokerAddress, String>() {
-
-					@Override
-					public String valueOf(BrokerAddress object) {
-						return object.getHost() + ":" + object.getPort();
-					}
-
-				})
-				.makeString(",");
+		StringBuilder builder = new StringBuilder();
+		for (BrokerAddress brokerAddress : getBrokerAddresses()) {
+			builder.append(brokerAddress.toString()).append(',');
+		}
+		return builder.substring(0, builder.length() - 1);
 	}
 
 	@Override
