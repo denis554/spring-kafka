@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
+import org.apache.kafka.clients.consumer.OffsetCommitCallback;
 import org.apache.kafka.common.TopicPartition;
 
 import org.springframework.kafka.core.ConsumerFactory;
@@ -60,6 +61,10 @@ public class ConcurrentMessageListenerContainer<K, V> extends AbstractMessageLis
 	private int concurrency = 1;
 
 	private ConsumerRebalanceListener consumerRebalanceListener;
+
+	private OffsetCommitCallback commitCallback;
+
+	private boolean syncCommits;
 
 	/**
 	 * Construct an instance with the supplied configuration properties and specific
@@ -147,6 +152,26 @@ public class ConcurrentMessageListenerContainer<K, V> extends AbstractMessageLis
 	}
 
 	/**
+	 * Set the commit callback; by default a simple logging callback is used to
+	 * log success at DEBUG level and failures at ERROR level.
+	 * @param commitCallback the callback.
+	 */
+	public void setCommitCallback(OffsetCommitCallback commitCallback) {
+		this.commitCallback = commitCallback;
+	}
+
+	/**
+	 * Set whether or not to call consumer.commitSync() or commitAsync() when
+	 * the container is responsible for commits. Default true. See
+	 * https://github.com/spring-projects/spring-kafka/issues/62
+	 * At the time of writing, async commits are not entirely reliable.
+	 * @param syncCommits true to use commitSync().
+	 */
+	public void setSyncCommits(boolean syncCommits) {
+		this.syncCommits = syncCommits;
+	}
+
+	/**
 	 * Return the list of {@link KafkaMessageListenerContainer}s created by
 	 * this container.
 	 * @return the list of {@link KafkaMessageListenerContainer}s created by
@@ -180,6 +205,8 @@ public class ConcurrentMessageListenerContainer<K, V> extends AbstractMessageLis
 					container = new KafkaMessageListenerContainer<>(this.consumerFactory, this.consumerRebalanceListener,
 							this.topics, this.topicPattern, partitionSubset(i));
 				}
+				container.setCommitCallback(this.commitCallback);
+				container.setSyncCommits(this.syncCommits);
 				container.setAckMode(getAckMode());
 				container.setAckCount(getAckCount());
 				container.setAckTime(getAckTime());
