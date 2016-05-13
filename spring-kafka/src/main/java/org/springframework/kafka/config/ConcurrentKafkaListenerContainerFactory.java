@@ -25,11 +25,11 @@ import org.apache.kafka.common.TopicPartition;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 
 /**
- * A {@link KafkaListenerContainerFactory} implementation to build a regular
+ * A {@link KafkaListenerContainerFactory} implementation to build a
  * {@link ConcurrentMessageListenerContainer}.
  * <p>
  * This should be the default for most users and a good transition paths
- * for those that are used to build such container definition manually.
+ * for those that are used to build such container definitions manually.
  *
  * @param <K> the key type.
  * @param <V> the value type.
@@ -39,7 +39,7 @@ import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
  * @author Artem Bilan
  * @author Murali Reddy
  */
-public class SimpleKafkaListenerContainerFactory<K, V>
+public class ConcurrentKafkaListenerContainerFactory<K, V>
 		extends AbstractKafkaListenerContainerFactory<ConcurrentMessageListenerContainer<K, V>, K, V> {
 
 	private Integer concurrency;

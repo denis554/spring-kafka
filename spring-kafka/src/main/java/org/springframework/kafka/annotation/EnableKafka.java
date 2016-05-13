@@ -36,8 +36,8 @@ import org.springframework.context.annotation.Import;
  * &#064;EnableKafka
  * public class AppConfig {
  * 	&#064;Bean
- * 	public SimpleKafkaListenerContainerFactory myKafkaListenerContainerFactory() {
- * 		SimpleKafkaListenerContainerFactory factory = new SimpleKafkaListenerContainerFactory();
+ * 	public ConcurrentKafkaListenerContainerFactory myKafkaListenerContainerFactory() {
+ * 		ConcurrentKafkaListenerContainerFactory factory = new ConcurrentKafkaListenerContainerFactory();
  * 		factory.setConsumerFactory(consumerFactory());
  * 		factory.setConcurrency(4);
  * 		return factory;
@@ -48,8 +48,8 @@ import org.springframework.context.annotation.Import;
  *
  * The {@code KafkaListenerContainerFactory} is responsible to create the listener
  * container for a particular endpoint. Typical implementations, as the
- * {@link org.springframework.kafka.config.SimpleKafkaListenerContainerFactory
- * SimpleKafkaListenerContainerFactory} used in the sample above, provides the necessary
+ * {@link org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
+ * ConcurrentKafkaListenerContainerFactory} used in the sample above, provides the necessary
  * configuration options that are supported by the underlying
  * {@link org.springframework.kafka.listener.MessageListenerContainer
  * MessageListenerContainer}.

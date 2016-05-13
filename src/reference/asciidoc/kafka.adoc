@@ -267,8 +267,8 @@ This mechanism requires a listener container factory, which is used to configure
 @Bean
 KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<Integer, String>>
                     kafkaListenerContainerFactory() {
-    SimpleKafkaListenerContainerFactory<Integer, String> factory =
-                            new SimpleKafkaListenerContainerFactory<>();
+    ConcurrentKafkaListenerContainerFactory<Integer, String> factory =
+                            new ConcurrentKafkaListenerContainerFactory<>();
     factory.setConsumerFactory(consumerFactory());
     factory.setConcurrency(3);
     return factory;

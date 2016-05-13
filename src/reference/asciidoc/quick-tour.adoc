@@ -136,10 +136,10 @@ public void testSimple() throws Exception {
 public class Config {
 
     @Bean
-    SimpleKafkaListenerContainerFactory<Integer, String>
+    ConcurrentKafkaListenerContainerFactory<Integer, String>
                         kafkaListenerContainerFactory() {
-        SimpleKafkaListenerContainerFactory<Integer, String> factory =
-                                new SimpleKafkaListenerContainerFactory<>();
+        ConcurrentKafkaListenerContainerFactory<Integer, String> factory =
+                                new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         return factory;
     }
