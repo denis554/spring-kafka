@@ -31,7 +31,9 @@ import org.apache.kafka.common.serialization.IntegerSerializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
+import org.springframework.beans.DirectFieldAccessor;
 import org.springframework.kafka.test.rule.KafkaEmbedded;
+import org.springframework.util.Assert;
 
 /**
  * Kafka testing utilities.
@@ -127,6 +129,49 @@ public final class KafkaTestUtils {
 		ConsumerRecords<K, V> received = consumer.poll(10000);
 		assertThat(received).as("null received from consumer.poll()").isNotNull();
 		return received;
+	}
+
+	/**
+	 * Uses nested {@link DirectFieldAccessor}s to obtain a property using dotted notation to traverse fields; e.g.
+	 * "foo.bar.baz" will obtain a reference to the baz field of the bar field of foo. Adopted from Spring Integration.
+	 * @param root The object.
+	 * @param propertyPath The path.
+	 * @return The field.
+	 */
+	public static Object getPropertyValue(Object root, String propertyPath) {
+		Object value = null;
+		DirectFieldAccessor accessor = new DirectFieldAccessor(root);
+		String[] tokens = propertyPath.split("\\.");
+		for (int i = 0; i < tokens.length; i++) {
+			value = accessor.getPropertyValue(tokens[i]);
+			if (value != null) {
+				accessor = new DirectFieldAccessor(value);
+			}
+			else if (i == tokens.length - 1) {
+				return null;
+			}
+			else {
+				throw new IllegalArgumentException("intermediate property '" + tokens[i] + "' is null");
+			}
+		}
+		return value;
+	}
+
+	/**
+	 * A typed version of {@link #getPropertyValue(Object, String)}.
+	 * @param root the object.
+	 * @param propertyPath the path.
+	 * @param type the type to cast the object to
+	 * @return the field value.
+	 * @see #getPropertyValue(Object, String)
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> T getPropertyValue(Object root, String propertyPath, Class<T> type) {
+		Object value = getPropertyValue(root, propertyPath);
+		if (value != null) {
+			Assert.isAssignable(type, value.getClass());
+		}
+		return (T) value;
 	}
 
 }

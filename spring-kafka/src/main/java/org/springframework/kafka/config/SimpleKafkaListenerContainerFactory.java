@@ -19,6 +19,7 @@ package org.springframework.kafka.config;
 import java.util.Collection;
 
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
+import org.apache.kafka.clients.consumer.OffsetCommitCallback;
 import org.apache.kafka.common.TopicPartition;
 
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
@@ -47,6 +48,10 @@ public class SimpleKafkaListenerContainerFactory<K, V>
 
 	private ConsumerRebalanceListener consumerRebalanceListener;
 
+	private OffsetCommitCallback commitCallback;
+
+	private Boolean syncCommits;
+
 	/**
 	 * Specify the container concurrency.
 	 * @param concurrency the number of consumers to create.
@@ -73,6 +78,24 @@ public class SimpleKafkaListenerContainerFactory<K, V>
 	 */
 	public void setConsumerRebalanceListener(ConsumerRebalanceListener consumerRebalanceListener) {
 		this.consumerRebalanceListener = consumerRebalanceListener;
+	}
+
+	/**
+	 * Specify the commit callback.
+	 * @param commitCallback the callback to set.
+	 * @see ConcurrentMessageListenerContainer#setCommitCallback(OffsetCommitCallback)
+	 */
+	public void setCommitCallback(OffsetCommitCallback commitCallback) {
+		this.commitCallback = commitCallback;
+	}
+
+	/**
+	 * Specifiy whether or not to use sync commits.
+	 * @param syncCommits the sync commits to set.
+	 * @see ConcurrentMessageListenerContainer#setSyncCommits(boolean)
+	 */
+	public void setSyncCommits(Boolean syncCommits) {
+		this.syncCommits = syncCommits;
 	}
 
 	@Override
@@ -106,6 +129,12 @@ public class SimpleKafkaListenerContainerFactory<K, V>
 		}
 		if (this.consumerRebalanceListener != null) {
 			instance.setConsumerRebalanceListener(this.consumerRebalanceListener);
+		}
+		if (this.commitCallback != null) {
+			instance.setCommitCallback(this.commitCallback);
+		}
+		if (this.syncCommits != null) {
+			instance.setSyncCommits(this.syncCommits);
 		}
 	}
 

@@ -64,7 +64,7 @@ public class ConcurrentMessageListenerContainer<K, V> extends AbstractMessageLis
 
 	private OffsetCommitCallback commitCallback;
 
-	private boolean syncCommits;
+	private boolean syncCommits = true;
 
 	/**
 	 * Construct an instance with the supplied configuration properties and specific

@@ -78,7 +78,7 @@ subprojects { subproject ->
 		mockitoVersion = '1.9.5'
 		scalaVersion = '2.11'
 		springRetryVersion = '1.1.2.RELEASE'
-		springVersion = '4.2.5.RELEASE'
+		springVersion = '4.2.6.RELEASE'
 
 		idPrefix = 'kafka'
 
@@ -154,6 +154,7 @@ project ('spring-kafka-test') {
 	description = 'Spring Kafka Test Support'
 
 	dependencies {
+		compile "org.springframework:spring-beans:$springVersion"
 		compile "org.springframework:spring-test:$springVersion"
 		compile "org.springframework.retry:spring-retry:$springRetryVersion"
 		compile "org.apache.kafka:kafka_$scalaVersion:$kafkaVersion"

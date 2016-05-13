@@ -17,6 +17,7 @@
 package org.springframework.kafka.annotation;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import java.util.Collection;
 import java.util.Map;
@@ -26,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-
+import org.apache.kafka.clients.consumer.OffsetCommitCallback;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -139,6 +140,9 @@ public class EnableKafkaIntegrationTests {
 		this.registry.start();
 		assertThat(listenerContainer.isRunning()).isTrue();
 		listenerContainer.stop();
+		assertThat(KafkaTestUtils.getPropertyValue(listenerContainer, "syncCommits", Boolean.class)).isFalse();
+		assertThat(KafkaTestUtils.getPropertyValue(listenerContainer, "commitCallback")).isNotNull();
+		assertThat(KafkaTestUtils.getPropertyValue(listenerContainer, "consumerRebalanceListener")).isNotNull();
 	}
 
 	@Test
@@ -187,7 +191,7 @@ public class EnableKafkaIntegrationTests {
 
 		@Bean
 		public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<Integer, String>>
-		kafkaListenerContainerFactory() {
+				kafkaListenerContainerFactory() {
 			SimpleKafkaListenerContainerFactory<Integer, String> factory = new SimpleKafkaListenerContainerFactory<>();
 			factory.setConsumerFactory(consumerFactory());
 			return factory;
@@ -195,7 +199,7 @@ public class EnableKafkaIntegrationTests {
 
 		@Bean
 		public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<Integer, String>>
-		kafkaJsonListenerContainerFactory() {
+				kafkaJsonListenerContainerFactory() {
 			SimpleKafkaListenerContainerFactory<Integer, String> factory = new SimpleKafkaListenerContainerFactory<>();
 			factory.setConsumerFactory(consumerFactory());
 			factory.setMessageConverter(new StringJsonMessageConverter());
@@ -204,7 +208,7 @@ public class EnableKafkaIntegrationTests {
 
 		@Bean
 		public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<Integer, String>>
-		kafkaManualAckListenerContainerFactory() {
+				kafkaManualAckListenerContainerFactory() {
 			SimpleKafkaListenerContainerFactory<Integer, String> factory = new SimpleKafkaListenerContainerFactory<>();
 			factory.setConsumerFactory(manualConsumerFactory());
 			factory.setAckMode(AckMode.MANUAL_IMMEDIATE);
@@ -213,16 +217,19 @@ public class EnableKafkaIntegrationTests {
 
 		@Bean
 		public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<Integer, String>>
-		kafkaAutoStartFalseListenerContainerFactory() {
+				kafkaAutoStartFalseListenerContainerFactory() {
 			SimpleKafkaListenerContainerFactory<Integer, String> factory = new SimpleKafkaListenerContainerFactory<>();
 			factory.setConsumerFactory(consumerFactory());
 			factory.setAutoStartup(false);
+			factory.setSyncCommits(false);
+			factory.setCommitCallback(mock(OffsetCommitCallback.class));
+			factory.setConsumerRebalanceListener(mock(ConsumerRebalanceListener.class));
 			return factory;
 		}
 
 		@Bean
 		public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<Integer, String>>
-		kafkaRebalanceListenerContainerFactory() {
+				kafkaRebalanceListenerContainerFactory() {
 			SimpleKafkaListenerContainerFactory<Integer, String> factory = new SimpleKafkaListenerContainerFactory<>();
 			factory.setConsumerFactory(consumerFactory());
 			factory.setConsumerRebalanceListener(consumerRebalanceListener());
