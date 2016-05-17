@@ -65,8 +65,15 @@ subprojects { subproject ->
 		}
 	}
 
-	sourceCompatibility = 1.7
-	targetCompatibility = 1.7
+	compileJava {
+		sourceCompatibility = 1.7
+		targetCompatibility = 1.7
+	}
+
+	compileTestJava {
+		sourceCompatibility = 1.8
+		targetCompatibility = 1.8
+	}
 
 	ext {
 		assertjVersion = '3.3.0'
@@ -74,7 +81,6 @@ subprojects { subproject ->
 		jacksonVersion = '2.6.5'
 		junitVersion = '4.12'
 		kafkaVersion = '0.9.0.1'
-		lombokVersion = '1.16.4'
 		log4jVersion = '1.2.17'
 		mockitoVersion = '1.9.5'
 		scalaVersion = '2.11'
@@ -147,7 +153,6 @@ project ('spring-kafka') {
 
 		testCompile project (":spring-kafka-test")
 		testCompile "org.assertj:assertj-core:$assertjVersion"
-		testCompile "org.projectlombok:lombok:$lombokVersion"
 		testCompile "org.springframework:spring-tx:$springVersion"
 	}
 }

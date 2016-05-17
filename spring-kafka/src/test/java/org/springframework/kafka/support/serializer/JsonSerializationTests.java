@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 the original author or authors.
+ * Copyright 2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,13 @@
 package org.springframework.kafka.support.serializer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
+import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.Before;
@@ -29,16 +31,24 @@ import org.junit.Test;
 
 import org.springframework.kafka.support.serializer.testentities.DummyEntity;
 
+import com.fasterxml.jackson.core.JsonParseException;
+
 /**
  * @author Igor Stepanov
+ * @author Artem Bilan
  */
-public class JsonSerializationTest {
+public class JsonSerializationTests {
 
 	private StringSerializer stringWriter;
+
 	private StringDeserializer stringReader;
-	private DummyEntitySerializer jsonWriter;
-	private DummyEntityDeserializer jsonReader;
+
+	private JsonSerializer<DummyEntity> jsonWriter;
+
+	private JsonDeserializer<DummyEntity> jsonReader;
+
 	private DummyEntity entity;
+
 	private String topic;
 
 	@Before
@@ -47,16 +57,16 @@ public class JsonSerializationTest {
 		entity.intValue = 19;
 		entity.longValue = 7L;
 		entity.stringValue = "dummy";
-		List<String> list = Arrays.asList(new String[] { "dummy1", "dummy2" });
+		List<String> list = Arrays.asList("dummy1", "dummy2");
 		entity.complexStruct = new HashMap<>();
 		entity.complexStruct.put((short) 4, list);
 
 		topic = "topic-name";
 
-		jsonReader = new DummyEntityDeserializer();
+		jsonReader = new JsonDeserializer<DummyEntity>() { };
 		jsonReader.configure(new HashMap<String, Object>(), false);
 		jsonReader.close(); // does nothing, so may be called any time, or not called at all
-		jsonWriter = new DummyEntitySerializer();
+		jsonWriter = new JsonSerializer<>();
 		jsonWriter.configure(new HashMap<String, Object>(), false);
 		jsonWriter.close(); // does nothing, so may be called any time, or not called at all
 		stringReader = new StringDeserializer();
@@ -71,45 +81,41 @@ public class JsonSerializationTest {
 	 * 3. Check the result with the source entity.
 	 */
 	@Test
-	public void deserialize_serialized_entity_equals() {
+	public void testDeserializeSerializedEntityEquals() {
 		assertThat(jsonReader.deserialize(topic, jsonWriter.serialize(topic, entity))).isEqualTo(entity);
 	}
 
 	/*
 	 * 1. Serialize "dummy" String to byte array.
 	 * 2. Deserialize it back from the created byte array.
-	 *    - this operation should fail as the source is not json
-	 *    - but the exception is logged, not rethrown - this unblocks the consuming of another messages
-	 * 3. In case of exception result is "null".
+	 * 3. Fails with SerializationException.
 	 */
 	@Test
-	public void deserialize_serialized_dummy_equals_null() {
-		assertThat(jsonReader.deserialize(topic, stringWriter.serialize(topic, "dummy"))).isEqualTo(null);
+	public void testDeserializeSerializedDummyException() {
+		assertThatExceptionOfType(SerializationException.class)
+				.isThrownBy(() -> jsonReader.deserialize(topic, stringWriter.serialize(topic, "dummy")))
+				.withMessageStartingWith("Can't deserialize data [")
+				.withCauseExactlyInstanceOf(JsonParseException.class);
 	}
 
 	@Test
-	public void serialized_string_null_equals_null() {
+	public void testSerializedStringNullEqualsNull() {
 		assertThat(stringWriter.serialize(topic, null)).isEqualTo(null);
 	}
 
 	@Test
-	public void serialized_json_null_equals_null() {
+	public void testSerializedJsonNullEqualsNull() {
 		assertThat(jsonWriter.serialize(topic, null)).isEqualTo(null);
 	}
 
 	@Test
-	public void deserialized_string_null_equals_null() {
+	public void testDeserializedStringNullEqualsNull() {
 		assertThat(stringReader.deserialize(topic, null)).isEqualTo(null);
 	}
 
 	@Test
-	public void deserialized_json_null_equals_null() {
+	public void testDeserializedJsonNullEqualsNull() {
 		assertThat(jsonReader.deserialize(topic, null)).isEqualTo(null);
 	}
 
-	private class DummyEntitySerializer extends JsonSerializer<DummyEntity> {
-	}
-
-	private class DummyEntityDeserializer extends JsonDeserializer<DummyEntity> {
-	}
 }

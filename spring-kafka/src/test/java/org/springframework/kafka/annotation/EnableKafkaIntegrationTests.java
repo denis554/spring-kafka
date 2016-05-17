@@ -210,8 +210,7 @@ public class EnableKafkaIntegrationTests {
 		}
 
 		@Bean
-		public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<Integer, String>>
-				kafkaJsonListenerContainerFactory() {
+		public KafkaListenerContainerFactory<?> kafkaJsonListenerContainerFactory() {
 			ConcurrentKafkaListenerContainerFactory<Integer, String> factory =
 					new ConcurrentKafkaListenerContainerFactory<>();
 			factory.setConsumerFactory(consumerFactory());

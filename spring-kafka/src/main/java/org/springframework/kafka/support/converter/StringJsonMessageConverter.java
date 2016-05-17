@@ -22,9 +22,12 @@ import java.lang.reflect.Type;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 import org.springframework.messaging.Message;
+import org.springframework.util.Assert;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 
@@ -32,12 +35,23 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
  * JSON Message converter - String on output, String or byte[] on input.
  *
  * @author Gary Russell
+ * @author Artem Bilan
  *
  */
 public class StringJsonMessageConverter extends MessagingMessageConverter {
 
-	private final ObjectMapper objectMapper = new ObjectMapper();
+	private final ObjectMapper objectMapper;
 
+	public StringJsonMessageConverter() {
+		this(new ObjectMapper());
+		this.objectMapper.configure(MapperFeature.DEFAULT_VIEW_INCLUSION, false);
+		this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+	}
+
+	public StringJsonMessageConverter(ObjectMapper objectMapper) {
+		Assert.notNull(objectMapper, "'objectMapper' must not be null.");
+		this.objectMapper = objectMapper;
+	}
 
 	@Override
 	protected Object convertPayload(Message<?> message) {

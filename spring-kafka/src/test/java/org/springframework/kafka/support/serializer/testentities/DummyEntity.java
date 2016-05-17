@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 the original author or authors.
+ * Copyright 2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,39 @@ package org.springframework.kafka.support.serializer.testentities;
 
 import java.util.List;
 import java.util.Map;
-
-import lombok.EqualsAndHashCode;
+import java.util.Objects;
 
 /**
  * @author Igor Stepanov
  */
-@EqualsAndHashCode
 public class DummyEntity {
 
 	public int intValue;
+
 	public Long longValue;
+
 	public String stringValue;
+
 	public Map<Short, List<String>> complexStruct;
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		DummyEntity that = (DummyEntity) o;
+		return intValue == that.intValue &&
+				Objects.equals(longValue, that.longValue) &&
+				Objects.equals(stringValue, that.stringValue) &&
+				Objects.equals(complexStruct, that.complexStruct);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(intValue, longValue, stringValue, complexStruct);
+	}
+
 }

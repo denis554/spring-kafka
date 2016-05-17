@@ -17,59 +17,88 @@
 package org.springframework.kafka.support.serializer;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
 
+import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.core.ResolvableType;
+import org.springframework.util.Assert;
 
-import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 
 /**
- * Generic {@link Deserializer} for sending Java objects to Kafka as JSON.
+ * Generic {@link Deserializer} for receiving JSON from Kafka and return Java objects.
  *
  * @param <T> class of the entity, representing messages
  *
  * @author Igor Stepanov
+ * @author Artem Bilan
  */
 public class JsonDeserializer<T> implements Deserializer<T> {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(JsonDeserializer.class);
+	protected final Logger logger = LoggerFactory.getLogger(getClass());
 
-	private ObjectReader reader;
+	protected final ObjectMapper objectMapper;
+
+	protected final Class<T> targetType;
+
+	private volatile ObjectReader reader;
+
+	protected JsonDeserializer() {
+		this((Class<T>) null);
+	}
+
+	protected JsonDeserializer(ObjectMapper objectMapper) {
+		this(null, objectMapper);
+	}
+
+	public JsonDeserializer(Class<T> targetType) {
+		this(targetType, new ObjectMapper());
+		this.objectMapper.configure(MapperFeature.DEFAULT_VIEW_INCLUSION, false);
+		this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+	}
+
+	@SuppressWarnings("unchecked")
+	public JsonDeserializer(Class<T> targetType, ObjectMapper objectMapper) {
+		Assert.notNull(objectMapper, "'objectMapper' must not be null.");
+		this.objectMapper = objectMapper;
+		if (targetType == null) {
+			targetType = (Class<T>) ResolvableType.forClass(getClass()).getSuperType().resolveGeneric(0);
+		}
+		Assert.notNull(targetType, "'targetType' cannot be resolved.");
+		this.targetType = targetType;
+	}
 
 	public void configure(Map<String, ?> configs, boolean isKey) {
-		LOGGER.debug("Start configuring");
-		Class<?> type = ResolvableType.forClass(this.getClass()).getSuperType().resolveGeneric(0);
-		this.reader = JsonDatabindFactory.createDeserializer(type, configs, isKey);
-		LOGGER.debug("Finish configuring");
+		// No-op
 	}
 
 	public T deserialize(String topic, byte[] data) {
+		if (this.reader == null) {
+			this.reader = this.objectMapper.readerFor(this.targetType);
+		}
 		try {
-			LOGGER.debug("Start processing");
 			T result = null;
 			if (data != null) {
 				result = this.reader.readValue(data);
 			}
-			LOGGER.debug("Finish processing");
 			return result;
 		}
-		catch (JsonParseException ex) {
-			LOGGER.error("Failed processing", ex);
-			// if the exception is not processed, the same incorrect message is consumed in "infinite loop", so just logging the failure
-			return null;
-		}
-		catch (IOException ex) {
-			LOGGER.debug("Failed processing");
-			throw new JsonWrapperException(ex);
+		catch (IOException e) {
+			throw new SerializationException("Can't deserialize data [" + Arrays.toString(data) +
+					"] from topic [" + topic + "]", e);
 		}
 	}
 
 	public void close() {
-		LOGGER.debug("Nothing to close");
+		// No-op
 	}
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 the original author or authors.
+ * Copyright 2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,17 @@
 
 package org.springframework.kafka.support.serializer;
 
+import java.io.IOException;
 import java.util.Map;
 
+import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Serializer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectWriter;
+import org.springframework.util.Assert;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Generic {@link Serializer} for sending Java objects to Kafka as JSON.
@@ -31,36 +34,42 @@ import com.fasterxml.jackson.databind.ObjectWriter;
  * @param <T> class of the entity, representing messages
  *
  * @author Igor Stepanov
+ * @author Artem Bilan
  */
 public class JsonSerializer<T> implements Serializer<T> {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(JsonSerializer.class);
+	protected final ObjectMapper objectMapper;
 
-	private ObjectWriter writer;
+	public JsonSerializer() {
+		this(new ObjectMapper());
+		this.objectMapper.configure(MapperFeature.DEFAULT_VIEW_INCLUSION, false);
+		this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+	}
+
+	public JsonSerializer(ObjectMapper objectMapper) {
+		Assert.notNull(objectMapper, "'objectMapper' must not be null.");
+		this.objectMapper = objectMapper;
+	}
 
 	public void configure(Map<String, ?> configs, boolean isKey) {
-		LOGGER.debug("Start configuring");
-		this.writer = JsonDatabindFactory.createSerializer(configs, isKey);
-		LOGGER.debug("Finish configuring");
+		// No-op
 	}
 
 	public byte[] serialize(String topic, T data) {
 		try {
-			LOGGER.debug("Start processing");
 			byte[] result = null;
 			if (data != null) {
-				result = this.writer.writeValueAsBytes(data);
+				result = this.objectMapper.writeValueAsBytes(data);
 			}
-			LOGGER.debug("Finish processing");
 			return result;
 		}
-		catch (JsonProcessingException ex) {
-			LOGGER.debug("Failed processing");
-			throw new JsonWrapperException(ex);
+		catch (IOException ex) {
+			throw new SerializationException("Can't serialize data [" + data + "] for topic [" + topic + "]", ex);
 		}
 	}
 
 	public void close() {
-		LOGGER.debug("Nothing to close");
+		// No-op
 	}
+
 }
