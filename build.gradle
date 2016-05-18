@@ -84,6 +84,7 @@ subprojects { subproject ->
 		log4jVersion = '1.2.17'
 		mockitoVersion = '1.9.5'
 		scalaVersion = '2.11'
+		slf4jVersion = '1.7.21'
 		springRetryVersion = '1.1.2.RELEASE'
 		springVersion = '4.2.6.RELEASE'
 
@@ -147,13 +148,17 @@ project ('spring-kafka') {
 
 	dependencies {
 		compile "org.springframework:spring-messaging:$springVersion"
-		compile "org.apache.kafka:kafka-clients:$kafkaVersion"
+		compile ("org.apache.kafka:kafka-clients:$kafkaVersion") {
+			exclude group: 'org.slf4j', module: 'slf4j-api'
+		}
 		compile ("com.fasterxml.jackson.core:jackson-core:$jacksonVersion", optional)
 		compile ("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion", optional)
 
 		testCompile project (":spring-kafka-test")
 		testCompile "org.assertj:assertj-core:$assertjVersion"
 		testCompile "org.springframework:spring-tx:$springVersion"
+
+		testRuntime "org.slf4j:slf4j-log4j12:$slf4jVersion"
 	}
 }
 
@@ -164,16 +169,22 @@ project ('spring-kafka-test') {
 		compile "org.springframework:spring-beans:$springVersion"
 		compile "org.springframework:spring-test:$springVersion"
 		compile "org.springframework.retry:spring-retry:$springRetryVersion"
-		compile "org.apache.kafka:kafka_$scalaVersion:$kafkaVersion"
-		compile "org.apache.kafka:kafka_$scalaVersion:$kafkaVersion:test"
+
+		compile ("org.apache.kafka:kafka_$scalaVersion:$kafkaVersion") {
+			exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+		}
+
+		compile ("org.apache.kafka:kafka_$scalaVersion:$kafkaVersion:test") {
+			exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+		}
 
 		compile ("junit:junit:$junitVersion") {
-			exclude group: 'org.hamcrest'
+			exclude group: 'org.hamcrest', module: 'hamcrest-core'
 		}
-		compile "log4j:log4j:$log4jVersion"
 		compile ("org.mockito:mockito-core:$mockitoVersion") {
-			exclude group: 'org.hamcrest'
+			exclude group: 'org.hamcrest', module: 'hamcrest-core'
 		}
+
 		compile ("org.hamcrest:hamcrest-all:$hamcrestVersion", optional)
 		compile ("org.assertj:assertj-core:$assertjVersion", optional)
 	}
