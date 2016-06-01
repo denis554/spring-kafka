@@ -27,6 +27,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -247,6 +248,8 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 
 		private volatile Collection<TopicPartition> definedPartitions;
 
+		private ConsumerRecords<K, V> unsent;
+
 		private volatile Collection<TopicPartition> assignedPartitions;
 
 		private int count;
@@ -268,7 +271,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 				long recentOffset) {
 			Assert.state(!this.isAnyManualAck || !this.autoCommit,
 				"Consumer cannot be configured for auto commit for ackMode " + this.containerProperties.getAckMode());
-			Consumer<K, V> consumer = KafkaMessageListenerContainer.this.consumerFactory.createConsumer();
+			final Consumer<K, V> consumer = KafkaMessageListenerContainer.this.consumerFactory.createConsumer();
 
 			ConsumerRebalanceListener rebalanceListener = new ConsumerRebalanceListener() {
 
@@ -284,6 +287,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 						if (ListenerConsumer.this.listenerInvokerFuture != null) {
 							stopInvokerAndCommitManualAcks();
 							ListenerConsumer.this.recordsToProcess.clear();
+							ListenerConsumer.this.unsent = null;
 						}
 						else {
 							if (!CollectionUtils.isEmpty(partitions)) {
@@ -305,6 +309,21 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 				@Override
 				public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
 					ListenerConsumer.this.assignedPartitions = partitions;
+					if (!ListenerConsumer.this.autoCommit) {
+						// Commit initial positions - while this is generally redundant
+						// it protects us from the case when another consumer starts
+						Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
+						for (TopicPartition partition : partitions) {
+							offsets.put(partition, new OffsetAndMetadata(consumer.position(partition)));
+						}
+						if (KafkaMessageListenerContainer.this.getContainerProperties().isSyncCommits()) {
+							ListenerConsumer.this.consumer.commitSync(offsets);
+						}
+						else {
+							ListenerConsumer.this.consumer.commitAsync(offsets,
+									KafkaMessageListenerContainer.this.getContainerProperties().getCommitCallback());
+						}
+					}
 					// We will not start the invoker thread if we are in autocommit mode,
 					// as we will execute synchronously then
 					// We will not start the invoker thread if the container is stopped
@@ -363,7 +382,6 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 					startInvoker();
 				}
 			}
-			ConsumerRecords<K, V> unsent = null;
 			long lastReceive = System.currentTimeMillis();
 			long lastAlertAt = lastReceive;
 			while (isRunning()) {
@@ -394,7 +412,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 									this.consumer.pause(this.assignedPartitions
 											.toArray(new TopicPartition[this.assignedPartitions.size()]));
 									this.paused = true;
-									unsent = records;
+									this.unsent = records;
 								}
 							}
 						}
@@ -409,13 +427,13 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 							}
 						}
 					}
-					unsent = checkPause(unsent);
+					this.unsent = checkPause(this.unsent);
 					if (!this.paused && !this.autoCommit) {
 						processCommits();
 					}
 				}
 				catch (WakeupException e) {
-					unsent = checkPause(unsent);
+					this.unsent = checkPause(this.unsent);
 				}
 				catch (Exception e) {
 					if (this.containerProperties.getErrorHandler() != null) {
@@ -449,9 +467,11 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 		}
 
 		private void stopInvokerAndCommitManualAcks() {
+			long now = System.currentTimeMillis();
 			this.invoker.stop();
+			long remaining = this.containerProperties.getShutdownTimeout() + now - System.currentTimeMillis();
 			try {
-				this.listenerInvokerFuture.get(this.containerProperties.getShutdownTimeout(), TimeUnit.MILLISECONDS);
+				this.listenerInvokerFuture.get(remaining, TimeUnit.MILLISECONDS);
 			}
 			catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
@@ -552,7 +572,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 
 		private void invokeListener(final ConsumerRecords<K, V> records) {
 			Iterator<ConsumerRecord<K, V>> iterator = records.iterator();
-			while (iterator.hasNext()) {
+			while (iterator.hasNext() && (this.autoCommit || (this.invoker != null && this.invoker.active))) {
 				final ConsumerRecord<K, V> record = iterator.next();
 				if (this.logger.isTraceEnabled()) {
 					this.logger.trace("Processing " + record);
@@ -696,6 +716,8 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 
 		private final class ListenerInvoker implements SchedulingAwareRunnable {
 
+			private final CountDownLatch exitLatch = new CountDownLatch(1);
+
 			private volatile boolean active = true;
 
 			private volatile Thread executingThread;
@@ -728,14 +750,14 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 								ListenerConsumer.this.logger.debug("Interrupt ignored");
 							}
 						}
-						if (!ListenerConsumer.this.isManualImmediateAck) {
+						if (!ListenerConsumer.this.isManualImmediateAck && this.active) {
 							ListenerConsumer.this.consumer.wakeup();
 						}
 					}
 				}
 				finally {
 					this.active = false;
-					this.executingThread = null;
+					this.exitLatch.countDown();
 				}
 			}
 
@@ -745,8 +767,25 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 			}
 
 			private void stop() {
+				if (ListenerConsumer.this.logger.isDebugEnabled()) {
+					ListenerConsumer.this.logger.debug("Stopping invoker");
+				}
 				this.active = false;
-				this.executingThread.interrupt();
+				try {
+					if (!this.exitLatch.await(getContainerProperties().getShutdownTimeout(), TimeUnit.MILLISECONDS)
+							&& this.executingThread != null) {
+						if (ListenerConsumer.this.logger.isDebugEnabled()) {
+							ListenerConsumer.this.logger.debug("Interrupting invoker");
+						}
+						this.executingThread.interrupt();
+					}
+				}
+				catch (InterruptedException e) {
+					if (this.executingThread != null) {
+						this.executingThread.interrupt();
+					}
+					Thread.currentThread().interrupt();
+				}
 			}
 		}
 
