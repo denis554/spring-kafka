@@ -59,7 +59,7 @@ import org.springframework.retry.support.RetryTemplate;
  * Tests for the listener container.
  *
  * @author Gary Russell
- *
+ * @author Martin Dam
  */
 public class KafkaMessageListenerContainerTests {
 
@@ -73,8 +73,10 @@ public class KafkaMessageListenerContainerTests {
 
 	private static String topic4 = "testTopic4";
 
+	private static String topic5 = "testTopic5";
+
 	@ClassRule
-	public static KafkaEmbedded embeddedKafka = new KafkaEmbedded(1, true, topic1, topic2, topic3, topic4);
+	public static KafkaEmbedded embeddedKafka = new KafkaEmbedded(1, true, topic1, topic2, topic3, topic4, topic5);
 
 	@Rule
 	public TestName testName = new TestName();
@@ -190,6 +192,54 @@ public class KafkaMessageListenerContainerTests {
 		verify(consumer, atLeastOnce()).resume(any(TopicPartition.class), any(TopicPartition.class));
 		container.stop();
 		logger.info("Stop " + this.testName.getMethodName() + ackMode);
+	}
+
+	@Test
+	public void testSlowConsumerCommitsAreProcessed() throws Exception {
+		Map<String, Object> props = KafkaTestUtils.consumerProps("slow", "false", embeddedKafka);
+		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<>(props);
+		ContainerProperties containerProps = new ContainerProperties(topic5);
+		containerProps.setAckCount(1);
+		containerProps.setPauseAfter(100);
+		containerProps.setAckMode(AckMode.MANUAL);
+		KafkaMessageListenerContainer<Integer, String> container =
+				new KafkaMessageListenerContainer<>(cf, containerProps);
+		final CountDownLatch latch = new CountDownLatch(3);
+		containerProps.setMessageListener((AcknowledgingMessageListener<Integer, String>) (message, ack) -> {
+			logger.info("slow: " + message);
+			try {
+				Thread.sleep(1000);
+			}
+			catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+			ack.acknowledge();
+			latch.countDown();
+		});
+		container.setBeanName("testSlow");
+		container.start();
+		ContainerTestUtils.waitForAssignment(container, embeddedKafka.getPartitionsPerTopic());
+		Consumer<?, ?> consumer = spyOnConsumer(container);
+
+
+		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
+		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<>(senderProps);
+		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
+		template.setDefaultTopic(topic5);
+		template.sendDefault(0, "foo");
+		template.sendDefault(2, "bar");
+		template.flush();
+		Thread.sleep(300);
+		template.sendDefault(0, "fiz");
+		template.sendDefault(2, "buz");
+		template.flush();
+
+		// Verify that commitSync is called when paused
+		assertThat(latch.await(60, TimeUnit.SECONDS)).isTrue();
+		verify(consumer, atLeastOnce()).pause(any(TopicPartition.class), any(TopicPartition.class));
+		verify(consumer, atLeastOnce()).commitSync(any());
+		verify(consumer, atLeastOnce()).resume(any(TopicPartition.class), any(TopicPartition.class));
+		container.stop();
 	}
 
 	@Test
