@@ -429,8 +429,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 								if (this.assignedPartitions != null) {
 									// avoid group management rebalance due to a slow
 									// consumer
-									this.consumer.pause(this.assignedPartitions
-											.toArray(new TopicPartition[this.assignedPartitions.size()]));
+									this.consumer.pause(this.assignedPartitions);
 									this.paused = true;
 									this.unsent = records;
 								}
@@ -514,8 +513,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 		private ConsumerRecords<K, V> checkPause(ConsumerRecords<K, V> unsent) {
 			if (this.paused && this.recordsToProcess.size() < this.containerProperties.getQueueDepth()) {
 				// Listener has caught up.
-				this.consumer.resume(
-						this.assignedPartitions.toArray(new TopicPartition[this.assignedPartitions.size()]));
+				this.consumer.resume(this.assignedPartitions);
 				this.paused = false;
 				if (unsent != null) {
 					try {
@@ -693,7 +691,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 
 					if (offset < 0) {
 						if (!metadata.relativeToCurrent) {
-							this.consumer.seekToEnd(topicPartition);
+							this.consumer.seekToEnd(Arrays.asList(topicPartition));
 						}
 						newOffset = Math.max(0, this.consumer.position(topicPartition) + offset);
 					}
@@ -708,7 +706,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 						}
 					}
 					catch (Exception e) {
-						logger.error("Failed to set initial offset for " + topicPartition
+						this.logger.error("Failed to set initial offset for " + topicPartition
 								+ " at " + newOffset + ". Position is " + this.consumer.position(topicPartition), e);
 					}
 				}

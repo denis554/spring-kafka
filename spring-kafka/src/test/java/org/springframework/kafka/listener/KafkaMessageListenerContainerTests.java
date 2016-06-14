@@ -19,6 +19,7 @@ package org.springframework.kafka.listener;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -142,8 +143,8 @@ public class KafkaMessageListenerContainerTests {
 		template.flush();
 		assertThat(latch.await(60, TimeUnit.SECONDS)).isTrue();
 		assertThat(bitSet.cardinality()).isEqualTo(6);
-		verify(consumer, atLeastOnce()).pause(any(TopicPartition.class), any(TopicPartition.class));
-		verify(consumer, atLeastOnce()).resume(any(TopicPartition.class), any(TopicPartition.class));
+		verify(consumer, atLeastOnce()).pause(anyObject());
+		verify(consumer, atLeastOnce()).resume(anyObject());
 		container.stop();
 		logger.info("Stop " + this.testName.getMethodName());
 	}
@@ -205,8 +206,8 @@ public class KafkaMessageListenerContainerTests {
 		template.flush();
 		assertThat(latch.await(60, TimeUnit.SECONDS)).isTrue();
 		assertThat(bitSet.cardinality()).isEqualTo(6);
-		verify(consumer, atLeastOnce()).pause(any(TopicPartition.class), any(TopicPartition.class));
-		verify(consumer, atLeastOnce()).resume(any(TopicPartition.class), any(TopicPartition.class));
+		verify(consumer, atLeastOnce()).pause(anyObject());
+		verify(consumer, atLeastOnce()).resume(anyObject());
 		container.stop();
 		logger.info("Stop " + this.testName.getMethodName() + ackMode);
 	}
@@ -264,8 +265,8 @@ public class KafkaMessageListenerContainerTests {
 
 		// Verify that commitSync is called when paused
 		assertThat(latch.await(60, TimeUnit.SECONDS)).isTrue();
-		verify(consumer, atLeastOnce()).pause(any(TopicPartition.class), any(TopicPartition.class));
-		verify(consumer, atLeastOnce()).resume(any(TopicPartition.class), any(TopicPartition.class));
+		verify(consumer, atLeastOnce()).pause(anyObject());
+		verify(consumer, atLeastOnce()).resume(anyObject());
 		container.stop();
 	}
 
@@ -370,8 +371,8 @@ public class KafkaMessageListenerContainerTests {
 		template.flush();
 		assertThat(latch.await(60, TimeUnit.SECONDS)).isTrue();
 		assertThat(bitSet.cardinality()).isEqualTo(6);
-		verify(consumer, atLeastOnce()).pause(any(TopicPartition.class), any(TopicPartition.class));
-		verify(consumer, atLeastOnce()).resume(any(TopicPartition.class), any(TopicPartition.class));
+		verify(consumer, atLeastOnce()).pause(anyObject());
+		verify(consumer, atLeastOnce()).resume(anyObject());
 		container.stop();
 		logger.info("Stop " + this.testName.getMethodName());
 	}
@@ -439,8 +440,8 @@ public class KafkaMessageListenerContainerTests {
 		template.flush();
 		assertThat(latch.await(60, TimeUnit.SECONDS)).isTrue();
 		assertThat(bitSet.cardinality()).isEqualTo(6);
-		verify(consumer, atLeastOnce()).pause(any(TopicPartition.class), any(TopicPartition.class));
-		verify(consumer, atLeastOnce()).resume(any(TopicPartition.class), any(TopicPartition.class));
+		verify(consumer, atLeastOnce()).pause(anyObject());
+		verify(consumer, atLeastOnce()).resume(anyObject());
 		container.stop();
 		logger.info("Stop " + this.testName.getMethodName());
 	}

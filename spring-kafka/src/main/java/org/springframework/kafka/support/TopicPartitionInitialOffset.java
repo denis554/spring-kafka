@@ -102,7 +102,7 @@ public class TopicPartitionInitialOffset {
 	}
 
 	public boolean isRelativeToCurrent() {
-		return relativeToCurrent;
+		return this.relativeToCurrent;
 	}
 
 	@Override

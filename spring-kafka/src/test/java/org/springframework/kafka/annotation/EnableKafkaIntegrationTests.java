@@ -330,7 +330,7 @@ public class EnableKafkaIntegrationTests {
 
 		@Bean
 		public Map<String, Object> consumerConfigs() {
-			Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("testAnnot", "true", embeddedKafka);
+			Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("testAnnot", "false", embeddedKafka);
 			consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 			return consumerProps;
 		}
