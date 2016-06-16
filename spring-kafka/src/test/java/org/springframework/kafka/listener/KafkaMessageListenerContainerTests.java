@@ -19,6 +19,7 @@ package org.springframework.kafka.listener;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
@@ -60,6 +61,7 @@ import org.springframework.retry.support.RetryTemplate;
  *
  * @author Gary Russell
  * @author Martin Dam
+ * @author Artem Bilan
  */
 public class KafkaMessageListenerContainerTests {
 
@@ -110,9 +112,11 @@ public class KafkaMessageListenerContainerTests {
 		});
 		container.setBeanName("testSlow1");
 		containerProps.setPauseAfter(100);
+
 		container.start();
-		ContainerTestUtils.waitForAssignment(container, embeddedKafka.getPartitionsPerTopic());
 		Consumer<?, ?> consumer = spyOnConsumer(container);
+		ContainerTestUtils.waitForAssignment(container, embeddedKafka.getPartitionsPerTopic());
+
 		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
 		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<Integer, String>(senderProps);
 		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
@@ -170,9 +174,11 @@ public class KafkaMessageListenerContainerTests {
 		container.setBeanName("testSlow2");
 		containerProps.setPauseAfter(100);
 		containerProps.setAckMode(ackMode);
+
 		container.start();
-		ContainerTestUtils.waitForAssignment(container, embeddedKafka.getPartitionsPerTopic());
 		Consumer<?, ?> consumer = spyOnConsumer(container);
+		ContainerTestUtils.waitForAssignment(container, embeddedKafka.getPartitionsPerTopic());
+
 		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
 		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<Integer, String>(senderProps);
 		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
@@ -217,10 +223,10 @@ public class KafkaMessageListenerContainerTests {
 			latch.countDown();
 		});
 		container.setBeanName("testSlow");
-		container.start();
-		ContainerTestUtils.waitForAssignment(container, embeddedKafka.getPartitionsPerTopic());
-		Consumer<?, ?> consumer = spyOnConsumer(container);
 
+		container.start();
+		Consumer<?, ?> consumer = spyOnConsumer(container);
+		ContainerTestUtils.waitForAssignment(container, embeddedKafka.getPartitionsPerTopic());
 
 		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
 		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<>(senderProps);
@@ -237,7 +243,7 @@ public class KafkaMessageListenerContainerTests {
 		// Verify that commitSync is called when paused
 		assertThat(latch.await(60, TimeUnit.SECONDS)).isTrue();
 		verify(consumer, atLeastOnce()).pause(any(TopicPartition.class), any(TopicPartition.class));
-		verify(consumer, atLeastOnce()).commitSync(any());
+		verify(consumer, atMost(2)).commitSync(any());
 		verify(consumer, atLeastOnce()).resume(any(TopicPartition.class), any(TopicPartition.class));
 		container.stop();
 	}
@@ -277,11 +283,13 @@ public class KafkaMessageListenerContainerTests {
 		containerProps.setMessageListener(adapter);
 		containerProps.setPauseAfter(100);
 		container.setBeanName("testSlow3");
+
 		container.start();
-		ContainerTestUtils.waitForAssignment(container, embeddedKafka.getPartitionsPerTopic());
 		Consumer<?, ?> consumer = spyOnConsumer(container);
+		ContainerTestUtils.waitForAssignment(container, embeddedKafka.getPartitionsPerTopic());
+
 		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
-		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<Integer, String>(senderProps);
+		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<>(senderProps);
 		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
 		template.setDefaultTopic(topic3);
 		template.sendDefault(0, "foo");
@@ -344,11 +352,13 @@ public class KafkaMessageListenerContainerTests {
 		containerProps.setMessageListener(adapter);
 		containerProps.setPauseAfter(100);
 		container.setBeanName("testSlow4");
+
 		container.start();
-		ContainerTestUtils.waitForAssignment(container, embeddedKafka.getPartitionsPerTopic());
 		Consumer<?, ?> consumer = spyOnConsumer(container);
+		ContainerTestUtils.waitForAssignment(container, embeddedKafka.getPartitionsPerTopic());
+
 		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
-		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<Integer, String>(senderProps);
+		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<>(senderProps);
 		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
 		template.setDefaultTopic(topic4);
 		template.sendDefault(0, "foo");
