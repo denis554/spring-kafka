@@ -532,7 +532,8 @@ public class ConcurrentMessageListenerContainerTests {
 		ContainerProperties containerProps = new ContainerProperties(topic6);
 		containerProps.setAckCount(23);
 		ContainerProperties containerProps2 = new ContainerProperties(topic2);
-		BeanUtils.copyProperties(containerProps, containerProps2, "topics", "topicPartitions", "topicPattern");
+		BeanUtils.copyProperties(containerProps, containerProps2,
+				"topics", "topicPartitions", "topicPattern", "ackCount", "ackTime");
 		ConcurrentMessageListenerContainer<Integer, String> container =
 				new ConcurrentMessageListenerContainer<>(cf, containerProps);
 		final CountDownLatch latch = new CountDownLatch(4);
