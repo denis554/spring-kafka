@@ -241,12 +241,13 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 		private final boolean isManualAck = this.containerProperties.getAckMode().equals(AckMode.MANUAL);
 
 		private final boolean isManualImmediateAck =
-				this.containerProperties.getAckMode().equals(AckMode.MANUAL_IMMEDIATE)
-				|| this.containerProperties.getAckMode().equals(AckMode.MANUAL_IMMEDIATE_SYNC);
+				this.containerProperties.getAckMode().equals(AckMode.MANUAL_IMMEDIATE);
 
 		private final boolean isAnyManualAck = this.isManualAck || this.isManualImmediateAck;
 
 		private final boolean isRecordAck = this.containerProperties.getAckMode().equals(AckMode.RECORD);
+
+		private final boolean isBatchAck = this.containerProperties.getAckMode().equals(AckMode.BATCH);
 
 		private final BlockingQueue<ConsumerRecords<K, V>> recordsToProcess =
 				new LinkedBlockingQueue<>(this.containerProperties.getQueueDepth());
@@ -289,8 +290,8 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 					// this will occur on the initial start on a subscription
 					if (!ListenerConsumer.this.autoCommit) {
 						if (ListenerConsumer.this.logger.isTraceEnabled()) {
-							ListenerConsumer.this.logger
-									.trace("Received partition revocation notification, and will stop the invoker.");
+							ListenerConsumer.this.logger.trace("Received partition revocation notification, " +
+									"and will stop the invoker.");
 						}
 						if (ListenerConsumer.this.listenerInvokerFuture != null) {
 							stopInvokerAndCommitManualAcks();
@@ -299,16 +300,16 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 						}
 						else {
 							if (!CollectionUtils.isEmpty(partitions)) {
-								ListenerConsumer.this.logger.error(
-										"Invalid state: the invoker was not active, but the consumer had allocated partitions");
+								ListenerConsumer.this.logger.error("Invalid state: the invoker was not active, " +
+												"but the consumer had allocated partitions");
 							}
 						}
 					}
 					else {
 						if (ListenerConsumer.this.logger.isTraceEnabled()) {
-							ListenerConsumer.this.logger
-									.trace("Received partition revocation notification, but the container is in "
-											+ "autocommit mode, so transition will be handled by the consumer");
+							ListenerConsumer.this.logger.trace("Received partition revocation notification, " +
+									"but the container is in autocommit mode, " +
+									"so transition will be handled by the consumer");
 						}
 					}
 					getContainerProperties().getConsumerRebalanceListener().onPartitionsRevoked(partitions);
@@ -573,12 +574,12 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 			if (ListenerConsumer.this.logger.isDebugEnabled()) {
 				ListenerConsumer.this.logger.debug("Committing: " + commits);
 			}
-			if (ListenerConsumer.this.containerProperties.getAckMode().equals(AckMode.MANUAL_IMMEDIATE)) {
+			if (this.containerProperties.isSyncCommits()) {
+				ListenerConsumer.this.consumer.commitSync(commits);
+			}
+			else {
 				ListenerConsumer.this.consumer.commitAsync(commits,
 						ListenerConsumer.this.commitCallback);
-			}
-			else { // MANUAL_IMMEDIATE_SYNC
-				ListenerConsumer.this.consumer.commitSync(commits);
 			}
 		}
 
@@ -591,13 +592,14 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 				}
 				try {
 					if (this.acknowledgingMessageListener != null) {
-						this.acknowledgingMessageListener.onMessage(record, new ConsumerAcknowledgment(record));
+						this.acknowledgingMessageListener.onMessage(record,
+								new ConsumerAcknowledgment(record, this.isManualImmediateAck));
 					}
 					else {
 						this.listener.onMessage(record);
 					}
 					this.acks.add(record);
-					if (this.isManualImmediateAck || this.isRecordAck) {
+					if (this.isRecordAck) {
 						this.consumer.wakeup();
 					}
 				}
@@ -613,6 +615,9 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 					}
 				}
 			}
+			if (this.isManualAck || this.isBatchAck) {
+				this.consumer.wakeup();
+			}
 		}
 
 		private void processCommits() {
@@ -625,8 +630,9 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 					updatePendingOffsets();
 				}
 				boolean countExceeded = this.count >= this.containerProperties.getAckCount();
-				if (ackMode.equals(AckMode.BATCH) || (ackMode.equals(AckMode.COUNT) && countExceeded)) {
-					if (this.logger.isDebugEnabled()) {
+				if (this.isManualAck || this.isBatchAck
+						|| (ackMode.equals(AckMode.COUNT) && countExceeded)) {
+					if (this.logger.isDebugEnabled() && ackMode.equals(AckMode.COUNT)) {
 						this.logger.debug("Committing in AckMode.COUNT because count " + this.count
 								+ " exceeds configured limit of " + this.containerProperties.getAckCount());
 					}
@@ -638,25 +644,24 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 					boolean elapsed = now - this.last > this.containerProperties.getAckTime();
 					if (ackMode.equals(AckMode.TIME) && elapsed) {
 						if (this.logger.isDebugEnabled()) {
-							this.logger
-									.debug("Committing in AckMode.TIME " +
+							this.logger.debug("Committing in AckMode.TIME " +
 											"because time elapsed exceeds configured limit of " +
 											this.containerProperties.getAckTime());
 						}
 						commitIfNecessary();
 						this.last = now;
 					}
-					else if ((ackMode.equals(AckMode.COUNT_TIME) || this.isManualAck) && (elapsed || countExceeded)) {
+					else if (ackMode.equals(AckMode.COUNT_TIME) && (elapsed || countExceeded)) {
 						if (this.logger.isDebugEnabled()) {
 							if (elapsed) {
-								this.logger.debug("Committing in AckMode." + ackMode.name() +
-										" because time elapsed exceeds configured limit of " +
+								this.logger.debug("Committing in AckMode.COUNT_TIME " +
+										"because time elapsed exceeds configured limit of " +
 										this.containerProperties.getAckTime());
 							}
 							else {
-								this.logger.debug("Committing in AckMode." + ackMode.name() + " because count "
-										+ this.count + " exceeds configured limit of"
-										+ this.containerProperties.getAckCount());
+								this.logger.debug("Committing in AckMode.COUNT_TIME " +
+										"because count " + this.count + " exceeds configured limit of" +
+										this.containerProperties.getAckCount());
 							}
 						}
 
@@ -823,8 +828,11 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 
 			private final ConsumerRecord<K, V> record;
 
-			private ConsumerAcknowledgment(ConsumerRecord<K, V> record) {
+			private final boolean immediate;
+
+			private ConsumerAcknowledgment(ConsumerRecord<K, V> record, boolean immediate) {
 				this.record = record;
+				this.immediate = immediate;
 			}
 
 			@Override
@@ -836,7 +844,9 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 					Thread.currentThread().interrupt();
 					throw new KafkaException("Interrupted while queuing ack for " + this.record, e);
 				}
-				ListenerConsumer.this.consumer.wakeup();
+				if (this.immediate) {
+					ListenerConsumer.this.consumer.wakeup();
+				}
 			}
 
 			@Override
