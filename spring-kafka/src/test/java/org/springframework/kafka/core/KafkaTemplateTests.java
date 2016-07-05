@@ -17,6 +17,8 @@
 package org.springframework.kafka.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.Mockito.mock;
 import static org.springframework.kafka.test.assertj.KafkaConditions.key;
 import static org.springframework.kafka.test.assertj.KafkaConditions.partition;
 import static org.springframework.kafka.test.assertj.KafkaConditions.value;
@@ -50,7 +52,7 @@ import org.springframework.util.concurrent.ListenableFutureCallback;
 /**
  * @author Gary Russell
  * @author Artem Bilan
- *
+ * @author Igor Stepanov
  */
 public class KafkaTemplateTests {
 
@@ -193,6 +195,20 @@ public class KafkaTemplateTests {
 		assertThat(record).has(Assertions.<ConsumerRecord<String, String>>allOf(key("foo"), value("bar")));
 		consumer.close();
 		pf.createProducer().close();
+	}
+
+	@Test
+	@SuppressWarnings({"rawtypes", "unchecked"})
+	public void flushWithoutSend() throws Exception {
+		KafkaTemplate template = new KafkaTemplate(mock(ProducerFactory.class));
+		try {
+			template.flush();
+			fail("IllegalStateException expected");
+		}
+		catch (Exception e) {
+			assertThat(e).isInstanceOf(IllegalStateException.class);
+			assertThat(e.getMessage()).isEqualTo("'producer' must not be null for flushing.");
+		}
 	}
 
 }
