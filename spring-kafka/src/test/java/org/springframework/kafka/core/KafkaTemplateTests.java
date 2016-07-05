@@ -17,7 +17,7 @@
 package org.springframework.kafka.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.mock;
 import static org.springframework.kafka.test.assertj.KafkaConditions.key;
 import static org.springframework.kafka.test.assertj.KafkaConditions.partition;
@@ -47,7 +47,6 @@ import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
-
 
 /**
  * @author Gary Russell
@@ -125,7 +124,7 @@ public class KafkaTemplateTests {
 	@Test
 	public void withListener() throws Exception {
 		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
-		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<Integer, String>(senderProps);
+		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<>(senderProps);
 		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
 		template.setDefaultTopic(INT_KEY_TOPIC);
 		final CountDownLatch latch = new CountDownLatch(1);
@@ -152,7 +151,7 @@ public class KafkaTemplateTests {
 	@Test
 	public void testWithCallback() throws Exception {
 		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
-		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<Integer, String>(senderProps);
+		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<>(senderProps);
 		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf, true);
 		template.setDefaultTopic(INT_KEY_TOPIC);
 		ListenableFuture<SendResult<Integer, String>> future = template.sendDefault("foo");
@@ -180,12 +179,12 @@ public class KafkaTemplateTests {
 	@Test
 	public void testTemplateDisambiguation() throws Exception {
 		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
-		DefaultKafkaProducerFactory<String, String> pf = new DefaultKafkaProducerFactory<String, String>(senderProps);
+		DefaultKafkaProducerFactory<String, String> pf = new DefaultKafkaProducerFactory<>(senderProps);
 		pf.setKeySerializer(new StringSerializer());
 		KafkaTemplate<String, String> template = new KafkaTemplate<>(pf, true);
 		template.setDefaultTopic(STRING_KEY_TOPIC);
 		Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("testTString", "false", embeddedKafka);
-		DefaultKafkaConsumerFactory<String, String> cf = new DefaultKafkaConsumerFactory<String, String>(consumerProps);
+		DefaultKafkaConsumerFactory<String, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps);
 		cf.setKeyDeserializer(new StringDeserializer());
 		Consumer<String, String> consumer = cf.createConsumer();
 		embeddedKafka.consumeFromAnEmbeddedTopic(consumer, STRING_KEY_TOPIC);
@@ -201,14 +200,9 @@ public class KafkaTemplateTests {
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	public void flushWithoutSend() throws Exception {
 		KafkaTemplate template = new KafkaTemplate(mock(ProducerFactory.class));
-		try {
-			template.flush();
-			fail("IllegalStateException expected");
-		}
-		catch (Exception e) {
-			assertThat(e).isInstanceOf(IllegalStateException.class);
-			assertThat(e.getMessage()).isEqualTo("'producer' must not be null for flushing.");
-		}
+		assertThatExceptionOfType(IllegalStateException.class)
+				.isThrownBy(template::flush)
+				.withMessageContaining("'producer' must not be null for flushing.");
 	}
 
 }
