@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 the original author or authors.
+ * Copyright 2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.springframework.kafka.listener.MessageListener;
  *
  * @author Stephane Nicoll
  * @author Gary Russell
+ * @author Artem Bilan
  *
  * @see MessageListener
  * @see AcknowledgingMessageListener
@@ -41,33 +42,25 @@ public abstract class AbstractAdaptableMessageListener<K, V> implements MessageL
 
 	protected final Log logger = LogFactory.getLog(getClass()); //NOSONAR
 
-
 	/**
 	 * Kafka {@link MessageListener} entry point.
-	 * <p> Delegate the message to the target listener method, with appropriate conversion of the message argument.
-	 * In case of an exception, the {@link #handleListenerException(Throwable)} method will be invoked.
+	 * <p> Delegate the message to the target listener method,
+	 * with appropriate conversion of the message argument.
 	 * @param record the incoming Kafka {@link ConsumerRecord}.
 	 * @see #handleListenerException
 	 * @see AcknowledgingMessageListener#onMessage(ConsumerRecord, org.springframework.kafka.support.Acknowledgment)
 	 */
 	@Override
 	public void onMessage(ConsumerRecord<K, V> record) {
-		try {
-			onMessage(record, null);
-		}
-		catch (Exception ex) {
-			handleListenerException(ex);
-		}
+		onMessage(record, null);
 	}
 
 	/**
 	 * Handle the given exception that arose during listener execution.
+	 * Can be used by inheritors from overridden {@link #onMessage(ConsumerRecord)}
+	 * or {@link #onMessage(ConsumerRecord, org.springframework.kafka.support.Acknowledgment)}
 	 * The default implementation logs the exception at error level.
-	 * <p> This method only applies when using a Kafka {@link MessageListener}. With
-	 * {@link AcknowledgingMessageListener}, exceptions get handled by the
-	 * caller instead.
 	 * @param ex the exception to handle
-	 * @see #onMessage(ConsumerRecord)
 	 */
 	protected void handleListenerException(Throwable ex) {
 		this.logger.error("Listener execution failed", ex);
