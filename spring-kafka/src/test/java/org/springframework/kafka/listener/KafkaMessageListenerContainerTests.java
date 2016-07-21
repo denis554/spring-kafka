@@ -55,7 +55,6 @@ import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.listener.AbstractMessageListenerContainer.AckMode;
 import org.springframework.kafka.listener.adapter.RetryingMessageListenerAdapter;
 import org.springframework.kafka.listener.config.ContainerProperties;
-import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.test.rule.KafkaEmbedded;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.retry.backoff.FixedBackOffPolicy;
@@ -101,28 +100,25 @@ public class KafkaMessageListenerContainerTests {
 //		props.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, 6); // 2 per poll
 		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<Integer, String>(props);
 		ContainerProperties containerProps = new ContainerProperties(topic1);
-		KafkaMessageListenerContainer<Integer, String> container =
-				new KafkaMessageListenerContainer<>(cf, containerProps);
+
 		final CountDownLatch latch = new CountDownLatch(6);
 		final BitSet bitSet = new BitSet(6);
-		containerProps.setMessageListener(new MessageListener<Integer, String>() {
-
-			@Override
-			public void onMessage(ConsumerRecord<Integer, String> message) {
-				logger.info("slow1: " + message);
-				bitSet.set((int) (message.partition() * 3 + message.offset()));
-				try {
-					Thread.sleep(1000);
-				}
-				catch (InterruptedException e) {
-					Thread.currentThread().interrupt();
-				}
-				latch.countDown();
+		containerProps.setMessageListener((MessageListener<Integer, String>) message -> {
+			logger.info("slow1: " + message);
+			bitSet.set((int) (message.partition() * 3 + message.offset()));
+			try {
+				Thread.sleep(1000);
 			}
-
+			catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+			latch.countDown();
 		});
-		container.setBeanName("testSlow1");
 		containerProps.setPauseAfter(100);
+		KafkaMessageListenerContainer<Integer, String> container =
+				new KafkaMessageListenerContainer<>(cf, containerProps);
+		container.setBeanName("testSlow1");
+
 
 		container.start();
 		Consumer<?, ?> consumer = spyOnConsumer(container);
@@ -162,32 +158,29 @@ public class KafkaMessageListenerContainerTests {
 		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<Integer, String>(props);
 		ContainerProperties containerProps = new ContainerProperties(topic);
 		containerProps.setSyncCommits(true);
-		KafkaMessageListenerContainer<Integer, String> container =
-				new KafkaMessageListenerContainer<>(cf, containerProps);
+
 		final CountDownLatch latch = new CountDownLatch(6);
 		final BitSet bitSet = new BitSet(4);
-		containerProps.setMessageListener(new AcknowledgingMessageListener<Integer, String>() {
-
-			@Override
-			public void onMessage(ConsumerRecord<Integer, String> message, Acknowledgment ack) {
-				logger.info("slow2: " + message);
-				bitSet.set((int) (message.partition() * 3 + message.offset()));
-				try {
-					Thread.sleep(1000);
-				}
-				catch (InterruptedException e) {
-					Thread.currentThread().interrupt();
-				}
-				ack.acknowledge();
-				latch.countDown();
+		containerProps.setMessageListener((AcknowledgingMessageListener<Integer, String>) (message, ack) -> {
+			logger.info("slow2: " + message);
+			bitSet.set((int) (message.partition() * 3 + message.offset()));
+			try {
+				Thread.sleep(1000);
 			}
-
+			catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+			ack.acknowledge();
+			latch.countDown();
 		});
-		container.setBeanName("testSlow2");
 		containerProps.setPauseAfter(100);
 		containerProps.setAckMode(ackMode);
 
+		KafkaMessageListenerContainer<Integer, String> container =
+				new KafkaMessageListenerContainer<>(cf, containerProps);
+		container.setBeanName("testSlow2");
 		container.start();
+
 		Consumer<?, ?> consumer = spyOnConsumer(container);
 		ContainerTestUtils.waitForAssignment(container, embeddedKafka.getPartitionsPerTopic());
 
@@ -221,8 +214,6 @@ public class KafkaMessageListenerContainerTests {
 		containerProps.setPauseAfter(100);
 		containerProps.setAckMode(AckMode.MANUAL_IMMEDIATE);
 		containerProps.setSyncCommits(true);
-		KafkaMessageListenerContainer<Integer, String> container =
-				new KafkaMessageListenerContainer<>(cf, containerProps);
 
 		containerProps.setMessageListener((AcknowledgingMessageListener<Integer, String>) (message, ack) -> {
 			logger.info("slow: " + message);
@@ -234,6 +225,10 @@ public class KafkaMessageListenerContainerTests {
 			}
 			ack.acknowledge();
 		});
+
+		KafkaMessageListenerContainer<Integer, String> container =
+				new KafkaMessageListenerContainer<>(cf, containerProps);
+
 		container.setBeanName("testSlow");
 
 		container.start();
@@ -281,14 +276,15 @@ public class KafkaMessageListenerContainerTests {
 		containerProps.setAckTime(20000);
 		containerProps.setAckCount(20000);
 		containerProps.setAckMode(AckMode.COUNT_TIME);
-		KafkaMessageListenerContainer<Integer, String> container =
-				new KafkaMessageListenerContainer<>(cf, containerProps);
+
 		final CountDownLatch latch = new CountDownLatch(4);
 		containerProps.setMessageListener((AcknowledgingMessageListener<Integer, String>) (message, ack) -> {
 			logger.info("slow: " + message);
 			ack.acknowledge();
 			latch.countDown();
 		});
+		KafkaMessageListenerContainer<Integer, String> container =
+				new KafkaMessageListenerContainer<>(cf, containerProps);
 		container.setBeanName("testManualFlushed");
 
 		container.start();
@@ -322,8 +318,7 @@ public class KafkaMessageListenerContainerTests {
 		Map<String, Object> props = KafkaTestUtils.consumerProps("slow3", "false", embeddedKafka);
 		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<Integer, String>(props);
 		ContainerProperties containerProps = new ContainerProperties(topic3);
-		KafkaMessageListenerContainer<Integer, String> container =
-				new KafkaMessageListenerContainer<>(cf, containerProps);
+
 		final CountDownLatch latch = new CountDownLatch(18);
 		final BitSet bitSet = new BitSet(6);
 		final Map<String, AtomicInteger> faults = new HashMap<>();
@@ -350,6 +345,9 @@ public class KafkaMessageListenerContainerTests {
 			}, buildRetry(), null);
 		containerProps.setMessageListener(adapter);
 		containerProps.setPauseAfter(100);
+
+		KafkaMessageListenerContainer<Integer, String> container =
+				new KafkaMessageListenerContainer<>(cf, containerProps);
 		container.setBeanName("testSlow3");
 
 		container.start();
@@ -383,8 +381,6 @@ public class KafkaMessageListenerContainerTests {
 		Map<String, Object> props = KafkaTestUtils.consumerProps("slow4", "false", embeddedKafka);
 		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<Integer, String>(props);
 		ContainerProperties containerProps = new ContainerProperties(topic4);
-		KafkaMessageListenerContainer<Integer, String> container =
-				new KafkaMessageListenerContainer<>(cf, containerProps);
 		final CountDownLatch latch = new CountDownLatch(18);
 		final BitSet bitSet = new BitSet(6);
 		final Map<String, AtomicInteger> faults = new HashMap<>();
@@ -419,6 +415,9 @@ public class KafkaMessageListenerContainerTests {
 			}, buildRetry(), null);
 		containerProps.setMessageListener(adapter);
 		containerProps.setPauseAfter(100);
+
+		KafkaMessageListenerContainer<Integer, String> container =
+				new KafkaMessageListenerContainer<>(cf, containerProps);
 		container.setBeanName("testSlow4");
 
 		container.start();
@@ -458,6 +457,7 @@ public class KafkaMessageListenerContainerTests {
 		containerProps.setSyncCommits(true);
 		containerProps.setAckMode(AckMode.RECORD);
 		containerProps.setAckOnError(false);
+
 		KafkaMessageListenerContainer<Integer, String> container = new KafkaMessageListenerContainer<>(cf,
 				containerProps);
 		container.setBeanName("testRecordAcks");
@@ -523,6 +523,7 @@ public class KafkaMessageListenerContainerTests {
 		containerProps.setAckMode(AckMode.BATCH);
 		containerProps.setPollTimeout(10000);
 		containerProps.setAckOnError(false);
+
 		KafkaMessageListenerContainer<Integer, String> container = new KafkaMessageListenerContainer<>(cf,
 				containerProps);
 		container.setBeanName("testBatchAcks");
