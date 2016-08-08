@@ -24,6 +24,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.kafka.support.KafkaNull;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.MessageBuilder;
@@ -35,6 +36,7 @@ import org.springframework.messaging.support.MessageBuilder;
  *
  * @author Marius Bogoevici
  * @author Gary Russell
+ * @author Dariusz Szablinski
  */
 public class MessagingMessageConverter implements MessageConverter {
 
@@ -105,7 +107,7 @@ public class MessagingMessageConverter implements MessageConverter {
 	 * @return the value.
 	 */
 	protected Object extractAndConvertValue(ConsumerRecord<?, ?> record, Type type) {
-		return record.value();
+		return record.value() == null ? KafkaNull.INSTANCE : record.value();
 	}
 
 	@SuppressWarnings("serial")
