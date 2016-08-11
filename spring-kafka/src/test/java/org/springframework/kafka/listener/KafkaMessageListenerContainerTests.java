@@ -87,9 +87,15 @@ public class KafkaMessageListenerContainerTests {
 
 	private static String topic7 = "testTopic7";
 
+	private static String topic8 = "testTopic8";
+
+	private static String topic9 = "testTopic9";
+
+	private static String topic10 = "testTopic10";
+
 	@ClassRule
 	public static KafkaEmbedded embeddedKafka = new KafkaEmbedded(1, true, topic1, topic2, topic3, topic4, topic5,
-			topic6, topic7);
+			topic6, topic7, topic8, topic9, topic10);
 
 	@Rule
 	public TestName testName = new TestName();
@@ -239,8 +245,12 @@ public class KafkaMessageListenerContainerTests {
 
 		willAnswer(invocation -> {
 
-			latch.countDown();
-			return invocation.callRealMethod();
+			try {
+				return invocation.callRealMethod();
+			}
+			finally {
+				latch.countDown();
+			}
 
 		}).given(consumer)
 				.commitSync(any());
@@ -279,9 +289,8 @@ public class KafkaMessageListenerContainerTests {
 		containerProps.setAckMode(AckMode.COUNT_TIME);
 
 		final CountDownLatch latch = new CountDownLatch(4);
-		containerProps.setMessageListener((AcknowledgingMessageListener<Integer, String>) (message, ack) -> {
-			logger.info("slow: " + message);
-			ack.acknowledge();
+		containerProps.setMessageListener((MessageListener<Integer, String>) message -> {
+			logger.info("flushed: " + message);
 			latch.countDown();
 		});
 		KafkaMessageListenerContainer<Integer, String> container =
@@ -468,14 +477,18 @@ public class KafkaMessageListenerContainerTests {
 		willAnswer(invocation -> {
 
 			@SuppressWarnings({ "unchecked" })
-			Map<TopicPartition, OffsetAndMetadata> map = (Map<TopicPartition, OffsetAndMetadata>) invocation
-					.getArguments()[0];
-			for (Entry<TopicPartition, OffsetAndMetadata> entry : map.entrySet()) {
-				if (entry.getValue().offset() == 2) {
-					latch.countDown();
+			Map<TopicPartition, OffsetAndMetadata> map =
+					(Map<TopicPartition, OffsetAndMetadata>) invocation.getArguments()[0];
+			try {
+				return invocation.callRealMethod();
+			}
+			finally {
+				for (Entry<TopicPartition, OffsetAndMetadata> entry : map.entrySet()) {
+					if (entry.getValue().offset() == 2) {
+						latch.countDown();
+					}
 				}
 			}
-			return invocation.callRealMethod();
 
 		}).given(containerConsumer)
 				.commitSync(any());
@@ -540,10 +553,18 @@ public class KafkaMessageListenerContainerTests {
 			for (Entry<TopicPartition, OffsetAndMetadata> entry : map.entrySet()) {
 				if (entry.getValue().offset() == 2) {
 					firstBatchLatch.countDown();
-					latch.countDown();
 				}
 			}
-			return invocation.callRealMethod();
+			try {
+				return invocation.callRealMethod();
+			}
+			finally {
+				for (Entry<TopicPartition, OffsetAndMetadata> entry : map.entrySet()) {
+					if (entry.getValue().offset() == 2) {
+						latch.countDown();
+					}
+				}
+			}
 
 		}).given(containerConsumer)
 				.commitSync(any());
@@ -558,6 +579,212 @@ public class KafkaMessageListenerContainerTests {
 		container.stop();
 		consumer.close();
 		logger.info("Stop batch ack");
+	}
+
+	@Test
+	public void testBatchListener() throws Exception {
+		logger.info("Start batch listener");
+
+		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
+		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<>(senderProps);
+		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
+		template.setDefaultTopic(topic8);
+		template.sendDefault(0, 0, "foo");
+		template.sendDefault(0, 0, "baz");
+		template.sendDefault(1, 0, "bar");
+		template.sendDefault(1, 0, "qux");
+		template.flush();
+
+		Map<String, Object> props = KafkaTestUtils.consumerProps("test8", "false", embeddedKafka);
+		props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<>(props);
+		ContainerProperties containerProps = new ContainerProperties(topic8);
+		containerProps.setMessageListener((BatchMessageListener<Integer, String>) messages -> {
+			logger.info("batch listener: " + messages);
+		});
+		containerProps.setSyncCommits(true);
+		containerProps.setAckMode(AckMode.BATCH);
+		containerProps.setPollTimeout(10000);
+		containerProps.setAckOnError(false);
+
+		KafkaMessageListenerContainer<Integer, String> container = new KafkaMessageListenerContainer<>(cf,
+				containerProps);
+		container.setBeanName("testBatchListener");
+		container.start();
+		Consumer<?, ?> containerConsumer = spyOnConsumer(container);
+		final CountDownLatch firstBatchLatch = new CountDownLatch(1);
+		final CountDownLatch latch = new CountDownLatch(2);
+		willAnswer(invocation -> {
+
+			@SuppressWarnings({ "unchecked" })
+			Map<TopicPartition, OffsetAndMetadata> map = (Map<TopicPartition, OffsetAndMetadata>) invocation
+					.getArguments()[0];
+			for (Entry<TopicPartition, OffsetAndMetadata> entry : map.entrySet()) {
+				if (entry.getValue().offset() == 2) {
+					firstBatchLatch.countDown();
+				}
+			}
+			try {
+				return invocation.callRealMethod();
+			}
+			finally {
+				for (Entry<TopicPartition, OffsetAndMetadata> entry : map.entrySet()) {
+					if (entry.getValue().offset() == 2) {
+						latch.countDown();
+					}
+				}
+			}
+
+		}).given(containerConsumer)
+				.commitSync(any());
+
+		assertThat(firstBatchLatch.await(9, TimeUnit.SECONDS)).isTrue();
+
+		assertThat(latch.await(60, TimeUnit.SECONDS)).isTrue();
+		Consumer<Integer, String> consumer = cf.createConsumer();
+		consumer.assign(Arrays.asList(new TopicPartition(topic8, 0), new TopicPartition(topic8, 1)));
+		assertThat(consumer.position(new TopicPartition(topic8, 0))).isEqualTo(2);
+		assertThat(consumer.position(new TopicPartition(topic8, 1))).isEqualTo(2);
+		container.stop();
+		consumer.close();
+		logger.info("Stop batch listener");
+	}
+
+	@Test
+	public void testBatchListenerManual() throws Exception {
+		logger.info("Start batch listener manual");
+
+		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
+		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<>(senderProps);
+		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
+		template.setDefaultTopic(topic9);
+		template.sendDefault(0, 0, "foo");
+		template.sendDefault(0, 0, "baz");
+		template.sendDefault(1, 0, "bar");
+		template.sendDefault(1, 0, "qux");
+		template.flush();
+
+		Map<String, Object> props = KafkaTestUtils.consumerProps("test9", "false", embeddedKafka);
+		props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<>(props);
+		ContainerProperties containerProps = new ContainerProperties(topic9);
+		final CountDownLatch latch = new CountDownLatch(4);
+		containerProps.setMessageListener((BatchAcknowledgingMessageListener<Integer, String>) (messages, ack) -> {
+			logger.info("batch listener manual: " + messages);
+			for (int i = 0; i < messages.size(); i++) {
+				latch.countDown();
+			}
+			ack.acknowledge();
+		});
+		containerProps.setSyncCommits(true);
+		containerProps.setAckMode(AckMode.MANUAL_IMMEDIATE);
+		containerProps.setPollTimeout(10000);
+		containerProps.setAckOnError(false);
+
+		KafkaMessageListenerContainer<Integer, String> container = new KafkaMessageListenerContainer<>(cf,
+				containerProps);
+		container.setBeanName("testBatchListenerManual");
+		container.start();
+		Consumer<?, ?> containerConsumer = spyOnConsumer(container);
+		final CountDownLatch commitLatch = new CountDownLatch(2);
+		willAnswer(invocation -> {
+
+			@SuppressWarnings({ "unchecked" })
+			Map<TopicPartition, OffsetAndMetadata> map = (Map<TopicPartition, OffsetAndMetadata>) invocation
+					.getArguments()[0];
+			try {
+				return invocation.callRealMethod();
+			}
+			finally {
+				for (Entry<TopicPartition, OffsetAndMetadata> entry : map.entrySet()) {
+					if (entry.getValue().offset() == 2) {
+						commitLatch.countDown();
+					}
+				}
+			}
+
+		}).given(containerConsumer)
+				.commitSync(any());
+
+		assertThat(latch.await(60, TimeUnit.SECONDS)).isTrue();
+		assertThat(commitLatch.await(60, TimeUnit.SECONDS)).isTrue();
+		Consumer<Integer, String> consumer = cf.createConsumer();
+		consumer.assign(Arrays.asList(new TopicPartition(topic9, 0), new TopicPartition(topic9, 1)));
+		assertThat(consumer.position(new TopicPartition(topic9, 0))).isEqualTo(2);
+		assertThat(consumer.position(new TopicPartition(topic9, 1))).isEqualTo(2);
+		container.stop();
+		consumer.close();
+		logger.info("Stop batch listener manual");
+	}
+
+	@Test
+	public void testBatchListenerErrors() throws Exception {
+		logger.info("Start batch listener errors");
+
+		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
+		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<>(senderProps);
+		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
+		template.setDefaultTopic(topic10);
+		template.sendDefault(0, 0, "foo");
+		template.sendDefault(0, 0, "baz");
+		template.sendDefault(1, 0, "bar");
+		template.sendDefault(1, 0, "qux");
+		template.flush();
+
+		Map<String, Object> props = KafkaTestUtils.consumerProps("test9", "false", embeddedKafka);
+		props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<>(props);
+		ContainerProperties containerProps = new ContainerProperties(topic10);
+		containerProps.setMessageListener((BatchMessageListener<Integer, String>) messages -> {
+			logger.info("batch listener errors: " + messages);
+			throw new RuntimeException("intentional");
+		});
+		containerProps.setSyncCommits(true);
+		containerProps.setAckMode(AckMode.BATCH);
+		containerProps.setPollTimeout(10000);
+		containerProps.setAckOnError(true);
+		final CountDownLatch latch = new CountDownLatch(4);
+		containerProps.setErrorHandler((BatchErrorHandler) (t, messages) -> {
+			new BatchLoggingErrorHandler().handle(t, messages);
+			for (int i = 0; i < messages.count(); i++) {
+				latch.countDown();
+			}
+		});
+
+		KafkaMessageListenerContainer<Integer, String> container = new KafkaMessageListenerContainer<>(cf,
+				containerProps);
+		container.setBeanName("testBatchListenerErrors");
+		container.start();
+		Consumer<?, ?> containerConsumer = spyOnConsumer(container);
+		final CountDownLatch commitLatch = new CountDownLatch(2);
+		willAnswer(invocation -> {
+
+			@SuppressWarnings({ "unchecked" })
+			Map<TopicPartition, OffsetAndMetadata> map = (Map<TopicPartition, OffsetAndMetadata>) invocation
+					.getArguments()[0];
+			try {
+				return invocation.callRealMethod();
+			}
+			finally {
+				for (Entry<TopicPartition, OffsetAndMetadata> entry : map.entrySet()) {
+					if (entry.getValue().offset() == 2) {
+						commitLatch.countDown();
+					}
+				}
+			}
+
+		}).given(containerConsumer)
+				.commitSync(any());
+
+		assertThat(latch.await(60, TimeUnit.SECONDS)).isTrue();
+		assertThat(commitLatch.await(60, TimeUnit.SECONDS)).isTrue();
+		Consumer<Integer, String> consumer = cf.createConsumer();
+		consumer.assign(Arrays.asList(new TopicPartition(topic10, 0), new TopicPartition(topic10, 1)));
+		assertThat(consumer.position(new TopicPartition(topic10, 0))).isEqualTo(2);
+		assertThat(consumer.position(new TopicPartition(topic10, 1))).isEqualTo(2);
+		container.stop();
+		consumer.close();
+		logger.info("Stop batch listener errors");
 	}
 
 	private RetryTemplate buildRetry() {
