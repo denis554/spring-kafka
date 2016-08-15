@@ -650,8 +650,9 @@ public class KafkaListenerAnnotationBeanPostProcessor<K, V>
 			argumentResolvers.add(new HeadersMethodArgumentResolver());
 
 			// Type-based argument resolution
-			argumentResolvers.add(new MessageMethodArgumentResolver());
-			argumentResolvers.add(new PayloadArgumentResolver(new GenericMessageConverter(conversionService)) {
+			final GenericMessageConverter messageConverter = new GenericMessageConverter(conversionService);
+			argumentResolvers.add(new MessageMethodArgumentResolver(messageConverter));
+			argumentResolvers.add(new PayloadArgumentResolver(messageConverter) {
 
 				@Override
 				protected boolean isEmptyPayload(Object payload) {
