@@ -385,7 +385,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 			}
 			this.consumer = consumer;
 			Object theListener = listener == null ? ackListener : listener;
-			GenericErrorHandler<?> errHandler = this.containerProperties.getErrorHandler();
+			GenericErrorHandler<?> errHandler = this.containerProperties.getGenericErrorHandler();
 			if (theListener instanceof MessageListener) {
 				this.listener = (MessageListener<K, V>) theListener;
 				this.batchListener = null;
@@ -437,7 +437,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 		}
 
 		private void validateErrorHandler(boolean batch) {
-			GenericErrorHandler<?> errHandler = this.containerProperties.getErrorHandler();
+			GenericErrorHandler<?> errHandler = this.containerProperties.getGenericErrorHandler();
 			if (errorHandler == null) {
 				return;
 			}
@@ -533,8 +533,8 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 					this.unsent = checkPause(this.unsent);
 				}
 				catch (Exception e) {
-					if (this.containerProperties.getErrorHandler() != null) {
-						this.containerProperties.getErrorHandler().handle(e, null);
+					if (this.containerProperties.getGenericErrorHandler() != null) {
+						this.containerProperties.getGenericErrorHandler().handle(e, null);
 					}
 					else {
 						this.logger.error("Container exception", e);
@@ -701,7 +701,16 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 							this.acks.add(record);
 						}
 					}
-					this.batchErrorHandler.handle(e, records);
+					try {
+						this.batchErrorHandler.handle(e, records);
+					}
+					catch (Exception ee) {
+						logger.error("Error handler threw an exception", ee);
+					}
+					catch (Error er) { //NOSONAR
+						logger.error("Error handler threw an error", er);
+						throw er;
+					}
 				}
 			}
 		}
@@ -732,7 +741,16 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 					if (this.containerProperties.isAckOnError() && !this.autoCommit) {
 						this.acks.add(record);
 					}
-					this.errorHandler.handle(e, record);
+					try {
+						this.errorHandler.handle(e, record);
+					}
+					catch (Exception ee) {
+						logger.error("Error handler threw an exception", ee);
+					}
+					catch (Error er) { //NOSONAR
+						logger.error("Error handler threw an error", er);
+						throw er;
+					}
 				}
 			}
 			if (this.isManualAck || this.isBatchAck) {

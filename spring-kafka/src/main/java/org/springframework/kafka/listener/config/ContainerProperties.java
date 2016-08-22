@@ -406,7 +406,7 @@ public class ContainerProperties {
 		return this.listenerTaskExecutor;
 	}
 
-	public GenericErrorHandler<?> getErrorHandler() {
+	public GenericErrorHandler<?> getGenericErrorHandler() {
 		return this.errorHandler;
 	}
 
