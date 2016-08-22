@@ -189,6 +189,22 @@ public class KafkaMessageListenerContainerTests {
 		container.start();
 
 		Consumer<?, ?> consumer = spyOnConsumer(container);
+
+		final CountDownLatch commitLatch = new CountDownLatch(7);
+
+		willAnswer(invocation -> {
+
+			try {
+				return invocation.callRealMethod();
+			}
+			finally {
+				commitLatch.countDown();
+			}
+
+		}).given(consumer)
+				.commitSync(any());
+
+
 		ContainerTestUtils.waitForAssignment(container, embeddedKafka.getPartitionsPerTopic());
 
 		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
@@ -205,6 +221,7 @@ public class KafkaMessageListenerContainerTests {
 		template.sendDefault(2, "buz");
 		template.flush();
 		assertThat(latch.await(60, TimeUnit.SECONDS)).isTrue();
+		assertThat(commitLatch.await(60, TimeUnit.SECONDS)).isTrue();
 		assertThat(bitSet.cardinality()).isEqualTo(6);
 		verify(consumer, atLeastOnce()).pause(anyObject());
 		verify(consumer, atLeastOnce()).resume(anyObject());
