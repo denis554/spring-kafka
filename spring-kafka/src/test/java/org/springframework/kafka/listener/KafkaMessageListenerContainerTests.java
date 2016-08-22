@@ -744,7 +744,7 @@ public class KafkaMessageListenerContainerTests {
 		containerProps.setPollTimeout(10000);
 		containerProps.setAckOnError(true);
 		final CountDownLatch latch = new CountDownLatch(4);
-		containerProps.setErrorHandler((BatchErrorHandler) (t, messages) -> {
+		containerProps.setGenericErrorHandler((BatchErrorHandler) (t, messages) -> {
 			new BatchLoggingErrorHandler().handle(t, messages);
 			for (int i = 0; i < messages.count(); i++) {
 				latch.countDown();

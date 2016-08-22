@@ -27,6 +27,7 @@ import org.springframework.core.task.AsyncListenableTaskExecutor;
 import org.springframework.kafka.listener.AbstractMessageListenerContainer;
 import org.springframework.kafka.listener.AbstractMessageListenerContainer.AckMode;
 import org.springframework.kafka.listener.AcknowledgingMessageListener;
+import org.springframework.kafka.listener.ErrorHandler;
 import org.springframework.kafka.listener.GenericErrorHandler;
 import org.springframework.kafka.listener.MessageListener;
 import org.springframework.kafka.support.TopicPartitionInitialOffset;
@@ -245,8 +246,17 @@ public class ContainerProperties {
 	/**
 	 * Set the error handler to call when the listener throws an exception.
 	 * @param errorHandler the error handler.
+	 * @see #setGenericErrorHandler(GenericErrorHandler)
 	 */
-	public void setErrorHandler(GenericErrorHandler<?> errorHandler) {
+	public void setErrorHandler(ErrorHandler errorHandler) {
+		this.errorHandler = errorHandler;
+	}
+
+	/**
+	 * Set the error handler to call when the listener throws an exception.
+	 * @param errorHandler the error handler.
+	 */
+	public void setGenericErrorHandler(GenericErrorHandler<?> errorHandler) {
 		this.errorHandler = errorHandler;
 	}
 
