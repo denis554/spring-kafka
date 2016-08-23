@@ -172,7 +172,7 @@ using one of the manual <<committing-offsets, commit methods>>.
 using auto-commit, or one of the container-managed <<committing-offsets, commit methods>>.
 `AckMode.RECORD` is not supported when using this interface since the listener is given the complete batch.
 
-<3> Use this for processing all `ConsumerRecord` s received from the kafka consumer `poll()` operation when
+<4> Use this for processing all `ConsumerRecord` s received from the kafka consumer `poll()` operation when
 using one of the manual <<committing-offsets, commit methods>>.
 
 [[message-listener-container]]
