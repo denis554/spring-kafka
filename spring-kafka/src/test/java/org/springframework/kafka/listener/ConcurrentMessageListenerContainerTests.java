@@ -100,8 +100,7 @@ public class ConcurrentMessageListenerContainerTests {
 			topic6, topic7, topic8, topic9);
 
 	@Rule
-	public Log4jLevelAdjuster levelAdjuster = new Log4jLevelAdjuster(Level.DEBUG, "org.springframework.kafka",
-			"org.springframework.integration.test.rule");
+	public Log4jLevelAdjuster levelAdjuster = new Log4jLevelAdjuster(Level.DEBUG, "org.springframework.kafka");
 
 	@Test
 	public void testAutoCommit() throws Exception {
