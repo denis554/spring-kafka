@@ -44,13 +44,16 @@ import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.log4j.Level;
 import org.junit.ClassRule;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import org.springframework.beans.BeanUtils;
+import org.springframework.integration.test.rule.Log4jLevelAdjuster;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
@@ -95,6 +98,10 @@ public class ConcurrentMessageListenerContainerTests {
 	@ClassRule
 	public static KafkaEmbedded embeddedKafka = new KafkaEmbedded(1, true, topic1, topic2, topic3, topic4, topic5,
 			topic6, topic7, topic8, topic9);
+
+	@Rule
+	public Log4jLevelAdjuster levelAdjuster = new Log4jLevelAdjuster(Level.DEBUG, "org.springframework.kafka",
+			"org.springframework.integration.test.rule");
 
 	@Test
 	public void testAutoCommit() throws Exception {
@@ -367,6 +374,8 @@ public class ConcurrentMessageListenerContainerTests {
 		assertThat(latch5.await(60, TimeUnit.SECONDS)).isTrue();
 		resettingContainer.stop();
 		assertThat(messages).contains("baz", "qux", "FOO", "BAR");
+
+		this.logger.info("+++++++++++++++++++++ Start relative reset");
 
 		template.sendDefault(0, 0, "BAZ");
 		template.sendDefault(1, 2, "QUX");
