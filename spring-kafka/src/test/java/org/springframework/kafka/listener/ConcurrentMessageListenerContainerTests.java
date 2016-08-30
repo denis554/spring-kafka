@@ -42,18 +42,14 @@ import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
-import org.apache.log4j.Level;
 import org.junit.ClassRule;
 import org.junit.Ignore;
-import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import org.springframework.beans.BeanUtils;
-import org.springframework.integration.test.rule.Log4jLevelAdjuster;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
@@ -81,7 +77,7 @@ public class ConcurrentMessageListenerContainerTests {
 
 	private static String topic2 = "testTopic2";
 
-	private static String topic3 = "testTopic3";
+//	private static String topic3 = "testTopic3";
 
 	private static String topic4 = "testTopic4";
 
@@ -96,11 +92,8 @@ public class ConcurrentMessageListenerContainerTests {
 	private static String topic9 = "testTopic9";
 
 	@ClassRule
-	public static KafkaEmbedded embeddedKafka = new KafkaEmbedded(1, true, topic1, topic2, topic3, topic4, topic5,
+	public static KafkaEmbedded embeddedKafka = new KafkaEmbedded(1, true, topic1, topic2, topic4, topic5,
 			topic6, topic7, topic8, topic9);
-
-	@Rule
-	public Log4jLevelAdjuster levelAdjuster = new Log4jLevelAdjuster(Level.DEBUG, "org.springframework.kafka");
 
 	@Test
 	public void testAutoCommit() throws Exception {
@@ -241,168 +234,6 @@ public class ConcurrentMessageListenerContainerTests {
 		assertThat(listenerThreadNames).allMatch(threadName -> threadName.contains("-listener-"));
 		container.stop();
 		this.logger.info("Stop manual");
-	}
-
-	@Test
-	public void testDefinedPartitions() throws Exception {
-		this.logger.info("Start defined parts");
-		final Map<String, Object> props = KafkaTestUtils.consumerProps("test3", "false", embeddedKafka);
-		TopicPartitionInitialOffset topic1Partition0 = new TopicPartitionInitialOffset(topic3, 0, 0L);
-
-		final CountDownLatch initialConsumersLatch = new CountDownLatch(2);
-
-		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<Integer, String>(props) {
-
-			@Override
-			public Consumer<Integer, String> createConsumer() {
-				return new KafkaConsumer<Integer, String>(props) {
-
-					@Override
-					public ConsumerRecords<Integer, String> poll(long timeout) {
-						try {
-							return super.poll(timeout);
-						}
-						finally {
-							initialConsumersLatch.countDown();
-						}
-					}
-
-				};
-			}
-
-		};
-
-		ContainerProperties container1Props = new ContainerProperties(topic1Partition0);
-		final CountDownLatch latch1 = new CountDownLatch(2);
-		container1Props.setMessageListener((MessageListener<Integer, String>) message -> {
-			ConcurrentMessageListenerContainerTests.this.logger.info("defined part: " + message);
-			latch1.countDown();
-		});
-		ConcurrentMessageListenerContainer<Integer, String> container1 =
-				new ConcurrentMessageListenerContainer<>(cf, container1Props);
-		container1.setBeanName("b1");
-		container1.start();
-
-		TopicPartitionInitialOffset topic1Partition1 = new TopicPartitionInitialOffset(topic3, 1, 0L);
-		ContainerProperties container2Props = new ContainerProperties(topic1Partition1);
-		final CountDownLatch latch2 = new CountDownLatch(2);
-		container2Props.setMessageListener((MessageListener<Integer, String>) message -> {
-			ConcurrentMessageListenerContainerTests.this.logger.info("defined part: " + message);
-			latch2.countDown();
-		});
-		ConcurrentMessageListenerContainer<Integer, String> container2 =
-				new ConcurrentMessageListenerContainer<>(cf, container2Props);
-		container2.setBeanName("b2");
-		container2.start();
-
-		assertThat(initialConsumersLatch.await(20, TimeUnit.SECONDS)).isTrue();
-
-		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
-		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<>(senderProps);
-		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
-		template.setDefaultTopic(topic3);
-		template.sendDefault(0, 0, "foo");
-		template.sendDefault(1, 2, "bar");
-		template.sendDefault(0, 0, "baz");
-		template.sendDefault(1, 2, "qux");
-		template.flush();
-
-		assertThat(latch1.await(60, TimeUnit.SECONDS)).isTrue();
-		assertThat(latch2.await(60, TimeUnit.SECONDS)).isTrue();
-		container1.stop();
-		container2.stop();
-
-		cf = new DefaultKafkaConsumerFactory<>(props);
-		// reset earliest
-		ContainerProperties container3Props = new ContainerProperties(topic1Partition0, topic1Partition1);
-
-		final CountDownLatch latch3 = new CountDownLatch(4);
-		container3Props.setMessageListener((MessageListener<Integer, String>) message -> {
-			ConcurrentMessageListenerContainerTests.this.logger.info("defined part e: " + message);
-			latch3.countDown();
-		});
-		ConcurrentMessageListenerContainer<Integer, String> resettingContainer =
-				new ConcurrentMessageListenerContainer<>(cf, container3Props);
-		resettingContainer.setBeanName("b3");
-		resettingContainer.start();
-		assertThat(latch3.await(60, TimeUnit.SECONDS)).isTrue();
-		resettingContainer.stop();
-		assertThat(latch3.getCount()).isEqualTo(0L);
-
-		cf = new DefaultKafkaConsumerFactory<>(props);
-		// reset beginning for part 0, minus one for part 1
-		topic1Partition0 = new TopicPartitionInitialOffset(topic3, 0, -1000L);
-		topic1Partition1 = new TopicPartitionInitialOffset(topic3, 1, -1L);
-		ContainerProperties container4Props = new ContainerProperties(topic1Partition0, topic1Partition1);
-
-		final CountDownLatch latch4 = new CountDownLatch(3);
-		final AtomicReference<String> receivedMessage = new AtomicReference<>();
-		container4Props.setMessageListener((MessageListener<Integer, String>) message -> {
-			ConcurrentMessageListenerContainerTests.this.logger.info("defined part 0, -1: " + message);
-			receivedMessage.set(message.value());
-			latch4.countDown();
-		});
-		resettingContainer = new ConcurrentMessageListenerContainer<>(cf, container4Props);
-		resettingContainer.setBeanName("b4");
-		resettingContainer.start();
-		assertThat(latch4.await(60, TimeUnit.SECONDS)).isTrue();
-		resettingContainer.stop();
-		assertThat(receivedMessage.get()).isIn("baz", "qux");
-		assertThat(latch4.getCount()).isEqualTo(0L);
-
-		// reset plus one
-		template.sendDefault(0, 0, "FOO");
-		template.sendDefault(1, 2, "BAR");
-		template.flush();
-
-		topic1Partition0 = new TopicPartitionInitialOffset(topic3, 0, 1L);
-		topic1Partition1 = new TopicPartitionInitialOffset(topic3, 1, 1L);
-		ContainerProperties container5Props = new ContainerProperties(topic1Partition0, topic1Partition1);
-
-		final CountDownLatch latch5 = new CountDownLatch(4);
-		final List<String> messages = new ArrayList<>();
-		container5Props.setMessageListener((MessageListener<Integer, String>) message -> {
-			ConcurrentMessageListenerContainerTests.this.logger.info("defined part 1: " + message);
-			messages.add(message.value());
-			latch5.countDown();
-		});
-
-		resettingContainer = new ConcurrentMessageListenerContainer<>(cf, container5Props);
-		resettingContainer.setBeanName("b5");
-		resettingContainer.start();
-		assertThat(latch5.await(60, TimeUnit.SECONDS)).isTrue();
-		resettingContainer.stop();
-		assertThat(messages).contains("baz", "qux", "FOO", "BAR");
-
-		this.logger.info("+++++++++++++++++++++ Start relative reset");
-
-		template.sendDefault(0, 0, "BAZ");
-		template.sendDefault(1, 2, "QUX");
-		template.sendDefault(0, 0, "FIZ");
-		template.sendDefault(1, 2, "BUZ");
-		template.flush();
-
-		topic1Partition0 = new TopicPartitionInitialOffset(topic3, 0, 1L, true);
-		topic1Partition1 = new TopicPartitionInitialOffset(topic3, 1, -1L, true);
-		ContainerProperties container6Props = new ContainerProperties(topic1Partition0, topic1Partition1);
-
-		final CountDownLatch latch6 = new CountDownLatch(4);
-		final List<String> messages6 = new ArrayList<>();
-		container6Props.setMessageListener((MessageListener<Integer, String>) message -> {
-			ConcurrentMessageListenerContainerTests.this.logger.info("defined part relative: " + message);
-			messages6.add(message.value());
-			latch6.countDown();
-		});
-
-		resettingContainer = new ConcurrentMessageListenerContainer<>(cf, container6Props);
-		resettingContainer.setBeanName("b6");
-		resettingContainer.start();
-		assertThat(latch6.await(60, TimeUnit.SECONDS)).isTrue();
-		resettingContainer.stop();
-		assertThat(messages6).hasSize(4);
-		assertThat(messages6).contains("FIZ", "BAR", "QUX", "BUZ");
-
-		this.logger.info("Stop auto parts");
 	}
 
 	@Test
