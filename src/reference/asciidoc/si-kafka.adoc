@@ -108,7 +108,7 @@ public ProducerFactory<String, String> producerFactory() {
 ----
 
 [[si-inbound]]
-==== Message Driven Channel Adapter:
+==== Message Driven Channel Adapter
 
 The `KafkaMessageDrivenChannelAdapter` (`<int-kafka:message-driven-channel-adapter>`) uses a `spring-kafka`
 `KafkaMessageListenerContainer` or `ConcurrentListenerContainer`.
