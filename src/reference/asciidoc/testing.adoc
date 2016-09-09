@@ -168,10 +168,11 @@ public class KafkaTemplateTests {
         Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("testT", "false", embeddedKafka);
         DefaultKafkaConsumerFactory<Integer, String> cf =
                             new DefaultKafkaConsumerFactory<Integer, String>(consumerProps);
+        ContainerProperties containerProperties = new ContainerProperties(TEMPLATE_TOPIC);
         KafkaMessageListenerContainer<Integer, String> container =
-                            new KafkaMessageListenerContainer<>(cf, TEMPLATE_TOPIC);
+                            new KafkaMessageListenerContainer<>(cf, containerProperties);
         final BlockingQueue<ConsumerRecord<Integer, String>> records = new LinkedBlockingQueue<>();
-        container.setMessageListener(new MessageListener<Integer, String>() {
+        container.setupMessageListener(new MessageListener<Integer, String>() {
 
         	@Override
         	public void onMessage(ConsumerRecord<Integer, String> record) {
@@ -183,7 +184,7 @@ public class KafkaTemplateTests {
         container.setBeanName("templateTests");
         container.start();
         ContainerTestUtils.waitForAssignment(container, embeddedKafka.getPartitionsPerTopic());
-        Map<String, Object> senderProps = KafkaTestUtils.senderProps(embeddedKafka);
+        Map<String, Object> senderProps = KafkaTestUtils.senderProps(embeddedKafka.getBrokersAsString());
         ProducerFactory<Integer, String> pf =
                              new DefaultKafkaProducerFactory<Integer, String>(senderProps);
         KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
