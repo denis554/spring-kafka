@@ -113,21 +113,21 @@ public abstract class MessagingMessageListenerAdapter<K, V> implements ConsumerS
 	@Override
 	public void registerSeekCallback(ConsumerSeekCallback callback) {
 		if (this.bean instanceof ConsumerSeekAware) {
-			((ConsumerSeekAware) bean).registerSeekCallback(callback);
+			((ConsumerSeekAware) this.bean).registerSeekCallback(callback);
 		}
 	}
 
 	@Override
 	public void onPartitionsAssigned(Map<TopicPartition, Long> assignments, ConsumerSeekCallback callback) {
 		if (this.bean instanceof ConsumerSeekAware) {
-			((ConsumerSeekAware) bean).onPartitionsAssigned(assignments, callback);
+			((ConsumerSeekAware) this.bean).onPartitionsAssigned(assignments, callback);
 		}
 	}
 
 	@Override
 	public void onIdleContainer(Map<TopicPartition, Long> assignments, ConsumerSeekCallback callback) {
 		if (this.bean instanceof ConsumerSeekAware) {
-			((ConsumerSeekAware) bean).onIdleContainer(assignments, callback);
+			((ConsumerSeekAware) this.bean).onIdleContainer(assignments, callback);
 		}
 	}
 

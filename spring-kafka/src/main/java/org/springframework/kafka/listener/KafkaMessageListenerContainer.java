@@ -326,16 +326,16 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 			}
 			this.consumer = consumer;
 			GenericErrorHandler<?> errHandler = this.containerProperties.getGenericErrorHandler();
-			if (theListener instanceof BatchAcknowledgingMessageListener) {
+			if (this.theListener instanceof BatchAcknowledgingMessageListener) {
 				this.listener = null;
 				this.batchListener = null;
 				this.acknowledgingMessageListener = null;
 				this.batchAcknowledgingMessageListener = (BatchAcknowledgingMessageListener<K, V>) this.theListener;
 				this.isBatchListener = true;
 			}
-			else if (theListener instanceof AcknowledgingMessageListener) {
+			else if (this.theListener instanceof AcknowledgingMessageListener) {
 				this.listener = null;
-				this.acknowledgingMessageListener = (AcknowledgingMessageListener<K, V>) theListener;
+				this.acknowledgingMessageListener = (AcknowledgingMessageListener<K, V>) this.theListener;
 				this.batchListener = null;
 				this.batchAcknowledgingMessageListener = null;
 				this.isBatchListener = false;
@@ -347,8 +347,8 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 				this.batchAcknowledgingMessageListener = null;
 				this.isBatchListener = true;
 			}
-			else if (theListener instanceof MessageListener) {
-				this.listener = (MessageListener<K, V>) theListener;
+			else if (this.theListener instanceof MessageListener) {
+				this.listener = (MessageListener<K, V>) this.theListener;
 				this.batchListener = null;
 				this.acknowledgingMessageListener = null;
 				this.batchAcknowledgingMessageListener = null;
@@ -359,7 +359,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 						+ "'BatchMessageListener', 'AcknowledgingMessageListener', "
 						+ "'BatchAcknowledgingMessageListener', not " + this.theListener.getClass().getName());
 			}
-			if (isBatchListener) {
+			if (this.isBatchListener) {
 				validateErrorHandler(true);
 				this.errorHandler = new LoggingErrorHandler();
 				this.batchErrorHandler = errHandler == null ? new BatchLoggingErrorHandler()
@@ -471,7 +471,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 
 		private void validateErrorHandler(boolean batch) {
 			GenericErrorHandler<?> errHandler = this.containerProperties.getGenericErrorHandler();
-			if (errorHandler == null) {
+			if (this.errorHandler == null) {
 				return;
 			}
 			Type[] genericInterfaces = errHandler.getClass().getGenericInterfaces();
@@ -739,10 +739,10 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 						this.batchErrorHandler.handle(e, records);
 					}
 					catch (Exception ee) {
-						logger.error("Error handler threw an exception", ee);
+						this.logger.error("Error handler threw an exception", ee);
 					}
 					catch (Error er) { //NOSONAR
-						logger.error("Error handler threw an error", er);
+						this.logger.error("Error handler threw an error", er);
 						throw er;
 					}
 				}
@@ -779,10 +779,10 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 						this.errorHandler.handle(e, record);
 					}
 					catch (Exception ee) {
-						logger.error("Error handler threw an exception", ee);
+						this.logger.error("Error handler threw an exception", ee);
 					}
 					catch (Error er) { //NOSONAR
-						logger.error("Error handler threw an error", er);
+						this.logger.error("Error handler threw an error", er);
 						throw er;
 					}
 				}
@@ -855,7 +855,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 					this.consumer.seek(offset.topicPartition(), offset.initialOffset());
 				}
 				catch (Exception e) {
-					logger.error("Exception while seeking " + offset, e);
+					this.logger.error("Exception while seeking " + offset, e);
 				}
 				offset = this.seeks.poll();
 			}
