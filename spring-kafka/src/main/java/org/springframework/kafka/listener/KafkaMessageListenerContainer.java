@@ -188,6 +188,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 	protected void doStop(final Runnable callback) {
 		if (isRunning()) {
 			this.listenerConsumerFuture.addCallback(new ListenableFutureCallback<Object>() {
+
 				@Override
 				public void onFailure(Throwable e) {
 					KafkaMessageListenerContainer.this.logger.error("Error while stopping the container: ", e);
@@ -300,7 +301,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 		@SuppressWarnings("unchecked")
 		private ListenerConsumer(GenericMessageListener<?> listener, GenericAcknowledgingMessageListener<?> ackListener) {
 			Assert.state(!this.isAnyManualAck || !this.autoCommit,
-				"Consumer cannot be configured for auto commit for ackMode " + this.containerProperties.getAckMode());
+					"Consumer cannot be configured for auto commit for ackMode " + this.containerProperties.getAckMode());
 			final Consumer<K, V> consumer = KafkaMessageListenerContainer.this.consumerFactory.createConsumer();
 
 			this.theListener = listener == null ? ackListener : listener;
@@ -393,7 +394,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 						else {
 							if (!CollectionUtils.isEmpty(partitions)) {
 								ListenerConsumer.this.logger.error("Invalid state: the invoker was not active, " +
-												"but the consumer had allocated partitions");
+										"but the consumer had allocated partitions");
 							}
 						}
 					}
@@ -451,7 +452,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 		private void seekPartitions(Collection<TopicPartition> partitions, boolean idle) {
 			Map<TopicPartition, Long> current = new HashMap<>();
 			for (TopicPartition topicPartition : partitions) {
-				current.put(topicPartition,	ListenerConsumer.this.consumer.position(topicPartition));
+				current.put(topicPartition, ListenerConsumer.this.consumer.position(topicPartition));
 			}
 			ConsumerSeekCallback callback = new ConsumerSeekCallback() {
 
@@ -718,7 +719,9 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 				try {
 					if (this.batchAcknowledgingMessageListener != null) {
 						this.batchAcknowledgingMessageListener.onMessage(recordList,
-								new ConsumerBatchAcknowledgment(recordList, this.isManualImmediateAck));
+								this.isAnyManualAck
+										? new ConsumerBatchAcknowledgment(recordList, this.isManualImmediateAck)
+										: null);
 					}
 					else {
 						this.batchListener.onMessage(recordList);
@@ -759,7 +762,9 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 				try {
 					if (this.acknowledgingMessageListener != null) {
 						this.acknowledgingMessageListener.onMessage(record,
-								new ConsumerAcknowledgment(record, this.isManualImmediateAck));
+								this.isAnyManualAck
+										? new ConsumerAcknowledgment(record, this.isManualImmediateAck)
+										: null);
 					}
 					else {
 						this.listener.onMessage(record);
@@ -817,8 +822,8 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 					if (ackMode.equals(AckMode.TIME) && elapsed) {
 						if (this.logger.isDebugEnabled()) {
 							this.logger.debug("Committing in AckMode.TIME " +
-											"because time elapsed exceeds configured limit of " +
-											this.containerProperties.getAckTime());
+									"because time elapsed exceeds configured limit of " +
+									this.containerProperties.getAckTime());
 						}
 						commitIfNecessary();
 						this.last = now;
