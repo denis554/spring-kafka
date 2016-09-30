@@ -59,7 +59,7 @@ public abstract class MessagingMessageListenerAdapter<K, V> implements ConsumerS
 
 	protected final Log logger = LogFactory.getLog(getClass()); //NOSONAR
 
-	protected final Type inferredType; //NOSONAR
+	private final Type inferredType;
 
 	private HandlerAdapter handlerMethod;
 
@@ -68,6 +68,8 @@ public abstract class MessagingMessageListenerAdapter<K, V> implements ConsumerS
 	private boolean isMessageList;
 
 	private RecordMessageConverter messageConverter = new MessagingMessageConverter();
+
+	private Type fallbackType = Object.class;
 
 
 	public MessagingMessageListenerAdapter(Object bean, Method method) {
@@ -91,6 +93,26 @@ public abstract class MessagingMessageListenerAdapter<K, V> implements ConsumerS
 	 */
 	protected final RecordMessageConverter getMessageConverter() {
 		return this.messageConverter;
+	}
+
+	/**
+	 * Returns the inferred type for conversion or, if null, the
+	 * {@link #setFallbackType(Type) fallbackType}.
+	 * @return the type.
+	 */
+	protected Type getType() {
+		return this.inferredType == null ? this.fallbackType : this.inferredType;
+	}
+
+	/**
+	 * Set a fallback type to use when using a type-aware message converter and this
+	 * adapter cannot determine the inferred type from the method. An example of a
+	 * type-aware message converter is the {@code StringJsonMessageConverter}. Defaults to
+	 * {@link Object}.
+	 * @param fallbackType the type.
+	 */
+	public void setFallbackType(Type fallbackType) {
+		this.fallbackType = fallbackType;
 	}
 
 	/**
@@ -132,7 +154,7 @@ public abstract class MessagingMessageListenerAdapter<K, V> implements ConsumerS
 	}
 
 	protected Message<?> toMessagingMessage(ConsumerRecord<K, V> record, Acknowledgment acknowledgment) {
-		return getMessageConverter().toMessage(record, acknowledgment, this.inferredType);
+		return getMessageConverter().toMessage(record, acknowledgment, getType());
 	}
 
 	/**
@@ -174,7 +196,13 @@ public abstract class MessagingMessageListenerAdapter<K, V> implements ConsumerS
 				+ "Bean [" + this.handlerMethod.getBean() + "]";
 	}
 
-	private Type determineInferredType(Method method) {
+	/**
+	 * Subclasses can override this method to use a different mechanism to determine
+	 * the target type of the payload conversion.
+	 * @param method the method.
+	 * @return the type.
+	 */
+	protected Type determineInferredType(Method method) {
 		if (method == null) {
 			return null;
 		}
