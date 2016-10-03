@@ -636,7 +636,7 @@ You can also perform seek operations from `onIdleContainer()` when an idle conta
 
 To arbitrarily seek at runtime, use the callback reference from the `registerSeekCallback` for the appropriate thread.
 
-
+[[serdes]]
 ==== Serialization/Deserialization and Message Conversion
 
 Apache Kafka provides a high-level API for serializing/deserializing record values as well as their keys.
@@ -659,29 +659,28 @@ constructors to accept `(De)Serializer` instances for `keys` and/or `values`, re
 To meet this API, the `DefaultKafkaProducerFactory` and `DefaultKafkaConsumerFactory` also provide properties to allow
 to inject a custom `(De)Serializer` to target `Producer`/`Consumer`.
 
-For this purpose Spring for Apache Kafka also provides `JsonSerializer`/`JsonDeserializer` implementations based on the
-Jackson JSON processor.
-When `JsonSerializer` is pretty simple and just lets to write any Java object as a JSON `byte[]`, the `JsonDeserializer`
-requires an additional `Class<?> targetType` argument to allow to deserializer consumed `byte[]` to the proper target
+For this purpose, Spring for Apache Kafka also provides `JsonSerializer`/`JsonDeserializer` implementations based on the
+Jackson JSON object mapper.
+The `JsonSerializer` is quite simple and just allows writing any Java object as a JSON `byte[]`, the `JsonDeserializer`
+requires an additional `Class<?> targetType` argument to allow the deserialization of a consumed `byte[]` to the proper target
 object.
-The `JsonDeserializer` can be extended to the particular generic type, when the last one is resolved at runtime,
-instead of compile-time additional `type` argument:
 
 [source, java]
 ----
 JsonDeserializer<Bar> barDeserializer = new JsonDeserializer<>(Bar.class);
 ----
 
-Both `JsonSerializer` and `JsonDeserializer` can be customized with provided `ObjectMapper`.
-Plus you can extend them to implement some particular configuration logic in the
+Both `JsonSerializer` and `JsonDeserializer` can be customized with an `ObjectMapper`.
+You can also extend them to implement some particular configuration logic in the
 `configure(Map<String, ?> configs, boolean isKey)` method.
 
-Although `Serializer`/`Deserializer` API is pretty simple and flexible from the low-level Kafka `Consumer` and
-`Producer` perspective, it is not enough on the Messaging level, where `KafkaTemplate` and `@KafkaListener` are present.
-To easy convert to/from `org.springframework.messaging.Message`, Spring for Apache Kafka provides `MessageConverter`
- abstraction with the `MessagingMessageConverter` implementation and its `StringJsonMessageConverter` customization.
+Although the `Serializer`/`Deserializer` API is quite simple and flexible from the low-level Kafka `Consumer` and
+`Producer` perspective, you might need more flexibility at the Spring Messaging level, either when using `@KafkaListener` or <<si-kafka,Spring Integration>>.
+To easily convert to/from `org.springframework.messaging.Message`, Spring for Apache Kafka provides a `MessageConverter`
+abstraction with the `MessagingMessageConverter` implementation and its `StringJsonMessageConverter` customization.
 The `MessageConverter` can be injected into `KafkaTemplate` instance directly and via
 `AbstractKafkaListenerContainerFactory` bean definition for the `@KafkaListener.containerFactory()` property:
+
 [source, java]
 ----
 @Bean
@@ -699,6 +698,10 @@ public void jsonListener(Foo foo) {
 ...
 }
 ----
+
+When using a `@KafkaListener`, the parameter type is provided to the message converter to assist with the conversion.
+
+NOTE: When using the `StringJsonMessageConverter`, you should use a `StringDeserializer` in the kafka consumer configuration and `StringSerializer` in the kafka producer configuration, when using Spring Integration or the `KafkaTemplate.send(Message<?> message)` method.
 
 ==== Log Compaction
 

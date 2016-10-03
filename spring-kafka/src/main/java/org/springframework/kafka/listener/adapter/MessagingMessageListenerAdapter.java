@@ -97,7 +97,7 @@ public abstract class MessagingMessageListenerAdapter<K, V> implements ConsumerS
 
 	/**
 	 * Returns the inferred type for conversion or, if null, the
-	 * {@link #setFallbackType(Type) fallbackType}.
+	 * {@link #setFallbackType(Class) fallbackType}.
 	 * @return the type.
 	 */
 	protected Type getType() {
@@ -111,7 +111,7 @@ public abstract class MessagingMessageListenerAdapter<K, V> implements ConsumerS
 	 * {@link Object}.
 	 * @param fallbackType the type.
 	 */
-	public void setFallbackType(Type fallbackType) {
+	public void setFallbackType(Class<?> fallbackType) {
 		this.fallbackType = fallbackType;
 	}
 

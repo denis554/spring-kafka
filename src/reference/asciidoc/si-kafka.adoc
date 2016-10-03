@@ -174,3 +174,42 @@ public ConsumerFactory<String, String> consumerFactory() {
     return new DefaultKafkaConsumerFactory<>(props);
 }
 ----
+
+[[message-conversion]]
+==== Message Conversion
+
+A `StringJsonMessageConverter` is provided, see <<serdes>> for more information.
+
+When using this converter with a message-driven channel adapter, you can specify the type to which you want the incoming payload to be converted.
+This is achieved by setting the `payload-type` attribute (`payloadType` property) on the adapter.
+
+[source, xml]
+----
+<int-kafka:message-driven-channel-adapter
+        id="kafkaListener"
+        listener-container="container1"
+        auto-startup="false"
+        phase="100"
+        send-timeout="5000"
+        channel="nullChannel"
+        message-converter="messageConverter"
+        payload-type="com.example.Foo"
+        error-channel="errorChannel" />
+
+<bean id="messageConverter" class="org.springframework.kafka.support.converter.MessagingMessageConverter"/>
+
+----
+
+[source, java]
+----
+@Bean
+public KafkaMessageDrivenChannelAdapter<String, String>
+            adapter(KafkaMessageListenerContainer<String, String> container) {
+    KafkaMessageDrivenChannelAdapter<String, String> kafkaMessageDrivenChannelAdapter =
+            new KafkaMessageDrivenChannelAdapter<>(container, ListenerMode.record);
+    kafkaMessageDrivenChannelAdapter.setOutputChannel(received());
+    kafkaMessageDrivenChannelAdapter.setMessageConverter(converter());
+    kafkaMessageDrivenChannelAdapter.setPayloadType(Foo.class);
+    return kafkaMessageDrivenChannelAdapter;
+}
+----
