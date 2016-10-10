@@ -501,10 +501,28 @@ public class ConcurrentMessageListenerContainerTests {
 		// this consumer is positioned at 1, the next offset after the successfully
 		// processed 'foo'
 		// it has not been updated because 'bar' failed
+		// Since there is no simple ability to hook into 'commitSync()' action with concurrent containers,
+		// ping partition until success through some sleep period
+		for (int i = 0; i < 100; i++) {
+			if (consumer.position(new TopicPartition(topic9, 0)) == 1) {
+				break;
+			}
+			else {
+				Thread.sleep(100);
+			}
+		}
 		assertThat(consumer.position(new TopicPartition(topic9, 0))).isEqualTo(1);
 		// this consumer is positioned at 1, the next offset after the successfully
 		// processed 'qux'
 		// it has been updated even 'baz' failed
+		for (int i = 0; i < 100; i++) {
+			if (consumer.position(new TopicPartition(topic9, 1)) == 2) {
+				break;
+			}
+			else {
+				Thread.sleep(100);
+			}
+		}
 		assertThat(consumer.position(new TopicPartition(topic9, 1))).isEqualTo(2);
 		consumer.close();
 		logger.info("Stop ack on error");
