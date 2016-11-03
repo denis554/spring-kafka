@@ -571,7 +571,7 @@ public class KafkaMessageListenerContainerTests {
 		});
 		containerProps.setSyncCommits(true);
 		containerProps.setAckMode(AckMode.BATCH);
-		containerProps.setPollTimeout(10000);
+		containerProps.setPollTimeout(100);
 		containerProps.setAckOnError(false);
 
 		KafkaMessageListenerContainer<Integer, String> container = new KafkaMessageListenerContainer<>(cf,
@@ -640,7 +640,7 @@ public class KafkaMessageListenerContainerTests {
 		});
 		containerProps.setSyncCommits(true);
 		containerProps.setAckMode(AckMode.BATCH);
-		containerProps.setPollTimeout(10000);
+		containerProps.setPollTimeout(100);
 		containerProps.setAckOnError(false);
 
 		KafkaMessageListenerContainer<Integer, String> container = new KafkaMessageListenerContainer<>(cf,
@@ -714,7 +714,7 @@ public class KafkaMessageListenerContainerTests {
 		});
 		containerProps.setSyncCommits(true);
 		containerProps.setAckMode(AckMode.MANUAL_IMMEDIATE);
-		containerProps.setPollTimeout(10000);
+		containerProps.setPollTimeout(100);
 		containerProps.setAckOnError(false);
 
 		KafkaMessageListenerContainer<Integer, String> container = new KafkaMessageListenerContainer<>(cf,
@@ -777,7 +777,7 @@ public class KafkaMessageListenerContainerTests {
 		});
 		containerProps.setSyncCommits(true);
 		containerProps.setAckMode(AckMode.BATCH);
-		containerProps.setPollTimeout(10000);
+		containerProps.setPollTimeout(100);
 		containerProps.setAckOnError(true);
 		final CountDownLatch latch = new CountDownLatch(4);
 		containerProps.setGenericErrorHandler((BatchErrorHandler) (t, messages) -> {
