@@ -22,7 +22,6 @@ import java.util.List;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.messaging.handler.annotation.support.DefaultMessageHandlerMethodFactory;
 import org.springframework.messaging.handler.annotation.support.MessageHandlerMethodFactory;
 import org.springframework.util.Assert;
 
@@ -39,8 +38,7 @@ import org.springframework.util.Assert;
  */
 public class KafkaListenerEndpointRegistrar implements BeanFactoryAware, InitializingBean {
 
-	private final List<KafkaListenerEndpointDescriptor> endpointDescriptors =
-			new ArrayList<KafkaListenerEndpointDescriptor>();
+	private final List<KafkaListenerEndpointDescriptor> endpointDescriptors = new ArrayList<>();
 
 	private KafkaListenerEndpointRegistry endpointRegistry;
 
@@ -75,10 +73,12 @@ public class KafkaListenerEndpointRegistrar implements BeanFactoryAware, Initial
 	/**
 	 * Set the {@link MessageHandlerMethodFactory} to use to configure the message
 	 * listener responsible to serve an endpoint detected by this processor.
-	 * <p>By default, {@link DefaultMessageHandlerMethodFactory} is used and it
-	 * can be configured further to support additional method arguments
+	 * <p>By default,
+	 * {@link org.springframework.messaging.handler.annotation.support.DefaultMessageHandlerMethodFactory}
+	 * is used and it can be configured further to support additional method arguments
 	 * or to customize conversion and validation support. See
-	 * {@link DefaultMessageHandlerMethodFactory} javadoc for more details.
+	 * {@link org.springframework.messaging.handler.annotation.support.DefaultMessageHandlerMethodFactory}
+	 * javadoc for more details.
 	 * @param kafkaHandlerMethodFactory the {@link MessageHandlerMethodFactory} instance.
 	 */
 	public void setMessageHandlerMethodFactory(MessageHandlerMethodFactory kafkaHandlerMethodFactory) {

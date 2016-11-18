@@ -26,10 +26,8 @@ import org.apache.kafka.clients.consumer.OffsetCommitCallback;
 import org.springframework.core.task.AsyncListenableTaskExecutor;
 import org.springframework.kafka.listener.AbstractMessageListenerContainer;
 import org.springframework.kafka.listener.AbstractMessageListenerContainer.AckMode;
-import org.springframework.kafka.listener.AcknowledgingMessageListener;
 import org.springframework.kafka.listener.ErrorHandler;
 import org.springframework.kafka.listener.GenericErrorHandler;
-import org.springframework.kafka.listener.MessageListener;
 import org.springframework.kafka.support.TopicPartitionInitialOffset;
 import org.springframework.util.Assert;
 
@@ -72,7 +70,7 @@ public class ContainerProperties {
 	 * {@code #setPollTimeout(long) pollTimeout}.</li>
 	 * <li>COUNT: Ack after at least this number of records have been received</li>
 	 * <li>MANUAL: Listener is responsible for acking - use a
-	 * {@link AcknowledgingMessageListener}.
+	 * {@link org.springframework.kafka.listener.AcknowledgingMessageListener}.
 	 * </ul>
 	 */
 	private AbstractMessageListenerContainer.AckMode ackMode = AckMode.BATCH;
@@ -92,8 +90,8 @@ public class ContainerProperties {
 	private long ackTime;
 
 	/**
-	 * The message listener; must be a {@link MessageListener} or
-	 * {@link AcknowledgingMessageListener}.
+	 * The message listener; must be a {@link org.springframework.kafka.listener.MessageListener}
+	 * or {@link org.springframework.kafka.listener.AcknowledgingMessageListener}.
 	 */
 	private Object messageListener;
 
@@ -188,8 +186,8 @@ public class ContainerProperties {
 	}
 
 	/**
-	 * Set the message listener; must be a {@link MessageListener} or
-	 * {@link AcknowledgingMessageListener}.
+	 * Set the message listener; must be a {@link org.springframework.kafka.listener.MessageListener}
+	 * or {@link org.springframework.kafka.listener.AcknowledgingMessageListener}.
 	 * @param messageListener the listener.
 	 */
 	public void setMessageListener(Object messageListener) {
@@ -206,7 +204,7 @@ public class ContainerProperties {
 	 * {@code #setPollTimeout(long) pollTimeout}.</li>
 	 * <li>COUNT: Ack after at least this number of records have been received</li>
 	 * <li>MANUAL: Listener is responsible for acking - use a
-	 * {@link AcknowledgingMessageListener}.
+	 * {@link org.springframework.kafka.listener.AcknowledgingMessageListener}.
 	 * </ul>
 	 * @param ackMode the {@link AckMode}; default BATCH.
 	 */

@@ -23,7 +23,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import org.springframework.kafka.listener.MessageListener;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 
 /**
@@ -64,7 +63,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
  * </ul>
  *
  * <p>When defined at the method level, a listener container is created for each method.
- * The {@link MessageListener} is a
+ * The {@link org.springframework.kafka.listener.MessageListener} is a
  * {@link org.springframework.kafka.listener.adapter.MessagingMessageListenerAdapter},
  * configured with a {@link org.springframework.kafka.config.MethodKafkaListenerEndpoint}.
  *

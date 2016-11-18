@@ -22,8 +22,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.kafka.common.TopicPartition;
-
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.listener.config.ContainerProperties;
 import org.springframework.kafka.support.TopicPartitionInitialOffset;
@@ -32,8 +30,8 @@ import org.springframework.util.Assert;
 /**
  * Creates 1 or more {@link KafkaMessageListenerContainer}s based on
  * {@link #setConcurrency(int) concurrency}. If the
- * {@link ContainerProperties} is configured with {@link TopicPartition}s,
- * the {@link TopicPartition}s are distributed evenly across the
+ * {@link ContainerProperties} is configured with {@link org.apache.kafka.common.TopicPartition}s,
+ * the {@link org.apache.kafka.common.TopicPartition}s are distributed evenly across the
  * instances.
  *
  * @param <K> the key type.

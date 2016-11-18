@@ -18,7 +18,6 @@ package org.springframework.kafka.core;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Future;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -78,8 +77,8 @@ public class KafkaTemplate<K, V> implements KafkaOperations<K, V> {
 
 	/**
 	 * Create an instance using the supplied producer factory and autoFlush setting.
-	 * Set autoFlush to true if you wish to synchronously interact with Kafaka, calling
-	 * {@link Future#get()} on the result.
+	 * Set autoFlush to true if you wish to synchronously interact with Kafka, calling
+	 * {@link java.util.concurrent.Future#get()} on the result.
 	 * @param producerFactory the producer factory.
 	 * @param autoFlush true to flush after each send.
 	 */
