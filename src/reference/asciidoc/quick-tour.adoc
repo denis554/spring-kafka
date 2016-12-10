@@ -44,7 +44,6 @@ Using plain Java to send and receive a message:
 public void testAutoCommit() throws Exception {
     logger.info("Start auto");
     ContainerProperties containerProps = new ContainerProperties("topic1", "topic2");
-    KafkaMessageListenerContainer<Integer, String> container = createContainer(containerProps);
     final CountDownLatch latch = new CountDownLatch(4);
     containerProps.setMessageListener(new MessageListener<Integer, String>() {
 
@@ -55,6 +54,7 @@ public void testAutoCommit() throws Exception {
         }
 
     });
+    KafkaMessageListenerContainer<Integer, String> container = createContainer(containerProps);
     container.setBeanName("testAuto");
     container.start();
     Thread.sleep(1000); // wait a bit for the container to start
