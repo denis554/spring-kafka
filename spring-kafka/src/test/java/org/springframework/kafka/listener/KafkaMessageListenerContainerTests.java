@@ -121,7 +121,7 @@ public class KafkaMessageListenerContainerTests {
 		logger.info("Start " + this.testName.getMethodName());
 		Map<String, Object> props = KafkaTestUtils.consumerProps("slow1", "false", embeddedKafka);
 //		props.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, 6); // 2 per poll
-		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<Integer, String>(props);
+		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<>(props);
 		ContainerProperties containerProps = new ContainerProperties(topic1);
 
 		final CountDownLatch latch = new CountDownLatch(6);
@@ -181,7 +181,7 @@ public class KafkaMessageListenerContainerTests {
 	private void testSlowListenerManualGuts(AckMode ackMode, String topic) throws Exception {
 		logger.info("Start " + this.testName.getMethodName() + ackMode);
 		Map<String, Object> props = KafkaTestUtils.consumerProps("slow2", "false", embeddedKafka);
-		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<Integer, String>(props);
+		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<>(props);
 		ContainerProperties containerProps = new ContainerProperties(topic);
 		containerProps.setSyncCommits(true);
 
@@ -513,8 +513,7 @@ public class KafkaMessageListenerContainerTests {
 		willAnswer(invocation -> {
 
 			@SuppressWarnings({ "unchecked" })
-			Map<TopicPartition, OffsetAndMetadata> map =
-					(Map<TopicPartition, OffsetAndMetadata>) invocation.getArguments()[0];
+			Map<TopicPartition, OffsetAndMetadata> map = invocation.getArgumentAt(0, Map.class);
 			try {
 				return invocation.callRealMethod();
 			}
@@ -552,16 +551,6 @@ public class KafkaMessageListenerContainerTests {
 	public void testBatchAck() throws Exception {
 		logger.info("Start batch ack");
 
-		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
-		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<>(senderProps);
-		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
-		template.setDefaultTopic(topic7);
-		template.sendDefault(0, 0, "foo");
-		template.sendDefault(0, 0, "baz");
-		template.sendDefault(1, 0, "bar");
-		template.sendDefault(1, 0, "qux");
-		template.flush();
-
 		Map<String, Object> props = KafkaTestUtils.consumerProps("test6", "false", embeddedKafka);
 		props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<>(props);
@@ -584,8 +573,7 @@ public class KafkaMessageListenerContainerTests {
 		willAnswer(invocation -> {
 
 			@SuppressWarnings({ "unchecked" })
-			Map<TopicPartition, OffsetAndMetadata> map = (Map<TopicPartition, OffsetAndMetadata>) invocation
-					.getArguments()[0];
+			Map<TopicPartition, OffsetAndMetadata> map = invocation.getArgumentAt(0, Map.class);
 			for (Entry<TopicPartition, OffsetAndMetadata> entry : map.entrySet()) {
 				if (entry.getValue().offset() == 2) {
 					firstBatchLatch.countDown();
@@ -605,6 +593,16 @@ public class KafkaMessageListenerContainerTests {
 		}).given(containerConsumer)
 				.commitSync(any());
 
+		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
+		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<>(senderProps);
+		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
+		template.setDefaultTopic(topic7);
+		template.sendDefault(0, 0, "foo");
+		template.sendDefault(0, 0, "baz");
+		template.sendDefault(1, 0, "bar");
+		template.sendDefault(1, 0, "qux");
+		template.flush();
+
 		assertThat(firstBatchLatch.await(9, TimeUnit.SECONDS)).isTrue();
 
 		assertThat(latch.await(60, TimeUnit.SECONDS)).isTrue();
@@ -620,16 +618,6 @@ public class KafkaMessageListenerContainerTests {
 	@Test
 	public void testBatchListener() throws Exception {
 		logger.info("Start batch listener");
-
-		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
-		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<>(senderProps);
-		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
-		template.setDefaultTopic(topic8);
-		template.sendDefault(0, 0, "foo");
-		template.sendDefault(0, 0, "baz");
-		template.sendDefault(1, 0, "bar");
-		template.sendDefault(1, 0, "qux");
-		template.flush();
 
 		Map<String, Object> props = KafkaTestUtils.consumerProps("test8", "false", embeddedKafka);
 		props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
@@ -653,8 +641,7 @@ public class KafkaMessageListenerContainerTests {
 		willAnswer(invocation -> {
 
 			@SuppressWarnings({ "unchecked" })
-			Map<TopicPartition, OffsetAndMetadata> map = (Map<TopicPartition, OffsetAndMetadata>) invocation
-					.getArguments()[0];
+			Map<TopicPartition, OffsetAndMetadata> map = invocation.getArgumentAt(0, Map.class);
 			for (Entry<TopicPartition, OffsetAndMetadata> entry : map.entrySet()) {
 				if (entry.getValue().offset() == 2) {
 					firstBatchLatch.countDown();
@@ -673,6 +660,16 @@ public class KafkaMessageListenerContainerTests {
 
 		}).given(containerConsumer)
 				.commitSync(any());
+
+		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
+		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<>(senderProps);
+		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
+		template.setDefaultTopic(topic8);
+		template.sendDefault(0, 0, "foo");
+		template.sendDefault(0, 0, "baz");
+		template.sendDefault(1, 0, "bar");
+		template.sendDefault(1, 0, "qux");
+		template.flush();
 
 		assertThat(firstBatchLatch.await(9, TimeUnit.SECONDS)).isTrue();
 
@@ -726,8 +723,7 @@ public class KafkaMessageListenerContainerTests {
 		willAnswer(invocation -> {
 
 			@SuppressWarnings({ "unchecked" })
-			Map<TopicPartition, OffsetAndMetadata> map = (Map<TopicPartition, OffsetAndMetadata>) invocation
-					.getArguments()[0];
+			Map<TopicPartition, OffsetAndMetadata> map = invocation.getArgumentAt(0, Map.class);
 			try {
 				return invocation.callRealMethod();
 			}
@@ -756,16 +752,6 @@ public class KafkaMessageListenerContainerTests {
 	@Test
 	public void testBatchListenerErrors() throws Exception {
 		logger.info("Start batch listener errors");
-
-		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
-		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<>(senderProps);
-		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
-		template.setDefaultTopic(topic10);
-		template.sendDefault(0, 0, "foo");
-		template.sendDefault(0, 0, "baz");
-		template.sendDefault(1, 0, "bar");
-		template.sendDefault(1, 0, "qux");
-		template.flush();
 
 		Map<String, Object> props = KafkaTestUtils.consumerProps("test9", "false", embeddedKafka);
 		props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
@@ -796,8 +782,7 @@ public class KafkaMessageListenerContainerTests {
 		willAnswer(invocation -> {
 
 			@SuppressWarnings({ "unchecked" })
-			Map<TopicPartition, OffsetAndMetadata> map = (Map<TopicPartition, OffsetAndMetadata>) invocation
-					.getArguments()[0];
+			Map<TopicPartition, OffsetAndMetadata> map = invocation.getArgumentAt(0, Map.class);
 			try {
 				return invocation.callRealMethod();
 			}
@@ -811,6 +796,16 @@ public class KafkaMessageListenerContainerTests {
 
 		}).given(containerConsumer)
 				.commitSync(any());
+
+		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
+		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<>(senderProps);
+		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
+		template.setDefaultTopic(topic10);
+		template.sendDefault(0, 0, "foo");
+		template.sendDefault(0, 0, "baz");
+		template.sendDefault(1, 0, "bar");
+		template.sendDefault(1, 0, "qux");
+		template.flush();
 
 		assertThat(latch.await(60, TimeUnit.SECONDS)).isTrue();
 		assertThat(commitLatch.await(60, TimeUnit.SECONDS)).isTrue();
