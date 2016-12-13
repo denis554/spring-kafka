@@ -131,8 +131,8 @@ private KafkaTemplate<Integer, String> template;
 
 @Test
 public void testSimple() throws Exception {
-    waitListening("foo");
     template.send("annotated1", 0, "foo");
+    template.flush();
     assertTrue(this.listener.latch1.await(10, TimeUnit.SECONDS));
 }
 
