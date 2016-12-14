@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1048,12 +1049,35 @@ public class KafkaMessageListenerContainerTests {
 			logger.info("defined part e: " + message);
 			latch3.countDown();
 		});
+
+		final CountDownLatch listenerConsumerAvailableLatch = new CountDownLatch(1);
+
+		final CountDownLatch listenerConsumerStartLatch = new CountDownLatch(1);
+
 		KafkaMessageListenerContainer<Integer, String> resettingContainer =
-				new KafkaMessageListenerContainer<>(cf, container3Props);
+				new KafkaMessageListenerContainer<Integer, String>(cf, container3Props) {
+
+					@Override
+					protected void setRunning(boolean running) {
+						listenerConsumerAvailableLatch.countDown();
+						try {
+							assertThat(listenerConsumerStartLatch.await(10, TimeUnit.SECONDS)).isTrue();
+						}
+						catch (InterruptedException e) {
+							Thread.currentThread().interrupt();
+							throw new IllegalStateException(e);
+						}
+						super.setRunning(running);
+					}
+
+				};
 		resettingContainer.setBeanName("b3");
-		resettingContainer.start();
+
+		Executors.newSingleThreadExecutor().submit(resettingContainer::start);
 
 		CountDownLatch stopLatch3 = new CountDownLatch(1);
+
+		assertThat(listenerConsumerAvailableLatch.await(60, TimeUnit.SECONDS)).isTrue();
 
 		willAnswer(invocation -> {
 
@@ -1066,6 +1090,8 @@ public class KafkaMessageListenerContainerTests {
 
 		}).given(spyOnConsumer(resettingContainer))
 				.commitSync(any());
+
+		listenerConsumerStartLatch.countDown();
 
 		assertThat(latch3.await(60, TimeUnit.SECONDS)).isTrue();
 
