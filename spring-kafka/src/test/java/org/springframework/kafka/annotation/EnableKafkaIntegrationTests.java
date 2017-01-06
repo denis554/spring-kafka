@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,8 @@ public class EnableKafkaIntegrationTests {
 	public Listener listener;
 
 	@ClassRule
-	public static KafkaEmbedded embeddedKafka = new KafkaEmbedded(1, true, "annotated1", "annotated2", "annotated3",
+	public static KafkaEmbedded embeddedKafka = new KafkaEmbedded(1, true,
+			"annotated1", "annotated2", "annotated3",
 			"annotated4", "annotated5", "annotated6", "annotated7", "annotated8", "annotated9", "annotated10",
 			"annotated11", "annotated12", "annotated13", "annotated14", "annotated15", "annotated16", "annotated17",
 			"annotated18", "annotated19");
@@ -576,7 +577,7 @@ public class EnableKafkaIntegrationTests {
 		public void manualStart(String foo) {
 		}
 
-		@KafkaListener(id = "foo", topics = "${topicOne:annotated1}")
+		@KafkaListener(id = "foo", topics = "#{'${topicOne:annotated1,foo}'.split(',')}")
 		public void listen1(String foo) {
 			this.latch1.countDown();
 		}
