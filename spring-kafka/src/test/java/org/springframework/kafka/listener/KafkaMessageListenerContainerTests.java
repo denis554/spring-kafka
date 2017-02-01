@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,8 @@
 package org.springframework.kafka.listener;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.willAnswer;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -166,8 +165,8 @@ public class KafkaMessageListenerContainerTests {
 		assertThat(latch.await(60, TimeUnit.SECONDS)).isTrue();
 		assertThat(ackNull.get()).isNull();
 		assertThat(bitSet.cardinality()).isEqualTo(6);
-		verify(consumer, atLeastOnce()).pause(anyObject());
-		verify(consumer, atLeastOnce()).resume(anyObject());
+		verify(consumer, atLeastOnce()).pause(any());
+		verify(consumer, atLeastOnce()).resume(any());
 		container.stop();
 		logger.info("Stop " + this.testName.getMethodName());
 	}
@@ -243,8 +242,8 @@ public class KafkaMessageListenerContainerTests {
 		assertThat(latch.await(60, TimeUnit.SECONDS)).isTrue();
 		assertThat(commitLatch.await(60, TimeUnit.SECONDS)).isTrue();
 		assertThat(bitSet.cardinality()).isEqualTo(6);
-		verify(consumer, atLeastOnce()).pause(anyObject());
-		verify(consumer, atLeastOnce()).resume(anyObject());
+		verify(consumer, atLeastOnce()).pause(any());
+		verify(consumer, atLeastOnce()).resume(any());
 		container.stop();
 		logger.info("Stop " + this.testName.getMethodName() + ackMode);
 	}
@@ -308,8 +307,8 @@ public class KafkaMessageListenerContainerTests {
 
 		// Verify that commitSync is called when paused
 		assertThat(latch.await(60, TimeUnit.SECONDS)).isTrue();
-		verify(consumer, atLeastOnce()).pause(anyObject());
-		verify(consumer, atLeastOnce()).resume(anyObject());
+		verify(consumer, atLeastOnce()).pause(any());
+		verify(consumer, atLeastOnce()).resume(any());
 		container.stop();
 	}
 
@@ -416,8 +415,8 @@ public class KafkaMessageListenerContainerTests {
 		template.flush();
 		assertThat(latch.await(60, TimeUnit.SECONDS)).isTrue();
 		assertThat(bitSet.cardinality()).isEqualTo(6);
-		verify(consumer, atLeastOnce()).pause(anyObject());
-		verify(consumer, atLeastOnce()).resume(anyObject());
+		verify(consumer, atLeastOnce()).pause(any());
+		verify(consumer, atLeastOnce()).resume(any());
 		container.stop();
 		logger.info("Stop " + this.testName.getMethodName());
 	}
@@ -486,8 +485,8 @@ public class KafkaMessageListenerContainerTests {
 		template.flush();
 		assertThat(latch.await(60, TimeUnit.SECONDS)).isTrue();
 		assertThat(bitSet.cardinality()).isEqualTo(6);
-		verify(consumer, atLeastOnce()).pause(anyObject());
-		verify(consumer, atLeastOnce()).resume(anyObject());
+		verify(consumer, atLeastOnce()).pause(any());
+		verify(consumer, atLeastOnce()).resume(any());
 		container.stop();
 		logger.info("Stop " + this.testName.getMethodName());
 	}
@@ -513,8 +512,7 @@ public class KafkaMessageListenerContainerTests {
 		final CountDownLatch latch = new CountDownLatch(2);
 		willAnswer(invocation -> {
 
-			@SuppressWarnings({ "unchecked" })
-			Map<TopicPartition, OffsetAndMetadata> map = invocation.getArgumentAt(0, Map.class);
+			Map<TopicPartition, OffsetAndMetadata> map = invocation.getArgument(0);
 			try {
 				return invocation.callRealMethod();
 			}
@@ -573,8 +571,7 @@ public class KafkaMessageListenerContainerTests {
 		final CountDownLatch latch = new CountDownLatch(2);
 		willAnswer(invocation -> {
 
-			@SuppressWarnings({ "unchecked" })
-			Map<TopicPartition, OffsetAndMetadata> map = invocation.getArgumentAt(0, Map.class);
+			Map<TopicPartition, OffsetAndMetadata> map = invocation.getArgument(0);
 			for (Entry<TopicPartition, OffsetAndMetadata> entry : map.entrySet()) {
 				if (entry.getValue().offset() == 2) {
 					firstBatchLatch.countDown();
@@ -641,8 +638,7 @@ public class KafkaMessageListenerContainerTests {
 		final CountDownLatch latch = new CountDownLatch(2);
 		willAnswer(invocation -> {
 
-			@SuppressWarnings({ "unchecked" })
-			Map<TopicPartition, OffsetAndMetadata> map = invocation.getArgumentAt(0, Map.class);
+			Map<TopicPartition, OffsetAndMetadata> map = invocation.getArgument(0);
 			for (Entry<TopicPartition, OffsetAndMetadata> entry : map.entrySet()) {
 				if (entry.getValue().offset() == 2) {
 					firstBatchLatch.countDown();
@@ -723,8 +719,7 @@ public class KafkaMessageListenerContainerTests {
 		final CountDownLatch commitLatch = new CountDownLatch(2);
 		willAnswer(invocation -> {
 
-			@SuppressWarnings({ "unchecked" })
-			Map<TopicPartition, OffsetAndMetadata> map = invocation.getArgumentAt(0, Map.class);
+			Map<TopicPartition, OffsetAndMetadata> map = invocation.getArgument(0);
 			try {
 				return invocation.callRealMethod();
 			}
@@ -782,8 +777,7 @@ public class KafkaMessageListenerContainerTests {
 		final CountDownLatch commitLatch = new CountDownLatch(2);
 		willAnswer(invocation -> {
 
-			@SuppressWarnings({ "unchecked" })
-			Map<TopicPartition, OffsetAndMetadata> map = invocation.getArgumentAt(0, Map.class);
+			Map<TopicPartition, OffsetAndMetadata> map = invocation.getArgument(0);
 			try {
 				return invocation.callRealMethod();
 			}

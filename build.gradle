@@ -36,7 +36,7 @@ allprojects {
 
 	repositories {
 		maven { url 'https://repo.spring.io/libs-release' }
-		maven { url 'https://repo.spring.io/libs-milestone' }
+		maven { url 'https://repo.spring.io/libs-snapshot' }
 		if (project.hasProperty('platformVersion')) {
 			maven { url 'https://repo.spring.io/snapshot' }
 		}
@@ -66,11 +66,6 @@ subprojects { subproject ->
 	}
 
 	compileJava {
-		sourceCompatibility = 1.7
-		targetCompatibility = 1.7
-	}
-
-	compileTestJava {
 		sourceCompatibility = 1.8
 		targetCompatibility = 1.8
 	}
@@ -78,15 +73,14 @@ subprojects { subproject ->
 	ext {
 		assertjVersion = '2.6.0'
 		hamcrestVersion = '1.3'
-		jacksonVersion = '2.6.7'
+		jacksonVersion = '2.8.6'
 		junitVersion = '4.12'
 		kafkaVersion = '0.10.1.1'
-		log4jVersion = '1.2.17'
-		mockitoVersion = '1.10.19'
+		mockitoVersion = '2.5.4'
 		scalaVersion = '2.11'
-		slf4jVersion = '1.7.21'
-		springRetryVersion = '1.1.3.RELEASE'
-		springVersion = '4.3.5.RELEASE'
+		slf4jVersion = '1.7.22'
+		springRetryVersion = '1.2.0.RELEASE'
+		springVersion = '5.0.0.BUILD-SNAPSHOT'
 
 		idPrefix = 'kafka'
 
