@@ -17,7 +17,10 @@
 package org.springframework.kafka.annotation;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 
 import java.util.Collection;
 import java.util.List;
@@ -25,6 +28,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -34,6 +38,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 
+import org.springframework.beans.DirectFieldAccessor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -51,6 +56,7 @@ import org.springframework.kafka.event.ListenerContainerIdleEvent;
 import org.springframework.kafka.listener.AbstractMessageListenerContainer.AckMode;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.listener.ConsumerSeekAware;
+import org.springframework.kafka.listener.KafkaMessageListenerContainer;
 import org.springframework.kafka.listener.MessageListenerContainer;
 import org.springframework.kafka.listener.adapter.FilteringAcknowledgingMessageListenerAdapter;
 import org.springframework.kafka.listener.adapter.MessagingMessageListenerAdapter;
@@ -243,7 +249,27 @@ public class EnableKafkaIntegrationTests {
 	}
 
 	@Test
+	@SuppressWarnings("unchecked")
 	public void testBatch() throws Exception {
+		ConcurrentMessageListenerContainer<?, ?> container =
+				(ConcurrentMessageListenerContainer<?, ?>) registry.getListenerContainer("list1");
+		Consumer<?, ?> consumer =
+				spyOnConsumer((KafkaMessageListenerContainer<Integer, String>) container.getContainers().get(0));
+
+		final CountDownLatch commitLatch = new CountDownLatch(2);
+
+		willAnswer(invocation -> {
+
+			try {
+				return invocation.callRealMethod();
+			}
+			finally {
+				commitLatch.countDown();
+			}
+
+		}).given(consumer)
+				.commitSync(any());
+
 		template.send("annotated14", null, "foo");
 		template.send("annotated14", null, "bar");
 		assertThat(this.listener.latch10.await(60, TimeUnit.SECONDS)).isTrue();
@@ -251,6 +277,8 @@ public class EnableKafkaIntegrationTests {
 		List<?> list = (List<?>) this.listener.payload;
 		assertThat(list.size()).isGreaterThan(0);
 		assertThat(list.get(0)).isInstanceOf(String.class);
+
+		assertThat(commitLatch.await(10, TimeUnit.SECONDS)).isTrue();
 	}
 
 	@Test
@@ -324,6 +352,14 @@ public class EnableKafkaIntegrationTests {
 		Message<?> m = (Message<?>) list.get(0);
 		assertThat(m.getPayload()).isInstanceOf(String.class);
 		assertThat(this.listener.ack).isNotNull();
+	}
+
+	private Consumer<?, ?> spyOnConsumer(KafkaMessageListenerContainer<Integer, String> container) {
+		Consumer<?, ?> consumer = spy(
+				KafkaTestUtils.getPropertyValue(container, "listenerConsumer.consumer", Consumer.class));
+		new DirectFieldAccessor(KafkaTestUtils.getPropertyValue(container, "listenerConsumer"))
+				.setPropertyValue("consumer", consumer);
+		return consumer;
 	}
 
 	@Configuration
