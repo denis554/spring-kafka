@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 the original author or authors.
+ * Copyright 2015-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ import org.springframework.util.concurrent.SettableListenableFuture;
  * @author Marius Bogoevici
  * @author Gary Russell
  * @author Igor Stepanov
+ * @author Artem Bilan
  */
 public class KafkaTemplate<K, V> implements KafkaOperations<K, V> {
 
@@ -59,8 +60,6 @@ public class KafkaTemplate<K, V> implements KafkaOperations<K, V> {
 	private final boolean autoFlush;
 
 	private RecordMessageConverter messageConverter = new MessagingMessageConverter();
-
-	private volatile Producer<K, V> producer;
 
 	private volatile String defaultTopic;
 
@@ -180,22 +179,52 @@ public class KafkaTemplate<K, V> implements KafkaOperations<K, V> {
 
 	@Override
 	public List<PartitionInfo> partitionsFor(String topic) {
-		return getTheProducer().partitionsFor(topic);
+		Producer<K, V> producer = getTheProducer();
+		try {
+			return producer.partitionsFor(topic);
+		}
+		finally {
+			producer.close();
+		}
 	}
 
 	@Override
 	public Map<MetricName, ? extends Metric> metrics() {
-		return getTheProducer().metrics();
+		Producer<K, V> producer = getTheProducer();
+		try {
+			return producer.metrics();
+		}
+		finally {
+			producer.close();
+		}
 	}
 
 	@Override
 	public <T> T execute(ProducerCallback<K, V, T> callback) {
-		return callback.doInKafka(getTheProducer());
+		Producer<K, V> producer = getTheProducer();
+		try {
+			return callback.doInKafka(producer);
+		}
+		finally {
+			producer.close();
+		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * <p><b>Note</b> It only makes sense to invoke this method if the
+	 * {@link ProducerFactory} serves up a singleton producer (such as the
+	 * {@link DefaultKafkaProducerFactory}).
+	 */
 	@Override
 	public void flush() {
-		getTheProducer().flush();
+		Producer<K, V> producer = getTheProducer();
+		try {
+			producer.flush();
+		}
+		finally {
+			producer.close();
+		}
 	}
 
 	/**
@@ -204,29 +233,37 @@ public class KafkaTemplate<K, V> implements KafkaOperations<K, V> {
 	 * @return a Future for the {@link RecordMetadata}.
 	 */
 	protected ListenableFuture<SendResult<K, V>> doSend(final ProducerRecord<K, V> producerRecord) {
-		getTheProducer();
+		final Producer<K, V> producer = getTheProducer();
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace("Sending: " + producerRecord);
 		}
 		final SettableListenableFuture<SendResult<K, V>> future = new SettableListenableFuture<>();
-		getTheProducer().send(producerRecord, new Callback() {
+		producer.send(producerRecord, new Callback() {
 
 			@Override
 			public void onCompletion(RecordMetadata metadata, Exception exception) {
-				if (exception == null) {
-					future.set(new SendResult<>(producerRecord, metadata));
-					if (KafkaTemplate.this.producerListener != null
-							&& KafkaTemplate.this.producerListener.isInterestedInSuccess()) {
-						KafkaTemplate.this.producerListener.onSuccess(producerRecord.topic(),
-								producerRecord.partition(), producerRecord.key(), producerRecord.value(), metadata);
+				try {
+					if (exception == null) {
+						future.set(new SendResult<>(producerRecord, metadata));
+						if (KafkaTemplate.this.producerListener != null
+								&& KafkaTemplate.this.producerListener.isInterestedInSuccess()) {
+							KafkaTemplate.this.producerListener.onSuccess(producerRecord.topic(),
+									producerRecord.partition(), producerRecord.key(), producerRecord.value(), metadata);
+						}
+					}
+					else {
+						future.setException(new KafkaProducerException(producerRecord, "Failed to send", exception));
+						if (KafkaTemplate.this.producerListener != null) {
+							KafkaTemplate.this.producerListener.onError(producerRecord.topic(),
+									producerRecord.partition(),
+									producerRecord.key(),
+									producerRecord.value(),
+									exception);
+						}
 					}
 				}
-				else {
-					future.setException(new KafkaProducerException(producerRecord, "Failed to send", exception));
-					if (KafkaTemplate.this.producerListener != null) {
-						KafkaTemplate.this.producerListener.onError(producerRecord.topic(),
-								producerRecord.partition(), producerRecord.key(), producerRecord.value(), exception);
-					}
+				finally {
+					producer.close();
 				}
 			}
 
@@ -241,14 +278,7 @@ public class KafkaTemplate<K, V> implements KafkaOperations<K, V> {
 	}
 
 	private Producer<K, V> getTheProducer() {
-		if (this.producer == null) {
-			synchronized (this) {
-				if (this.producer == null) {
-					this.producer = this.producerFactory.createProducer();
-				}
-			}
-		}
-		return this.producer;
+		return this.producerFactory.createProducer();
 	}
 
 }
