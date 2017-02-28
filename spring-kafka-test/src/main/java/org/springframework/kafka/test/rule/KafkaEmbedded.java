@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 the original author or authors.
+ * Copyright 2015-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.protocol.Errors;
 import org.apache.kafka.common.protocol.SecurityProtocol;
 import org.apache.kafka.common.requests.MetadataResponse;
+import org.apache.kafka.common.utils.Time;
 import org.junit.rules.ExternalResource;
 
 import org.springframework.kafka.test.core.BrokerAddress;
@@ -52,10 +53,10 @@ import org.springframework.retry.support.RetryTemplate;
 import kafka.admin.AdminUtils;
 import kafka.admin.AdminUtils$;
 import kafka.server.KafkaConfig;
+import kafka.server.KafkaConfig$;
 import kafka.server.KafkaServer;
 import kafka.server.NotRunning;
 import kafka.utils.CoreUtils;
-import kafka.utils.SystemTime$;
 import kafka.utils.TestUtils;
 import kafka.utils.ZKStringSerializer$;
 import kafka.utils.ZkUtils;
@@ -86,7 +87,7 @@ public class KafkaEmbedded extends ExternalResource implements KafkaRule {
 
 	private final int partitionsPerTopic;
 
-	private List<KafkaServer> kafkaServers;
+	private final List<KafkaServer> kafkaServers = new ArrayList<>();
 
 	private EmbeddedZookeeper zookeeper;
 
@@ -137,7 +138,7 @@ public class KafkaEmbedded extends ExternalResource implements KafkaRule {
 		this.zkConnect = "127.0.0.1:" + this.zookeeper.port();
 		this.zookeeperClient = new ZkClient(this.zkConnect, zkSessionTimeout, zkConnectionTimeout,
 				ZKStringSerializer$.MODULE$);
-		this.kafkaServers = new ArrayList<>();
+		this.kafkaServers.clear();
 		for (int i = 0; i < this.count; i++) {
 			ServerSocket ss = ServerSocketFactory.getDefault().createServerSocket(0);
 			int randomPort = ss.getLocalPort();
@@ -148,10 +149,11 @@ public class KafkaEmbedded extends ExternalResource implements KafkaRule {
 					scala.Option.<File>apply(null),
 					scala.Option.<Properties>apply(null),
 					true, false, 0, false, 0, false, 0, scala.Option.<String>apply(null));
+			brokerConfigProperties.setProperty(KafkaConfig$.MODULE$.PortProp(), "" + randomPort);
 			brokerConfigProperties.setProperty("replica.socket.timeout.ms", "1000");
 			brokerConfigProperties.setProperty("controller.socket.timeout.ms", "1000");
 			brokerConfigProperties.setProperty("offsets.topic.replication.factor", "1");
-			KafkaServer server = TestUtils.createServer(new KafkaConfig(brokerConfigProperties), SystemTime$.MODULE$);
+			KafkaServer server = TestUtils.createServer(new KafkaConfig(brokerConfigProperties), Time.SYSTEM);
 			this.kafkaServers.add(server);
 		}
 		ZkUtils zkUtils = new ZkUtils(getZkClient(), null, false);
@@ -221,7 +223,7 @@ public class KafkaEmbedded extends ExternalResource implements KafkaRule {
 
 	public BrokerAddress getBrokerAddress(int i) {
 		KafkaServer kafkaServer = this.kafkaServers.get(i);
-		return new BrokerAddress(kafkaServer.config().hostName(), kafkaServer.config().port());
+		return new BrokerAddress("127.0.0.1", kafkaServer.config().port());
 	}
 
 	@Override
