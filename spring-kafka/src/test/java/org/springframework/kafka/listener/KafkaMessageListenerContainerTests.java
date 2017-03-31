@@ -78,6 +78,7 @@ import org.springframework.retry.support.RetryTemplate;
  * @author Gary Russell
  * @author Martin Dam
  * @author Artem Bilan
+ * @author Loic Talhouarne
  */
 public class KafkaMessageListenerContainerTests {
 
@@ -725,7 +726,10 @@ public class KafkaMessageListenerContainerTests {
 			}
 			finally {
 				for (Entry<TopicPartition, OffsetAndMetadata> entry : map.entrySet()) {
-					if (entry.getValue().offset() == 2) {
+					if (entry.getValue().offset() == 1) {
+						throw new IllegalStateException("The highest offset should be the only one committed.");
+					}
+					else if (entry.getValue().offset() == 2) {
 						commitLatch.countDown();
 					}
 				}
