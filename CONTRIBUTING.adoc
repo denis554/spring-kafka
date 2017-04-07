@@ -1,4 +1,4 @@
-= Spring Kafka Contributor Guidelines
+= Spring for Apache Kafka Contributor Guidelines
 
 Have something you'd like to contribute to **Spring Kafka**?
 We welcome pull requests, but ask that you carefully read this document first to understand how best to submit them;
