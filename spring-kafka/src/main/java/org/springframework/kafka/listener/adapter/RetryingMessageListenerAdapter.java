@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,13 @@
 
 package org.springframework.kafka.listener.adapter;
 
+import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
-import org.springframework.kafka.KafkaException;
+import org.springframework.kafka.listener.AcknowledgingConsumerAwareMessageListener;
 import org.springframework.kafka.listener.MessageListener;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.retry.RecoveryCallback;
-import org.springframework.retry.RetryCallback;
-import org.springframework.retry.RetryContext;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.util.Assert;
 
@@ -37,7 +37,7 @@ import org.springframework.util.Assert;
  */
 public class RetryingMessageListenerAdapter<K, V>
 		extends AbstractRetryingMessageListenerAdapter<K, V, MessageListener<K, V>>
-		implements MessageListener<K, V> {
+		implements AcknowledgingConsumerAwareMessageListener<K, V> {
 
 	/**
 	 * Construct an instance with the provided template and delegate. The exception will
@@ -64,17 +64,45 @@ public class RetryingMessageListenerAdapter<K, V>
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public void onMessage(final ConsumerRecord<K, V> record) {
-		getRetryTemplate().execute(new RetryCallback<Object, KafkaException>() {
+	public void onMessage(final ConsumerRecord<K, V> record, Acknowledgment acknowledgment, Consumer<?, ?> consumer) {
+		getRetryTemplate().execute(context -> {
+					context.setAttribute("record", record);
+					switch (RetryingMessageListenerAdapter.this.delegateType) {
+						case ACKNOWLEDGING_CONSUMER_AWARE:
+							RetryingMessageListenerAdapter.this.delegate.onMessage(record, acknowledgment, consumer);
+							break;
+						case ACKNOWLEDGING:
+							RetryingMessageListenerAdapter.this.delegate.onMessage(record, acknowledgment);
+							break;
+						case CONSUMER_AWARE:
+							RetryingMessageListenerAdapter.this.delegate.onMessage(record, consumer);
+							break;
+						case SIMPLE:
+							RetryingMessageListenerAdapter.this.delegate.onMessage(record);
+					}
+					return null;
+				},
+				getRecoveryCallback());
+	}
 
-			@Override
-			public Void doWithRetry(RetryContext context) throws KafkaException {
-				context.setAttribute("record", record);
-				RetryingMessageListenerAdapter.this.delegate.onMessage(record);
-				return null;
-			}
+	/*
+	 * Since the container uses the delegate's type to determine which method to call, we
+	 * must implement them all.
+	 */
 
-		}, (RecoveryCallback<Object>) getRecoveryCallback());
+	@Override
+	public void onMessage(ConsumerRecord<K, V> data) {
+		onMessage(data, null, null);
+	}
+
+	@Override
+	public void onMessage(ConsumerRecord<K, V> data, Acknowledgment acknowledgment) {
+		onMessage(data, acknowledgment, null);
+	}
+
+	@Override
+	public void onMessage(ConsumerRecord<K, V> data, Consumer<?, ?> consumer) {
+		onMessage(data, null, consumer);
 	}
 
 }

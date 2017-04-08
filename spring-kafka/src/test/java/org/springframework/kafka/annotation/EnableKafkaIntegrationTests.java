@@ -59,10 +59,10 @@ import org.springframework.kafka.listener.ConsumerSeekAware;
 import org.springframework.kafka.listener.KafkaListenerErrorHandler;
 import org.springframework.kafka.listener.KafkaMessageListenerContainer;
 import org.springframework.kafka.listener.MessageListenerContainer;
-import org.springframework.kafka.listener.adapter.FilteringAcknowledgingMessageListenerAdapter;
+import org.springframework.kafka.listener.adapter.FilteringMessageListenerAdapter;
 import org.springframework.kafka.listener.adapter.MessagingMessageListenerAdapter;
 import org.springframework.kafka.listener.adapter.RecordFilterStrategy;
-import org.springframework.kafka.listener.adapter.RetryingAcknowledgingMessageListenerAdapter;
+import org.springframework.kafka.listener.adapter.RetryingMessageListenerAdapter;
 import org.springframework.kafka.listener.config.ContainerProperties;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -75,8 +75,6 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.retry.RecoveryCallback;
-import org.springframework.retry.RetryContext;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
@@ -151,17 +149,21 @@ public class EnableKafkaIntegrationTests {
 		assertThat(this.listener.event.getListenerId().startsWith("qux-"));
 		MessageListenerContainer manualContainer = this.registry.getListenerContainer("qux");
 		assertThat(KafkaTestUtils.getPropertyValue(manualContainer, "containerProperties.messageListener"))
-				.isInstanceOf(FilteringAcknowledgingMessageListenerAdapter.class);
+				.isInstanceOf(FilteringMessageListenerAdapter.class);
 		assertThat(KafkaTestUtils.getPropertyValue(manualContainer, "containerProperties.messageListener.ackDiscarded",
 				Boolean.class)).isTrue();
 		assertThat(KafkaTestUtils.getPropertyValue(manualContainer, "containerProperties.messageListener.delegate"))
-				.isInstanceOf(RetryingAcknowledgingMessageListenerAdapter.class);
+				.isInstanceOf(RetryingMessageListenerAdapter.class);
 		assertThat(KafkaTestUtils
 				.getPropertyValue(manualContainer, "containerProperties.messageListener.delegate.recoveryCallback")
 				.getClass().getName()).contains("EnableKafkaIntegrationTests$Config$");
 		assertThat(KafkaTestUtils.getPropertyValue(manualContainer,
 				"containerProperties.messageListener.delegate.delegate"))
 						.isInstanceOf(MessagingMessageListenerAdapter.class);
+		assertThat(this.listener.consumer).isNotNull();
+		assertThat(this.listener.consumer).isSameAs(KafkaTestUtils.getPropertyValue(KafkaTestUtils
+				.getPropertyValue(this.registry.getListenerContainer("qux"), "containers", List.class).get(0),
+				"listenerConsumer.consumer"));
 
 		template.send("annotated5", 0, 0, "foo");
 		template.send("annotated5", 1, 0, "bar");
@@ -447,14 +449,7 @@ public class EnableKafkaIntegrationTests {
 			factory.setRecordFilterStrategy(manualFilter());
 			factory.setAckDiscarded(true);
 			factory.setRetryTemplate(new RetryTemplate());
-			factory.setRecoveryCallback(new RecoveryCallback<Void>() {
-
-				@Override
-				public Void recover(RetryContext context) throws Exception {
-					return null;
-				}
-
-			});
+			factory.setRecoveryCallback(c -> null);
 			return factory;
 		}
 
@@ -627,6 +622,8 @@ public class EnableKafkaIntegrationTests {
 
 		private volatile List<Long> offsets;
 
+		private volatile Consumer<?, ?> consumer;
+
 		@KafkaListener(id = "manualStart", topics = "manualStart",
 				containerFactory = "kafkaAutoStartFalseListenerContainerFactory")
 		public void manualStart(String foo) {
@@ -659,9 +656,10 @@ public class EnableKafkaIntegrationTests {
 		}
 
 		@KafkaListener(id = "qux", topics = "annotated4", containerFactory = "kafkaManualAckListenerContainerFactory")
-		public void listen4(@Payload String foo, Acknowledgment ack) {
+		public void listen4(@Payload String foo, Acknowledgment ack, Consumer<?, ?> consumer) {
 			this.ack = ack;
 			this.ack.acknowledge();
+			this.consumer = consumer;
 			this.latch4.countDown();
 		}
 
