@@ -397,9 +397,21 @@ public class KafkaEmbedded extends ExternalResource implements KafkaRule {
 	 * @throws Exception an exception.
 	 */
 	public void consumeFromAnEmbeddedTopic(Consumer<?, ?> consumer, String topic) throws Exception {
-		assertThat(this.topics).as("topic is not in embedded topic list").contains(topic);
+		consumeFromEmbeddedTopics(consumer, topic);
+	}
+
+	/**
+	 * Subscribe a consumer to one or more of the embedded topics.
+	 * @param consumer the consumer.
+	 * @param topics the topics.
+	 * @throws Exception an exception.
+	 */
+	public void consumeFromEmbeddedTopics(Consumer<?, ?> consumer, String... topics) throws Exception {
+		for (String topic : topics) {
+			assertThat(this.topics).as("topic '" + topic + "' is not in embedded topic list").contains(topic);
+		}
 		final CountDownLatch consumerLatch = new CountDownLatch(1);
-		consumer.subscribe(Collections.singletonList(topic), new ConsumerRebalanceListener() {
+		consumer.subscribe(Arrays.asList(topics), new ConsumerRebalanceListener() {
 
 			@Override
 			public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
