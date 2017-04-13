@@ -77,12 +77,18 @@ public class RecordMessagingMessageListenerAdapter<K, V> extends MessagingMessag
 			logger.debug("Processing [" + message + "]");
 		}
 		try {
-			invokeHandler(record, acknowledgment, message, consumer);
+			Object result = invokeHandler(record, acknowledgment, message, consumer);
+			if (result != null) {
+				handleResult(result, record, message);
+			}
 		}
 		catch (ListenerExecutionFailedException e) {
 			if (this.errorHandler != null) {
 				try {
-					this.errorHandler.handleError(message, e);
+					Object result = this.errorHandler.handleError(message, e);
+					if (result != null) {
+						handleResult(result, record, message);
+					}
 				}
 				catch (Exception ex) {
 					throw new ListenerExecutionFailedException(createMessagingErrorMessage(

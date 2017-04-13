@@ -29,6 +29,9 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.config.BeanExpressionContext;
 import org.springframework.beans.factory.config.BeanExpressionResolver;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.context.expression.BeanFactoryResolver;
+import org.springframework.expression.BeanResolver;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.listener.MessageListener;
 import org.springframework.kafka.listener.MessageListenerContainer;
 import org.springframework.kafka.listener.adapter.FilteringMessageListenerAdapter;
@@ -69,6 +72,8 @@ public abstract class AbstractKafkaListenerEndpoint<K, V>
 
 	private BeanExpressionContext expressionContext;
 
+	private BeanResolver beanResolver;
+
 	private String group;
 
 	private RecordFilterStrategy<K, V> recordFilterStrategy;
@@ -81,6 +86,8 @@ public abstract class AbstractKafkaListenerEndpoint<K, V>
 
 	private boolean batchListener;
 
+	private KafkaTemplate<K, V> replyTemplate;
+
 	@Override
 	public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
 		this.beanFactory = beanFactory;
@@ -88,6 +95,7 @@ public abstract class AbstractKafkaListenerEndpoint<K, V>
 			this.resolver = ((ConfigurableListableBeanFactory) beanFactory).getBeanExpressionResolver();
 			this.expressionContext = new BeanExpressionContext((ConfigurableListableBeanFactory) beanFactory, null);
 		}
+		this.beanResolver = new BeanFactoryResolver(beanFactory);
 	}
 
 	protected BeanFactory getBeanFactory() {
@@ -100,6 +108,10 @@ public abstract class AbstractKafkaListenerEndpoint<K, V>
 
 	protected BeanExpressionContext getBeanExpressionContext() {
 		return this.expressionContext;
+	}
+
+	protected BeanResolver getBeanResolver() {
+		return this.beanResolver;
 	}
 
 	public void setId(String id) {
@@ -207,21 +219,17 @@ public abstract class AbstractKafkaListenerEndpoint<K, V>
 		this.batchListener = batchListener;
 	}
 
-	@Override
-	public void afterPropertiesSet() {
-		boolean topicsEmpty = getTopics().isEmpty();
-		boolean topicPartitionsEmpty = getTopicPartitions().isEmpty();
-		if (!topicsEmpty && !topicPartitionsEmpty) {
-			throw new IllegalStateException("Topics or topicPartitions must be provided but not both for " + this);
-		}
-		if (this.topicPattern != null && (!topicsEmpty || !topicPartitionsEmpty)) {
-			throw new IllegalStateException("Only one of topics, topicPartitions or topicPattern must are allowed for "
-						+ this);
-		}
-		if (this.topicPattern == null && topicsEmpty && topicPartitionsEmpty) {
-			throw new IllegalStateException("At least one of topics, topicPartitions or topicPattern must be provided "
-					+ "for " + this);
-		}
+	/**
+	 * Set the {@link KafkaTemplate} to use to send replies.
+	 * @param replyTemplate the template.
+	 * @since 2.0
+	 */
+	public void setReplyTemplate(KafkaTemplate<K, V> replyTemplate) {
+		this.replyTemplate = replyTemplate;
+	}
+
+	protected KafkaTemplate<K, V> getReplyTemplate() {
+		return this.replyTemplate;
 	}
 
 	protected RecordFilterStrategy<K, V> getRecordFilterStrategy() {
@@ -275,6 +283,23 @@ public abstract class AbstractKafkaListenerEndpoint<K, V>
 	}
 
 	@Override
+	public void afterPropertiesSet() {
+		boolean topicsEmpty = getTopics().isEmpty();
+		boolean topicPartitionsEmpty = getTopicPartitions().isEmpty();
+		if (!topicsEmpty && !topicPartitionsEmpty) {
+			throw new IllegalStateException("Topics or topicPartitions must be provided but not both for " + this);
+		}
+		if (this.topicPattern != null && (!topicsEmpty || !topicPartitionsEmpty)) {
+			throw new IllegalStateException("Only one of topics, topicPartitions or topicPattern must are allowed for "
+					+ this);
+		}
+		if (this.topicPattern == null && topicsEmpty && topicPartitionsEmpty) {
+			throw new IllegalStateException("At least one of topics, topicPartitions or topicPattern must be provided "
+					+ "for " + this);
+		}
+	}
+
+	@Override
 	public void setupListenerContainer(MessageListenerContainer listenerContainer, MessageConverter messageConverter) {
 		setupMessageListener(listenerContainer, messageConverter);
 	}
@@ -295,11 +320,11 @@ public abstract class AbstractKafkaListenerEndpoint<K, V>
 		Assert.state(messageListener != null, "Endpoint [" + this + "] must provide a non null message listener");
 		if (this.retryTemplate != null) {
 			messageListener = new RetryingMessageListenerAdapter<>((MessageListener<K, V>) messageListener,
-						this.retryTemplate, (RecoveryCallback<Object>) this.recoveryCallback);
+					this.retryTemplate, (RecoveryCallback<Object>) this.recoveryCallback);
 		}
 		if (this.recordFilterStrategy != null) {
 			messageListener = new FilteringMessageListenerAdapter<>((MessageListener<K, V>) messageListener,
-						this.recordFilterStrategy, this.ackDiscarded);
+					this.recordFilterStrategy, this.ackDiscarded);
 		}
 		container.setupMessageListener(messageListener);
 	}
