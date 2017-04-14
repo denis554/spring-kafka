@@ -371,7 +371,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 							offsets.put(partition, new OffsetAndMetadata(consumer.position(partition)));
 						}
 						if (ListenerConsumer.this.logger.isDebugEnabled()) {
-							ListenerConsumer.this.logger.debug("Committing: " + offsets);
+							ListenerConsumer.this.logger.debug("Committing on assignment: " + offsets);
 						}
 						if (KafkaMessageListenerContainer.this.getContainerProperties().isSyncCommits()) {
 							ListenerConsumer.this.consumer.commitSync(offsets);
