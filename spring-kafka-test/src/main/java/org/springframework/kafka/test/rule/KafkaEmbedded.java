@@ -43,6 +43,8 @@ import org.apache.kafka.common.requests.MetadataResponse;
 import org.apache.kafka.common.utils.Time;
 import org.junit.rules.ExternalResource;
 
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.kafka.test.core.BrokerAddress;
 import org.springframework.retry.RetryCallback;
 import org.springframework.retry.RetryContext;
@@ -73,7 +75,9 @@ import scala.collection.Set;
  * @author Gary Russell
  */
 @SuppressWarnings("serial")
-public class KafkaEmbedded extends ExternalResource implements KafkaRule {
+public class KafkaEmbedded extends ExternalResource implements KafkaRule, InitializingBean, DisposableBean {
+
+	public static final String BEAN_NAME = "kafkaEmbedded";
 
 	public static final String SPRING_EMBEDDED_KAFKA_BROKERS = "spring.embedded.kafka.brokers";
 
@@ -130,6 +134,11 @@ public class KafkaEmbedded extends ExternalResource implements KafkaRule {
 	}
 
 	@Override
+	public void afterPropertiesSet() throws Exception {
+		before();
+	}
+
+	@Override
 	public void before() throws Exception { //NOSONAR
 		startZookeeper();
 		int zkConnectionTimeout = 6000;
@@ -162,6 +171,12 @@ public class KafkaEmbedded extends ExternalResource implements KafkaRule {
 			AdminUtils.createTopic(zkUtils, topic, this.partitionsPerTopic, this.count, props, null);
 		}
 		System.setProperty(SPRING_EMBEDDED_KAFKA_BROKERS, getBrokersAsString());
+	}
+
+
+	@Override
+	public void destroy() throws Exception {
+		after();
 	}
 
 	@Override
