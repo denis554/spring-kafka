@@ -82,6 +82,8 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 
 	private GenericMessageListener<?> listener;
 
+	private String clientIdSuffix;
+
 	/**
 	 * Construct an instance with the supplied configuration properties.
 	 * @param consumerFactory the consumer factory.
@@ -110,6 +112,16 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 		else {
 			this.topicPartitions = containerProperties.getTopicPartitions();
 		}
+	}
+
+	/**
+	 * Set a suffix to add to the {@code client.id} consumer property (if the consumer
+	 * factory supports it).
+	 * @param clientIdSuffix the suffix to add.
+	 * @since 1.0.6
+	 */
+	public void setClientIdSuffix(String clientIdSuffix) {
+		this.clientIdSuffix = clientIdSuffix;
 	}
 
 	/**
@@ -210,7 +222,9 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 
 	@Override
 	public String toString() {
-		return "KafkaMessageListenerContainer [id=" + getBeanName() + ", topicPartitions=" + getAssignedPartitions()
+		return "KafkaMessageListenerContainer [id=" + getBeanName()
+				+ (this.clientIdSuffix != null ? ", clientIndex=" + this.clientIdSuffix : "")
+				+ ", topicPartitions=" + getAssignedPartitions()
 				+ "]";
 	}
 
@@ -269,10 +283,17 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 		private long last;
 
 		@SuppressWarnings("unchecked")
-		private ListenerConsumer(GenericMessageListener<?> listener, ListenerType listenerType) {
+		ListenerConsumer(GenericMessageListener<?> listener, ListenerType listenerType) {
 			Assert.state(!this.isAnyManualAck || !this.autoCommit,
-					"Consumer cannot be configured for auto commit for ackMode " + this.containerProperties.getAckMode());
-			final Consumer<K, V> consumer = KafkaMessageListenerContainer.this.consumerFactory.createConsumer();
+				"Consumer cannot be configured for auto commit for ackMode " + this.containerProperties.getAckMode());
+			@SuppressWarnings("deprecation")
+			final Consumer<K, V> consumer =
+					KafkaMessageListenerContainer.this.consumerFactory instanceof
+									org.springframework.kafka.core.ClientIdSuffixAware
+							? ((org.springframework.kafka.core.ClientIdSuffixAware<K, V>) KafkaMessageListenerContainer
+									.this.consumerFactory)
+										.createConsumer(KafkaMessageListenerContainer.this.clientIdSuffix)
+							: KafkaMessageListenerContainer.this.consumerFactory.createConsumer();
 
 			ConsumerRebalanceListener rebalanceListener = createRebalanceListener(consumer);
 
@@ -870,7 +891,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 
 			private final ConsumerRecord<K, V> record;
 
-			private ConsumerAcknowledgment(ConsumerRecord<K, V> record) {
+			ConsumerAcknowledgment(ConsumerRecord<K, V> record) {
 				this.record = record;
 			}
 
@@ -892,7 +913,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 
 			private final List<ConsumerRecord<K, V>> records;
 
-			private ConsumerBatchAcknowledgment(List<ConsumerRecord<K, V>> records) {
+			ConsumerBatchAcknowledgment(List<ConsumerRecord<K, V>> records) {
 				// make a copy in case the listener alters the list
 				this.records = new LinkedList<ConsumerRecord<K, V>>(records);
 			}
@@ -919,6 +940,10 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 
 		private static final Log logger = LogFactory.getLog(LoggingCommitCallback.class);
 
+		LoggingCommitCallback() {
+			super();
+		}
+
 		@Override
 		public void onComplete(Map<TopicPartition, OffsetAndMetadata> offsets, Exception exception) {
 			if (exception != null) {
@@ -937,7 +962,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 
 		private final boolean relativeToCurrent;
 
-		private OffsetMetadata(Long offset, boolean relativeToCurrent) {
+		OffsetMetadata(Long offset, boolean relativeToCurrent) {
 			this.offset = offset;
 			this.relativeToCurrent = relativeToCurrent;
 		}
