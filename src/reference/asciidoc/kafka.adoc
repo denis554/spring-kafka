@@ -551,11 +551,12 @@ The `@SendTo` value can have several forms:
 - `@SendTo("someTopic")` routes to the literal topic
 - `@SendTo("#{someExpression}")` routes to the topic determined by evaluating the expression once during application context initialization.
 - `@SendTo("!{someExpression}")` routes to the topic determined by evaluating the expression at runtime.
-The `#root` object for the evaluation has 4 properties:
+The `#root` object for the evaluation has 3 properties:
   - request - the inbound `ConsumerRecord` (or `ConsumerRecords` object for a batch listener))
   - source - the `org.springframework.messaging.Message<?>` converted from the `request`.
   - result - the method return result.
-The expression must return a `String` representing the topic name.
+
+The result of the expression evaluation must be a `String` representing the topic name.
 
 [source, java]
 ----

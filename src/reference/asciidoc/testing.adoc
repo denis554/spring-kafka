@@ -97,7 +97,7 @@ ConsumerRecord<Integer, String> received = KafkaTestUtils.getSingleRecord(consum
 When the embedded server is started by JUnit, it sets a system property `spring.embedded.kafka.brokers` to the address of the broker(s).
 A convenient constant `KafkaEmbedded.SPRING_EMBEDDED_KAFKA_BROKERS` is provided for this property.
 
-==== @EmbeddedKafka annotation
+==== @EmbeddedKafka Annotation
 It is generally recommended to use the rule as a `@ClassRule` to avoid starting/stopping the broker between tests (and use a different topic for each test).
 Starting with _version 2.0_, if you are using Spring's test application context caching, you can also declare a `KafkaEmbedded` bean, so a single broker can be used across multiple test classes.
 The JUnit `ExternalResource` `before()/after()` lifecycle is wrapped to the `afterPropertiesSet()` and `destroy()` Spring infrastructure hooks.
