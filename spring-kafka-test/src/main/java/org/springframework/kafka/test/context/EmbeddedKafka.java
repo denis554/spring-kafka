@@ -74,7 +74,7 @@ public @interface EmbeddedKafka {
 	int count() default 1;
 
 	/**
-	 * @return  passed into {@code kafka.utils.TestUtils.createBrokerConfig()}
+	 * @return passed into {@code kafka.utils.TestUtils.createBrokerConfig()}.
 	 */
 	boolean controlledShutdown() default false;
 
