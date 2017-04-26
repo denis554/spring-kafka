@@ -74,17 +74,17 @@ public @interface EmbeddedKafka {
 	int count() default 1;
 
 	/**
-	 * @return  passed into {@code kafka.utils.TestUtils.createBrokerConfig())
+	 * @return  passed into {@code kafka.utils.TestUtils.createBrokerConfig()}
 	 */
 	boolean controlledShutdown() default false;
 
 	/**
-	 * @return  partitions per topic.
+	 * @return partitions per topic
 	 */
 	int partitions() default 2;
 
 	/**
-	 * @return the topics to create..
+	 * @return the topics to create
 	 */
 	String[] topics() default {};
 
