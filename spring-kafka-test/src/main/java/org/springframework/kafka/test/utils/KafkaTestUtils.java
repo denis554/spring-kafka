@@ -79,8 +79,8 @@ public final class KafkaTestUtils {
 		props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokers);
 		props.put(ConsumerConfig.GROUP_ID_CONFIG, group);
 		props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, autoCommit);
-		props.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "100");
-		props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 15000);
+		props.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "10");
+		props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 60000);
 		props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, IntegerDeserializer.class);
 		props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 		return props;
@@ -126,7 +126,7 @@ public final class KafkaTestUtils {
 	 * @return the records.
 	 */
 	public static <K, V> ConsumerRecords<K, V> getRecords(Consumer<K, V> consumer) {
-		ConsumerRecords<K, V> received = consumer.poll(10000);
+		ConsumerRecords<K, V> received = consumer.poll(20000);
 		assertThat(received).as("null received from consumer.poll()").isNotNull();
 		return received;
 	}

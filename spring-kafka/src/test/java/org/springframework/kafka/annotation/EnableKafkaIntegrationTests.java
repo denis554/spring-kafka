@@ -171,10 +171,10 @@ public class EnableKafkaIntegrationTests {
 				.getClass().getName()).contains("EnableKafkaIntegrationTests$Config$");
 		assertThat(KafkaTestUtils.getPropertyValue(manualContainer,
 				"containerProperties.messageListener.delegate.delegate"))
-						.isInstanceOf(MessagingMessageListenerAdapter.class);
+				.isInstanceOf(MessagingMessageListenerAdapter.class);
 		assertThat(this.listener.consumer).isNotNull();
 		assertThat(this.listener.consumer).isSameAs(KafkaTestUtils.getPropertyValue(KafkaTestUtils
-				.getPropertyValue(this.registry.getListenerContainer("qux"), "containers", List.class).get(0),
+						.getPropertyValue(this.registry.getListenerContainer("qux"), "containers", List.class).get(0),
 				"listenerConsumer.consumer"));
 
 		template.send("annotated5", 0, 0, "foo");
@@ -499,7 +499,7 @@ public class EnableKafkaIntegrationTests {
 
 		@Bean
 		public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<Integer, String>>
-				kafkaListenerContainerFactory() {
+		kafkaListenerContainerFactory() {
 			ConcurrentKafkaListenerContainerFactory<Integer, String> factory =
 					new ConcurrentKafkaListenerContainerFactory<>();
 			factory.setConsumerFactory(consumerFactory());
@@ -551,7 +551,7 @@ public class EnableKafkaIntegrationTests {
 
 		@Bean
 		public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<Integer, String>>
-				kafkaManualAckListenerContainerFactory() {
+		kafkaManualAckListenerContainerFactory() {
 			ConcurrentKafkaListenerContainerFactory<Integer, String> factory =
 					new ConcurrentKafkaListenerContainerFactory<>();
 			factory.setConsumerFactory(manualConsumerFactory());
@@ -567,7 +567,7 @@ public class EnableKafkaIntegrationTests {
 
 		@Bean
 		public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<Integer, String>>
-				kafkaAutoStartFalseListenerContainerFactory() {
+		kafkaAutoStartFalseListenerContainerFactory() {
 			ConcurrentKafkaListenerContainerFactory<Integer, String> factory =
 					new ConcurrentKafkaListenerContainerFactory<>();
 			ContainerProperties props = factory.getContainerProperties();
@@ -581,7 +581,7 @@ public class EnableKafkaIntegrationTests {
 
 		@Bean
 		public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<Integer, String>>
-				kafkaRebalanceListenerContainerFactory() {
+		kafkaRebalanceListenerContainerFactory() {
 			ConcurrentKafkaListenerContainerFactory<Integer, String> factory =
 					new ConcurrentKafkaListenerContainerFactory<>();
 			ContainerProperties props = factory.getContainerProperties();
@@ -641,7 +641,7 @@ public class EnableKafkaIntegrationTests {
 
 		@Bean
 		public KafkaTemplate<Integer, String> template() {
-			return new KafkaTemplate<Integer, String>(producerFactory());
+			return new KafkaTemplate<>(producerFactory());
 		}
 
 		@Bean
@@ -659,7 +659,7 @@ public class EnableKafkaIntegrationTests {
 
 		@Bean
 		public KafkaTemplate<Integer, String> kafkaJsonTemplate() {
-			KafkaTemplate<Integer, String> kafkaTemplate = new KafkaTemplate<Integer, String>(producerFactory());
+			KafkaTemplate<Integer, String> kafkaTemplate = new KafkaTemplate<>(producerFactory());
 			kafkaTemplate.setMessageConverter(new StringJsonMessageConverter());
 			return kafkaTemplate;
 		}
@@ -690,18 +690,16 @@ public class EnableKafkaIntegrationTests {
 
 		@Bean
 		public KafkaListenerErrorHandler replyErrorHandler() {
-			return (m, e) -> {
-				return ((String) m.getPayload()).toLowerCase();
-			};
+			return (m, e) -> ((String) m.getPayload()).toLowerCase();
 		}
 
 		@SuppressWarnings("unchecked")
 		@Bean
 		public KafkaListenerErrorHandler replyBatchErrorHandler() {
-			return (m, e) -> {
-				return ((Collection<String>) m.getPayload()).stream().map(v -> v.toLowerCase())
-						.collect(Collectors.toList());
-			};
+			return (m, e) -> ((Collection<String>) m.getPayload())
+					.stream()
+					.map(String::toLowerCase)
+					.collect(Collectors.toList());
 		}
 
 	}
@@ -819,7 +817,7 @@ public class EnableKafkaIntegrationTests {
 				@TopicPartition(topic = "annotated5", partitions = { "#{'${foo:0,1}'.split(',')}" }),
 				@TopicPartition(topic = "annotated6", partitions = "0",
 						partitionOffsets = @PartitionOffset(partition = "${xxx:1}", initialOffset = "${yyy:0}",
-										relativeToCurrent = "${zzz:true}"))
+								relativeToCurrent = "${zzz:true}"))
 		})
 		public void listen5(ConsumerRecord<?, ?> record) {
 			this.record = record;
