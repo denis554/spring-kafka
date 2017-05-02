@@ -34,6 +34,7 @@ import org.springframework.util.Assert;
  * and lifecycle control for the internal {@link KafkaStreams} instance.
  *
  * @author Artem Bilan
+ * @author Ivan Ursul
  *
  * @since 1.1.4
  */
@@ -139,6 +140,16 @@ public class KStreamBuilderFactoryBean extends AbstractFactoryBean<KStreamBuilde
 	@Override
 	public int getPhase() {
 		return this.phase;
+	}
+
+	/**
+	 * Get a managed by this {@link KStreamBuilderFactoryBean} {@link KafkaStreams} instance.
+	 * @return KafkaStreams managed instance;
+	 * may be null if this {@link KStreamBuilderFactoryBean} hasn't been started.
+	 * @since 1.1.4
+	 */
+	public KafkaStreams getKafkaStreams() {
+		return this.kafkaStreams;
 	}
 
 }
