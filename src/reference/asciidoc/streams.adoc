@@ -75,7 +75,7 @@ Since `KStreamBuilderFactoryBean` utilize its internal `KafkaStreams` instance, 
 Also consider using different `KStreamBuilderFactoryBean` s, if you would like to control lifecycles for `KStream` instances separately.
 
 You can specify `KafkaStreams.StateListener` and `Thread.UncaughtExceptionHandler` options on the `KStreamBuilderFactoryBean` which are delegated to the internal `KafkaStreams` instance.
-That internal `KafkaStreams` instance can be accessed via `KStreamBuilderFactoryBean.getKafkaStreams()` if you need to perform some `KafkaStreams` directly.
+That internal `KafkaStreams` instance can be accessed via `KStreamBuilderFactoryBean.getKafkaStreams()` if you need to perform some `KafkaStreams` operations directly.
 
 ==== JSON Serdes
 
