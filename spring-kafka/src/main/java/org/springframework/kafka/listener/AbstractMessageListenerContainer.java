@@ -135,7 +135,7 @@ public abstract class AbstractMessageListenerContainer<K, V>
 			this.containerProperties.setAckTime(containerProperties.getAckTime());
 		}
 		if (this.containerProperties.getConsumerRebalanceListener() == null) {
-			this.containerProperties.setConsumerRebalanceListener(createConsumerRebalanceListener());
+			this.containerProperties.setConsumerRebalanceListener(createSimpleLoggingConsumerRebalanceListener());
 		}
 	}
 
@@ -234,17 +234,17 @@ public abstract class AbstractMessageListenerContainer<K, V>
 	 * Return default implementation of {@link ConsumerRebalanceListener} instance.
 	 * @return the {@link ConsumerRebalanceListener} currently assigned to this container.
 	 */
-	protected final ConsumerRebalanceListener createConsumerRebalanceListener() {
+	protected final ConsumerRebalanceListener createSimpleLoggingConsumerRebalanceListener() {
 		return new ConsumerRebalanceListener() {
 
 			@Override
 			public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
-				AbstractMessageListenerContainer.this.logger.info("partitions revoked:" + partitions);
+				AbstractMessageListenerContainer.this.logger.info("partitions revoked: " + partitions);
 			}
 
 			@Override
 			public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
-				AbstractMessageListenerContainer.this.logger.info("partitions assigned:" + partitions);
+				AbstractMessageListenerContainer.this.logger.info("partitions assigned: " + partitions);
 			}
 
 		};
