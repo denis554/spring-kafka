@@ -126,7 +126,7 @@ public final class KafkaTestUtils {
 	 * @return the records.
 	 */
 	public static <K, V> ConsumerRecords<K, V> getRecords(Consumer<K, V> consumer) {
-		ConsumerRecords<K, V> received = consumer.poll(20000);
+		ConsumerRecords<K, V> received = consumer.poll(60000);
 		assertThat(received).as("null received from consumer.poll()").isNotNull();
 		return received;
 	}

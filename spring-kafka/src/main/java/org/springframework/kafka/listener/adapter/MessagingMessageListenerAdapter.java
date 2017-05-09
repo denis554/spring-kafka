@@ -263,9 +263,7 @@ public abstract class MessagingMessageListenerAdapter<K, V> implements ConsumerS
 					+ "] - generating response message for it");
 		}
 		Object result = resultArg instanceof ResultHolder ? ((ResultHolder) resultArg).result : resultArg;
-		if (this.replyTemplate == null) {
-			this.logger.debug("No replyTemplate to handle the reply: " + result);
-		}
+		Assert.state(this.replyTemplate != null, "a KafkaTemplate is required to support replies");
 		String replyTopic = evaluateReplyTopic(request, source, resultArg);
 		sendResponse(result, replyTopic);
 	}

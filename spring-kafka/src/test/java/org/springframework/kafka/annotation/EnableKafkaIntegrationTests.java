@@ -653,7 +653,7 @@ public class EnableKafkaIntegrationTests {
 		@Bean
 		public KafkaTemplate<Integer, String> partitionZeroReplyingTemplate() {
 			// reply always uses the no-partition, no-key method; subclasses can be used
-			return new KafkaTemplate<Integer, String>(producerFactory()) {
+			return new KafkaTemplate<Integer, String>(producerFactory(), true) {
 
 				@Override
 				public ListenableFuture<SendResult<Integer, String>> send(String topic, String data) {
