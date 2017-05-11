@@ -1,5 +1,5 @@
 Spring Kafka <img src="https://build.spring.io/plugins/servlet/buildStatusImage/SK-MAS">
-[![Join the chat at https://gitter.im/spring-projects/spring-amqp](https://badges.gitter.im/spring-projects/spring-amqp.svg)](https://gitter.im/spring-projects/spring-amqp?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Join the chat at https://gitter.im/spring-projects/spring-kafka](https://badges.gitter.im/spring-projects/spring-kafka.svg)](https://gitter.im/spring-projects/spring-kafka?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 ==================
 
 # Checking out and Building
