@@ -70,6 +70,7 @@ public class Log4jLevelAdjuster implements MethodRule {
 	@Override
 	public Statement apply(final Statement base, final FrameworkMethod method, Object target) {
 		return new Statement() {
+
 			@Override
 			public void evaluate() throws Throwable {
 				Map<Class<?>, Level> oldLevels = new HashMap<Class<?>, Level>();
@@ -93,7 +94,7 @@ public class Log4jLevelAdjuster implements MethodRule {
 							+ "Restoring log level setting for: " + Arrays.asList(classes) + " and "
 							+ Arrays.asList(categories) + " for test " + method.getName());
 					// raw Class type used to avoid http://bugs.sun.com/view_bug.do?bug_id=6682380
-					for (@SuppressWarnings("rawtypes") Class cls : classes) {
+					for (Class<?> cls : classes) {
 						LogManager.getLogger(cls).setLevel(oldLevels.get(cls));
 					}
 					for (String category : categories) {
