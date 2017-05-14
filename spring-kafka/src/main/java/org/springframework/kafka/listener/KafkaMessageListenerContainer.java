@@ -286,14 +286,8 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 		ListenerConsumer(GenericMessageListener<?> listener, ListenerType listenerType) {
 			Assert.state(!this.isAnyManualAck || !this.autoCommit,
 				"Consumer cannot be configured for auto commit for ackMode " + this.containerProperties.getAckMode());
-			@SuppressWarnings("deprecation")
-			final Consumer<K, V> consumer =
-					KafkaMessageListenerContainer.this.consumerFactory instanceof
-									org.springframework.kafka.core.ClientIdSuffixAware
-							? ((org.springframework.kafka.core.ClientIdSuffixAware<K, V>) KafkaMessageListenerContainer
-									.this.consumerFactory)
-										.createConsumer(KafkaMessageListenerContainer.this.clientIdSuffix)
-							: KafkaMessageListenerContainer.this.consumerFactory.createConsumer();
+			final Consumer<K, V> consumer = KafkaMessageListenerContainer.this.consumerFactory
+					.createConsumer(KafkaMessageListenerContainer.this.clientIdSuffix);
 
 			ConsumerRebalanceListener rebalanceListener = createRebalanceListener(consumer);
 
