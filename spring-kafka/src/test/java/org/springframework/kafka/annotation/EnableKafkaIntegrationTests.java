@@ -38,9 +38,7 @@ import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetCommitCallback;
-import org.apache.log4j.Level;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -79,7 +77,6 @@ import org.springframework.kafka.support.SendResult;
 import org.springframework.kafka.support.TopicPartitionInitialOffset;
 import org.springframework.kafka.support.converter.StringJsonMessageConverter;
 import org.springframework.kafka.test.rule.KafkaEmbedded;
-import org.springframework.kafka.test.rule.Log4jLevelAdjuster;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.handler.annotation.Header;
@@ -118,9 +115,9 @@ public class EnableKafkaIntegrationTests {
 			"annotated22reply", "annotated23", "annotated23reply", "annotated24", "annotated24reply",
 			"annotated25", "annotated25reply1", "annotated25reply2");
 
-	@Rule
-	public Log4jLevelAdjuster adjuster = new Log4jLevelAdjuster(Level.TRACE,
-			"org.springframework.kafka", "org.apache.kafka.clients.consumer");
+//	@Rule
+//	public Log4jLevelAdjuster adjuster = new Log4jLevelAdjuster(Level.TRACE,
+//			"org.springframework.kafka", "org.apache.kafka.clients.consumer");
 
 	@Autowired
 	public IfaceListenerImpl ifaceListener;
@@ -435,7 +432,7 @@ public class EnableKafkaIntegrationTests {
 		template.send("annotated23", 0, "FoO");
 		template.flush();
 		Map<String, Object> consumerProps = new HashMap<>(this.consumerFactory.getConfigurationProperties());
-		consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "testReplying");
+		consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "testErrorHandlerReplying");
 		ConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps);
 		Consumer<Integer, String> consumer = cf.createConsumer();
 		embeddedKafka.consumeFromAnEmbeddedTopic(consumer, "annotated23reply");
@@ -450,7 +447,7 @@ public class EnableKafkaIntegrationTests {
 		template.send("annotated24", 0, 0, "BaR");
 		template.flush();
 		Map<String, Object> consumerProps = new HashMap<>(this.consumerFactory.getConfigurationProperties());
-		consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "testBatchReplying");
+		consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "testErrorHandlerBatchReplying");
 		ConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps);
 		Consumer<Integer, String> consumer = cf.createConsumer();
 		embeddedKafka.consumeFromAnEmbeddedTopic(consumer, "annotated24reply");
