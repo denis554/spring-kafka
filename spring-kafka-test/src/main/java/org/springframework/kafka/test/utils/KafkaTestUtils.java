@@ -21,6 +21,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -42,6 +44,8 @@ import org.springframework.util.Assert;
  *
  */
 public final class KafkaTestUtils {
+
+	private static final Log logger = LogFactory.getLog(KafkaTestUtils.class);
 
 	private KafkaTestUtils() {
 		// private ctor
@@ -126,7 +130,11 @@ public final class KafkaTestUtils {
 	 * @return the records.
 	 */
 	public static <K, V> ConsumerRecords<K, V> getRecords(Consumer<K, V> consumer) {
+		logger.debug("Polling...");
 		ConsumerRecords<K, V> received = consumer.poll(60000);
+		if (logger.isDebugEnabled()) {
+			logger.debug("Received: " + received);
+		}
 		assertThat(received).as("null received from consumer.poll()").isNotNull();
 		return received;
 	}

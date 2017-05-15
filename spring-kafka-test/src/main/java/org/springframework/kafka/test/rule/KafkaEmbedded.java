@@ -33,6 +33,8 @@ import javax.net.ServerSocketFactory;
 
 import org.I0Itec.zkclient.ZkClient;
 import org.I0Itec.zkclient.exception.ZkInterruptedException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.common.Node;
@@ -76,6 +78,8 @@ import scala.collection.Set;
  */
 @SuppressWarnings("serial")
 public class KafkaEmbedded extends ExternalResource implements KafkaRule, InitializingBean, DisposableBean {
+
+	private static final Log logger = LogFactory.getLog(KafkaEmbedded.class);
 
 	public static final String BEAN_NAME = "kafkaEmbedded";
 
@@ -435,6 +439,9 @@ public class KafkaEmbedded extends ExternalResource implements KafkaRule, Initia
 			@Override
 			public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
 				consumerLatch.countDown();
+				if (logger.isDebugEnabled()) {
+					logger.debug("partitions assigned: " + partitions);
+				}
 			}
 
 		});
@@ -442,6 +449,7 @@ public class KafkaEmbedded extends ExternalResource implements KafkaRule, Initia
 		assertThat(consumerLatch.await(30, TimeUnit.SECONDS))
 			.as("Failed to be assigned partitions from the embedded topics")
 			.isTrue();
+		logger.debug("Subscription Complete");
 	}
 
 }

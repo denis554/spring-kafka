@@ -412,13 +412,13 @@ public class EnableKafkaIntegrationTests {
 
 	@Test
 	public void testReplyingListener() throws Exception {
-		template.send("annotated21", 0, "annotated21reply");
-		template.flush();
 		Map<String, Object> consumerProps = new HashMap<>(this.consumerFactory.getConfigurationProperties());
 		consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "testReplying");
 		ConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps);
 		Consumer<Integer, String> consumer = cf.createConsumer();
 		embeddedKafka.consumeFromAnEmbeddedTopic(consumer, "annotated21reply");
+		template.send("annotated21", 0, "annotated21reply");
+		template.flush();
 		ConsumerRecord<Integer, String> reply = KafkaTestUtils.getSingleRecord(consumer, "annotated21reply");
 		assertThat(reply.value()).isEqualTo("ANNOTATED21REPLY");
 		consumer.close();
@@ -426,14 +426,14 @@ public class EnableKafkaIntegrationTests {
 
 	@Test
 	public void testReplyingBatchListener() throws Exception {
-		template.send("annotated22", 0, 0, "foo");
-		template.send("annotated22", 0, 0, "bar");
-		template.flush();
 		Map<String, Object> consumerProps = new HashMap<>(this.consumerFactory.getConfigurationProperties());
 		consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "testBatchReplying");
 		ConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps);
 		Consumer<Integer, String> consumer = cf.createConsumer();
 		embeddedKafka.consumeFromAnEmbeddedTopic(consumer, "annotated22reply");
+		template.send("annotated22", 0, 0, "foo");
+		template.send("annotated22", 0, 0, "bar");
+		template.flush();
 		ConsumerRecords<Integer, String> replies = KafkaTestUtils.getRecords(consumer);
 		assertThat(replies.count()).isGreaterThanOrEqualTo(1);
 		Iterator<ConsumerRecord<Integer, String>> iterator = replies.iterator();
@@ -452,13 +452,13 @@ public class EnableKafkaIntegrationTests {
 
 	@Test
 	public void testReplyingListenerWithErrorHandler() throws Exception {
-		template.send("annotated23", 0, "FoO");
-		template.flush();
 		Map<String, Object> consumerProps = new HashMap<>(this.consumerFactory.getConfigurationProperties());
 		consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "testErrorHandlerReplying");
 		ConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps);
 		Consumer<Integer, String> consumer = cf.createConsumer();
 		embeddedKafka.consumeFromAnEmbeddedTopic(consumer, "annotated23reply");
+		template.send("annotated23", 0, "FoO");
+		template.flush();
 		ConsumerRecord<Integer, String> reply = KafkaTestUtils.getSingleRecord(consumer, "annotated23reply");
 		assertThat(reply.value()).isEqualTo("foo");
 		consumer.close();
@@ -466,14 +466,14 @@ public class EnableKafkaIntegrationTests {
 
 	@Test
 	public void testReplyingBatchListenerWithErrorHandler() throws Exception {
-		template.send("annotated24", 0, 0, "FoO");
-		template.send("annotated24", 0, 0, "BaR");
-		template.flush();
 		Map<String, Object> consumerProps = new HashMap<>(this.consumerFactory.getConfigurationProperties());
 		consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "testErrorHandlerBatchReplying");
 		ConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps);
 		Consumer<Integer, String> consumer = cf.createConsumer();
 		embeddedKafka.consumeFromAnEmbeddedTopic(consumer, "annotated24reply");
+		template.send("annotated24", 0, 0, "FoO");
+		template.send("annotated24", 0, 0, "BaR");
+		template.flush();
 		ConsumerRecords<Integer, String> replies = KafkaTestUtils.getRecords(consumer);
 		assertThat(replies.count()).isGreaterThanOrEqualTo(1);
 		Iterator<ConsumerRecord<Integer, String>> iterator = replies.iterator();
