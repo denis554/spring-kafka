@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.RecordMetadata;
@@ -76,6 +77,7 @@ public class KafkaTemplateTests {
 	@BeforeClass
 	public static void setUp() throws Exception {
 		Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("testT", "false", embeddedKafka);
+		consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps);
 		consumer = cf.createConsumer();
 		embeddedKafka.consumeFromAnEmbeddedTopic(consumer, INT_KEY_TOPIC);
@@ -282,6 +284,7 @@ public class KafkaTemplateTests {
 		KafkaTemplate<String, String> template = new KafkaTemplate<>(pf, true);
 		template.setDefaultTopic(STRING_KEY_TOPIC);
 		Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("testTString", "false", embeddedKafka);
+		consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 		DefaultKafkaConsumerFactory<String, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps);
 		cf.setKeyDeserializer(new StringDeserializer());
 		Consumer<String, String> consumer = cf.createConsumer();

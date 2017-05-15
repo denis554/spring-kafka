@@ -429,7 +429,6 @@ public class KafkaEmbedded extends ExternalResource implements KafkaRule, Initia
 		for (String topic : topics) {
 			assertThat(this.topics).as("topic '" + topic + "' is not in embedded topic list").contains(topic);
 		}
-		final CountDownLatch consumerLatch = new CountDownLatch(1);
 		consumer.subscribe(Arrays.asList(topics), new ConsumerRebalanceListener() {
 
 			@Override
@@ -438,18 +437,13 @@ public class KafkaEmbedded extends ExternalResource implements KafkaRule, Initia
 
 			@Override
 			public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
-				consumerLatch.countDown();
 				if (logger.isDebugEnabled()) {
 					logger.debug("partitions assigned: " + partitions);
 				}
 			}
 
 		});
-		consumer.poll(0); // force assignment
-		assertThat(consumerLatch.await(30, TimeUnit.SECONDS))
-			.as("Failed to be assigned partitions from the embedded topics")
-			.isTrue();
-		logger.debug("Subscription Complete");
+		logger.debug("Subscription Initiated");
 	}
 
 }

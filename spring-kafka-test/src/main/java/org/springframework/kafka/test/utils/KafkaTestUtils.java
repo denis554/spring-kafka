@@ -133,7 +133,7 @@ public final class KafkaTestUtils {
 		logger.debug("Polling...");
 		ConsumerRecords<K, V> received = consumer.poll(60000);
 		if (logger.isDebugEnabled()) {
-			logger.debug("Received: " + received);
+			logger.debug("Received: " + received.count());
 		}
 		assertThat(received).as("null received from consumer.poll()").isNotNull();
 		return received;
