@@ -445,11 +445,10 @@ public class KafkaEmbedded extends ExternalResource implements KafkaRule, Initia
 			}
 
 		});
-		consumer.poll(0); // force assignment
 		assertThat(consumerLatch.await(30, TimeUnit.SECONDS))
 			.as("Failed to be assigned partitions from the embedded topics")
 			.isTrue();
-		logger.debug("Subscription Complete");
+		logger.debug("Subscription Initiated");
 	}
 
 }
