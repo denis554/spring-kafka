@@ -492,13 +492,13 @@ public class EnableKafkaIntegrationTests {
 
 	@Test
 	public void testMultiReplyTo() throws Exception {
-		template.send("annotated25", 0, 1, "foo");
-		template.flush();
 		Map<String, Object> consumerProps = new HashMap<>(this.consumerFactory.getConfigurationProperties());
 		consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "testMultiReplying");
 		ConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps);
 		Consumer<Integer, String> consumer = cf.createConsumer();
 		embeddedKafka.consumeFromEmbeddedTopics(consumer, "annotated25reply1", "annotated25reply2");
+		template.send("annotated25", 0, 1, "foo");
+		template.flush();
 		ConsumerRecord<Integer, String> reply = KafkaTestUtils.getSingleRecord(consumer, "annotated25reply1");
 		assertThat(reply.value()).isEqualTo("FOO");
 		template.send("annotated25", 0, 1, null);
