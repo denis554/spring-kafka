@@ -38,6 +38,7 @@ import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetCommitCallback;
+import org.apache.log4j.Level;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
