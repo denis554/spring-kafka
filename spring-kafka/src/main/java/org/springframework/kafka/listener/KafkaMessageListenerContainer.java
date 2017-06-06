@@ -287,7 +287,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 		@SuppressWarnings("unchecked")
 		ListenerConsumer(GenericMessageListener<?> listener, ListenerType listenerType) {
 			Assert.state(!this.isAnyManualAck || !this.autoCommit,
-				"Consumer cannot be configured for auto commit for ackMode " + this.containerProperties.getAckMode());
+					"Consumer cannot be configured for auto commit for ackMode " + this.containerProperties.getAckMode());
 			final Consumer<K, V> consumer = KafkaMessageListenerContainer.this.consumerFactory.createConsumer(
 					this.containerProperties.getGroupId(), KafkaMessageListenerContainer.this.clientIdSuffix);
 
@@ -354,7 +354,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 
 				final ConsumerAwareRebalanceListener consumerAwareListener =
 						userListener instanceof ConsumerAwareRebalanceListener
-							? (ConsumerAwareRebalanceListener) userListener : null;
+								? (ConsumerAwareRebalanceListener) userListener : null;
 
 				@Override
 				public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
@@ -623,7 +623,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 						case SIMPLE:
 							this.batchListener.onMessage(recordList);
 							break;
-						}
+					}
 					if (!this.isAnyManualAck && !this.autoCommit) {
 						for (ConsumerRecord<K, V> record : getHighestOffsetRecords(recordList)) {
 							this.acks.put(record);
@@ -661,9 +661,9 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 					switch (this.listenerType) {
 						case ACKNOWLEDGING_CONSUMER_AWARE:
 							this.listener.onMessage(record,
-								this.isAnyManualAck
-										? new ConsumerAcknowledgment(record)
-										: null, this.consumer);
+									this.isAnyManualAck
+											? new ConsumerAcknowledgment(record)
+											: null, this.consumer);
 							break;
 						case CONSUMER_AWARE:
 							this.listener.onMessage(record, this.consumer);
@@ -825,7 +825,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 
 		private void addOffset(ConsumerRecord<K, V> record) {
 			this.offsets.computeIfAbsent(record.topic(), v -> new HashMap<>())
-				.compute(record.partition(), (k, v) -> v == null ? record.offset() : Math.max(v, record.offset()));
+					.compute(record.partition(), (k, v) -> v == null ? record.offset() : Math.max(v, record.offset()));
 		}
 
 		private void commitIfNecessary() {
@@ -862,9 +862,10 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 		}
 
 		private Collection<ConsumerRecord<K, V>> getHighestOffsetRecords(List<ConsumerRecord<K, V>> records) {
-			final Map<Integer, ConsumerRecord<K, V>> highestOffsetMap = new HashMap<>();
+			final Map<TopicPartition, ConsumerRecord<K, V>> highestOffsetMap = new HashMap<>();
 			records.forEach(r -> {
-				highestOffsetMap.compute(r.partition(), (k, v) -> v == null ? r : r.offset() > v.offset() ? r : v);
+				highestOffsetMap.compute(new TopicPartition(r.topic(), r.partition()),
+						(k, v) -> v == null ? r : r.offset() > v.offset() ? r : v);
 			});
 			return highestOffsetMap.values();
 		}
