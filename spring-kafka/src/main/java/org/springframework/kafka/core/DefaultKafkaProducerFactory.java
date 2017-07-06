@@ -20,29 +20,37 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.PartitionInfo;
+import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.ProducerFencedException;
 import org.apache.kafka.common.serialization.Serializer;
 
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.context.Lifecycle;
+import org.springframework.util.Assert;
 
 /**
  * The {@link ProducerFactory} implementation for the {@code singleton} shared {@link Producer}
  * instance.
  * <p>
- * This implementation will produce a new {@link Producer} instance
+ * This implementation will produce a new {@link Producer} instance (if transactions are not enabled).
  * for provided {@link Map} {@code configs} and optional {@link Serializer} {@code keySerializer},
  * {@code valueSerializer} implementations on each {@link #createProducer()}
  * invocation.
@@ -50,6 +58,9 @@ import org.springframework.context.Lifecycle;
  * The {@link Producer} instance is freed from the external {@link Producer#close()} invocation
  * with the internal wrapper. The real {@link Producer#close()} is called on the target
  * {@link Producer} during the {@link Lifecycle#stop()} or {@link DisposableBean#destroy()}.
+ * <p>
+ * Setting {@link #setTransactionIdPrefix(String)} enables transactions; in which case, a cache
+ * of producers is maintained; closing the producer returns it to the cache.
  *
  * @param <K> the key type.
  * @param <V> the value type.
@@ -65,6 +76,10 @@ public class DefaultKafkaProducerFactory<K, V> implements ProducerFactory<K, V>,
 
 	private final Map<String, Object> configs;
 
+	private final AtomicInteger transactionIdSuffix = new AtomicInteger();
+
+	private final BlockingQueue<CloseSafeProducer<K, V>> cache = new LinkedBlockingQueue<>();
+
 	private volatile CloseSafeProducer<K, V> producer;
 
 	private Serializer<K> keySerializer;
@@ -72,6 +87,8 @@ public class DefaultKafkaProducerFactory<K, V> implements ProducerFactory<K, V>,
 	private Serializer<V> valueSerializer;
 
 	private int physicalCloseTimeout = DEFAULT_PHYSICAL_CLOSE_TIMEOUT;
+
+	private String transactionIdPrefix;
 
 	private volatile boolean running;
 
@@ -105,6 +122,16 @@ public class DefaultKafkaProducerFactory<K, V> implements ProducerFactory<K, V>,
 	}
 
 	/**
+	 * Set the transactional.id prefix.
+	 * @param transactionIdPrefix the prefix.
+	 * @since 2.0
+	 */
+	public void setTransactionIdPrefix(String transactionIdPrefix) {
+		Assert.notNull(transactionIdPrefix, "'transactionIdPrefix' cannot be null");
+		this.transactionIdPrefix = transactionIdPrefix;
+	}
+
+	/**
 	 * Return an unmodifiable reference to the configuration map for this factory.
 	 * Useful for cloning to make a similar factory.
 	 * @return the configs.
@@ -115,14 +142,29 @@ public class DefaultKafkaProducerFactory<K, V> implements ProducerFactory<K, V>,
 	}
 
 	@Override
+	public boolean transactionCapable() {
+		return this.transactionIdPrefix != null;
+	}
+
+	@SuppressWarnings("resource")
+	@Override
 	public void destroy() throws Exception { //NOSONAR
 		CloseSafeProducer<K, V> producer = this.producer;
 		this.producer = null;
 		if (producer != null) {
 			producer.delegate.close(this.physicalCloseTimeout, TimeUnit.SECONDS);
 		}
+		producer = this.cache.poll();
+		while (producer != null) {
+			try {
+				producer.delegate.close(this.physicalCloseTimeout, TimeUnit.SECONDS);
+			}
+			catch (Exception e) {
+				logger.error("Exception while closing producer", e);
+			}
+			producer = this.cache.poll();
+		}
 	}
-
 
 	@Override
 	public void start() {
@@ -136,7 +178,7 @@ public class DefaultKafkaProducerFactory<K, V> implements ProducerFactory<K, V>,
 			destroy();
 		}
 		catch (Exception e) {
-			logger.error("Exception while stopping producer", e);
+			logger.error("Exception while closing producer", e);
 		}
 	}
 
@@ -148,6 +190,9 @@ public class DefaultKafkaProducerFactory<K, V> implements ProducerFactory<K, V>,
 
 	@Override
 	public Producer<K, V> createProducer() {
+		if (this.transactionIdPrefix != null) {
+			return createTransactionalProducer();
+		}
 		if (this.producer == null) {
 			synchronized (this) {
 				if (this.producer == null) {
@@ -158,16 +203,38 @@ public class DefaultKafkaProducerFactory<K, V> implements ProducerFactory<K, V>,
 		return this.producer;
 	}
 
-	protected KafkaProducer<K, V> createKafkaProducer() {
+	protected Producer<K, V> createKafkaProducer() {
 		return new KafkaProducer<K, V>(this.configs, this.keySerializer, this.valueSerializer);
+	}
+
+	protected Producer<K, V> createTransactionalProducer() {
+		Producer<K, V> producer = this.cache.poll();
+		if (producer == null) {
+			Map<String, Object> configs = new HashMap<>(this.configs);
+			configs.put(ProducerConfig.TRANSACTIONAL_ID_CONFIG,
+					this.transactionIdPrefix + this.transactionIdSuffix.getAndIncrement());
+			producer = new KafkaProducer<K, V>(configs, this.keySerializer, this.valueSerializer);
+			producer.initTransactions();
+			return new CloseSafeProducer<K, V>(producer, this.cache);
+		}
+		else {
+			return producer;
+		}
 	}
 
 	private static class CloseSafeProducer<K, V> implements Producer<K, V> {
 
 		private final Producer<K, V> delegate;
 
+		private final BlockingQueue<CloseSafeProducer<K, V>> cache;
+
 		CloseSafeProducer(Producer<K, V> delegate) {
+			this(delegate, null);
+		}
+
+		CloseSafeProducer(Producer<K, V> delegate, BlockingQueue<CloseSafeProducer<K, V>> cache) {
 			this.delegate = delegate;
+			this.cache = cache;
 		}
 
 		@Override
@@ -196,11 +263,46 @@ public class DefaultKafkaProducerFactory<K, V> implements ProducerFactory<K, V>,
 		}
 
 		@Override
+		public void initTransactions() {
+			this.delegate.initTransactions();
+		}
+
+		@Override
+		public void beginTransaction() throws ProducerFencedException {
+			this.delegate.beginTransaction();
+		}
+
+		@Override
+		public void sendOffsetsToTransaction(Map<TopicPartition, OffsetAndMetadata> offsets, String consumerGroupId)
+				throws ProducerFencedException {
+			this.delegate.sendOffsetsToTransaction(offsets, consumerGroupId);
+		}
+
+		@Override
+		public void commitTransaction() throws ProducerFencedException {
+			this.delegate.commitTransaction();
+		}
+
+		@Override
+		public void abortTransaction() throws ProducerFencedException {
+			this.delegate.abortTransaction();
+		}
+
+		@Override
 		public void close() {
+			if (this.cache != null) {
+				this.cache.offer(this);
+			}
 		}
 
 		@Override
 		public void close(long timeout, TimeUnit unit) {
+			close();
+		}
+
+		@Override
+		public String toString() {
+			return "CloseSafeProducer [delegate=" + this.delegate + "]";
 		}
 
 	}
