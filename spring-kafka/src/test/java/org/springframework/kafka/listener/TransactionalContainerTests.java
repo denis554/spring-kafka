@@ -256,7 +256,14 @@ public class TransactionalContainerTests {
 		});
 		consumer.poll(0);
 		assertThat(subsLatch.await(10, TimeUnit.SECONDS)).isTrue();
-		assertThat(consumer.position(new TopicPartition(topic1, 0))).isEqualTo(0);
+
+		int n = 0;
+		while (consumer.position(new TopicPartition(topic1, 0)) == 0 && n++ < 100) {
+			Thread.sleep(100);
+			consumer.poll(0);
+		}
+
+		assertThat(consumer.position(new TopicPartition(topic1, 0))).isEqualTo(1);
 		logger.info("Stop testRollbackRecord");
 		pf.destroy();
 		tpf.destroy();
