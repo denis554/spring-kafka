@@ -438,7 +438,7 @@ public class ConcurrentMessageListenerContainerTests {
 			latch.countDown();
 			throw new RuntimeException("intended");
 		});
-		containerProps.setGenericErrorHandler((ErrorHandler) (thrownException, record) -> catchError.set(true));
+		containerProps.setErrorHandler((thrownException, record) -> catchError.set(true));
 
 		ConcurrentMessageListenerContainer<Integer, String> container =
 				new ConcurrentMessageListenerContainer<>(cf, containerProps);
