@@ -72,8 +72,14 @@ import org.springframework.util.concurrent.SettableListenableFuture;
  */
 @RunWith(SpringRunner.class)
 @DirtiesContext
-@EmbeddedKafka(partitions = 1, topics = { KafkaStreamsTests.STREAMING_TOPIC1,
-		KafkaStreamsTests.STREAMING_TOPIC2, KafkaStreamsTests.FOOS })
+@EmbeddedKafka(partitions = 1,
+		topics = {
+				KafkaStreamsTests.STREAMING_TOPIC1,
+				KafkaStreamsTests.STREAMING_TOPIC2,
+				KafkaStreamsTests.FOOS },
+		brokerProperties = {
+				"auto.create.topics.enable=false",
+				"delete.topic.enable=true" })
 public class KafkaStreamsTests {
 
 	static final String STREAMING_TOPIC1 = "streamingTopic1";
@@ -91,9 +97,15 @@ public class KafkaStreamsTests {
 	@Autowired
 	private KStreamBuilderFactoryBean kStreamBuilderFactoryBean;
 
+	@Autowired
+	private KafkaEmbedded kafkaEmbedded;
+
 
 	@Test
 	public void testKStreams() throws Exception {
+		assertThat(this.kafkaEmbedded.getKafkaServer(0).config().autoCreateTopicsEnable()).isFalse();
+		assertThat(this.kafkaEmbedded.getKafkaServer(0).config().deleteTopicEnable()).isTrue();
+
 		this.kStreamBuilderFactoryBean.stop();
 
 		CountDownLatch stateLatch = new CountDownLatch(1);
@@ -169,7 +181,9 @@ public class KafkaStreamsTests {
 			KStream<Integer, String> stream = kStreamBuilder.stream(STREAMING_TOPIC1);
 			stream.mapValues(String::toUpperCase)
 					.mapValues(Foo::new)
-					.through(Serdes.Integer(), new JsonSerde<Foo>() { }, FOOS)
+					.through(Serdes.Integer(), new JsonSerde<Foo>() {
+
+					}, FOOS)
 					.mapValues(Foo::getName)
 					.groupByKey()
 					.reduce((value1, value2) -> value1 + value2, TimeWindows.of(1000), "windowStore")

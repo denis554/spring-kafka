@@ -29,7 +29,7 @@ public static Map<String, Object> consumerProps(String group, String autoCommit,
 public static Map<String, Object> senderProps(KafkaEmbedded embeddedKafka) { ... }
 ----
 
-A JUnit `@Rule` is provided that creates an embedded kafka server.
+A JUnit `@Rule` is provided that creates an embedded Kafka server.
 
 [source, java]
 ----
@@ -96,6 +96,9 @@ ConsumerRecord<Integer, String> received = KafkaTestUtils.getSingleRecord(consum
 
 When the embedded server is started by JUnit, it sets a system property `spring.embedded.kafka.brokers` to the address of the broker(s).
 A convenient constant `KafkaEmbedded.SPRING_EMBEDDED_KAFKA_BROKERS` is provided for this property.
+
+With the `KafkaEmbedded.brokerProperties(Map<String, String>)` you can provide additional properties for the Kafka server(s).
+See https://kafka.apache.org/documentation/#brokerconfigs[Kafka Config] for more information about possible broker properties.
 
 ==== @EmbeddedKafka Annotation
 It is generally recommended to use the rule as a `@ClassRule` to avoid starting/stopping the broker between tests (and use a different topic for each test).

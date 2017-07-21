@@ -18,13 +18,13 @@ package org.springframework.kafka.test.rule;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.File;
 import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -40,7 +40,6 @@ import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.protocol.Errors;
-import org.apache.kafka.common.protocol.SecurityProtocol;
 import org.apache.kafka.common.requests.MetadataResponse;
 import org.apache.kafka.common.utils.Time;
 import org.junit.rules.ExternalResource;
@@ -66,7 +65,6 @@ import kafka.utils.ZKStringSerializer$;
 import kafka.utils.ZkUtils;
 import kafka.zk.EmbeddedZookeeper;
 import scala.collection.JavaConversions;
-import scala.collection.Map;
 import scala.collection.Set;
 
 /**
@@ -103,6 +101,8 @@ public class KafkaEmbedded extends ExternalResource implements KafkaRule, Initia
 
 	private String zkConnect;
 
+	private Map<String, String> brokerProperties;
+
 	public KafkaEmbedded(int count) {
 		this(count, false);
 	}
@@ -137,6 +137,18 @@ public class KafkaEmbedded extends ExternalResource implements KafkaRule, Initia
 		this.partitionsPerTopic = partitions;
 	}
 
+	/**
+	 * Specify the properties to configure Kafka Broker before start, e.g.
+	 * {@code auto.create.topics.enable}, {@code transaction.state.log.replication.factor} etc.
+	 * @param brokerProperties the properties to use for configuring Kafka Broker(s).
+	 * @return this for chaining configuration
+	 * @see KafkaConfig
+	 */
+	public KafkaEmbedded brokerProperties(Map<String, String> brokerProperties) {
+		this.brokerProperties = brokerProperties;
+		return this;
+	}
+
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		before();
@@ -158,14 +170,17 @@ public class KafkaEmbedded extends ExternalResource implements KafkaRule, Initia
 			ss.close();
 			Properties brokerConfigProperties = TestUtils.createBrokerConfig(i, this.zkConnect, this.controlledShutdown,
 					true, randomPort,
-					scala.Option.<SecurityProtocol>apply(null),
-					scala.Option.<File>apply(null),
-					scala.Option.<Properties>apply(null),
-					true, false, 0, false, 0, false, 0, scala.Option.<String>apply(null));
+					scala.Option.apply(null),
+					scala.Option.apply(null),
+					scala.Option.apply(null),
+					true, false, 0, false, 0, false, 0, scala.Option.apply(null));
 			brokerConfigProperties.setProperty(KafkaConfig$.MODULE$.PortProp(), "" + randomPort);
 			brokerConfigProperties.setProperty("replica.socket.timeout.ms", "1000");
 			brokerConfigProperties.setProperty("controller.socket.timeout.ms", "1000");
 			brokerConfigProperties.setProperty("offsets.topic.replication.factor", "1");
+			if (this.brokerProperties != null) {
+				this.brokerProperties.forEach(brokerConfigProperties::setProperty);
+			}
 			KafkaServer server = TestUtils.createServer(new KafkaConfig(brokerConfigProperties), Time.SYSTEM);
 			this.kafkaServers.add(server);
 		}
@@ -286,7 +301,8 @@ public class KafkaEmbedded extends ExternalResource implements KafkaRule, Initia
 				}
 				canExit = true;
 				ZkUtils zkUtils = new ZkUtils(getZkClient(), null, false);
-				Map<String, Properties> topicProperties = AdminUtils$.MODULE$.fetchAllTopicConfigs(zkUtils);
+				scala.collection.Map<String, Properties> topicProperties =
+						AdminUtils$.MODULE$.fetchAllTopicConfigs(zkUtils);
 				Set<MetadataResponse.TopicMetadata> topicMetadatas =
 						AdminUtils$.MODULE$.fetchTopicMetadataFromZk(topicProperties.keySet(), zkUtils);
 				for (MetadataResponse.TopicMetadata topicMetadata : JavaConversions.asJavaCollection(topicMetadatas)) {
@@ -405,8 +421,8 @@ public class KafkaEmbedded extends ExternalResource implements KafkaRule, Initia
 		});
 		consumer.poll(0); // force assignment
 		assertThat(consumerLatch.await(30, TimeUnit.SECONDS))
-			.as("Failed to be assigned partitions from the embedded topics")
-			.isTrue();
+				.as("Failed to be assigned partitions from the embedded topics")
+				.isTrue();
 	}
 
 	/**

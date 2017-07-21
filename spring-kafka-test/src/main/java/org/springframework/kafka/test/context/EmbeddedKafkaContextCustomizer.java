@@ -16,6 +16,10 @@
 
 package org.springframework.kafka.test.context;
 
+import java.io.StringReader;
+import java.util.Map;
+import java.util.Properties;
+
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.DefaultSingletonBeanRegistry;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -23,6 +27,7 @@ import org.springframework.kafka.test.rule.KafkaEmbedded;
 import org.springframework.test.context.ContextCustomizer;
 import org.springframework.test.context.MergedContextConfiguration;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 /**
  * The {@link ContextCustomizer} implementation for Spring Integration specific environment.
@@ -42,6 +47,7 @@ class EmbeddedKafkaContextCustomizer implements ContextCustomizer {
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public void customizeContext(ConfigurableApplicationContext context, MergedContextConfiguration mergedConfig) {
 		ConfigurableListableBeanFactory beanFactory = context.getBeanFactory();
 		Assert.isInstanceOf(DefaultSingletonBeanRegistry.class, beanFactory);
@@ -50,6 +56,22 @@ class EmbeddedKafkaContextCustomizer implements ContextCustomizer {
 				this.embeddedKafka.controlledShutdown(),
 				this.embeddedKafka.partitions(),
 				this.embeddedKafka.topics());
+
+		Properties properties = new Properties();
+
+		for (String pair : this.embeddedKafka.brokerProperties()) {
+			if (!StringUtils.hasText(pair)) {
+				continue;
+			}
+			try {
+				properties.load(new StringReader(pair));
+			}
+			catch (Exception ex) {
+				throw new IllegalStateException("Failed to load broker property from [" + pair + "]", ex);
+			}
+		}
+
+		kafkaEmbedded.brokerProperties((Map<String, String>) (Map<?, ?>) properties);
 
 		beanFactory.initializeBean(kafkaEmbedded, KafkaEmbedded.BEAN_NAME);
 		beanFactory.registerSingleton(KafkaEmbedded.BEAN_NAME, kafkaEmbedded);
