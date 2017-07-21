@@ -25,6 +25,8 @@ import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.listener.AbstractMessageListenerContainer;
+import org.springframework.kafka.listener.BatchErrorHandler;
+import org.springframework.kafka.listener.ErrorHandler;
 import org.springframework.kafka.listener.adapter.RecordFilterStrategy;
 import org.springframework.kafka.listener.config.ContainerProperties;
 import org.springframework.kafka.support.converter.MessageConverter;
@@ -251,6 +253,12 @@ public abstract class AbstractKafkaListenerContainerFactory<C extends AbstractMe
 		}
 		if (this.containerProperties.getAckTime() > 0) {
 			properties.setAckTime(this.containerProperties.getAckTime());
+		}
+		if (this.containerProperties.getGenericErrorHandler() instanceof BatchErrorHandler) {
+			properties.setBatchErrorHandler((BatchErrorHandler) this.containerProperties.getGenericErrorHandler());
+		}
+		else {
+			properties.setErrorHandler((ErrorHandler) this.containerProperties.getGenericErrorHandler());
 		}
 	}
 

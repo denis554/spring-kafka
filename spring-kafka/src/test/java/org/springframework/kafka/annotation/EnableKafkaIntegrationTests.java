@@ -860,7 +860,7 @@ public class EnableKafkaIntegrationTests {
 				offsetsToReset.compute(new org.apache.kafka.common.TopicPartition(topics.get(i), partitions.get(i)),
 						(k, v) -> v == null ? offsets.get(index) : Math.min(v, offsets.get(index)));
 			}
-			offsetsToReset.forEach((k, v) -> consumer.seek(k, v));
+			offsetsToReset.forEach(consumer::seek);
 		}
 
 		private final CountDownLatch badAckLatch = new CountDownLatch(1);

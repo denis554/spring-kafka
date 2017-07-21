@@ -41,6 +41,7 @@ import org.springframework.util.Assert;
  *
  * @author Gary Russell
  * @author Marius Bogoevici
+ * @author Artem Bilan
  */
 public abstract class AbstractMessageListenerContainer<K, V>
 		implements MessageListenerContainer, BeanNameAware, ApplicationEventPublisherAware, SmartLifecycle {
@@ -137,6 +138,12 @@ public abstract class AbstractMessageListenerContainer<K, V>
 		if (this.containerProperties.getConsumerRebalanceListener() == null) {
 			this.containerProperties.setConsumerRebalanceListener(createSimpleLoggingConsumerRebalanceListener());
 		}
+		if (containerProperties.getGenericErrorHandler() instanceof BatchErrorHandler) {
+			this.containerProperties.setBatchErrorHandler((BatchErrorHandler) containerProperties.getGenericErrorHandler());
+		}
+		else {
+			this.containerProperties.setErrorHandler((ErrorHandler) containerProperties.getGenericErrorHandler());
+		}
 	}
 
 	@Override
@@ -209,6 +216,7 @@ public abstract class AbstractMessageListenerContainer<K, V>
 	public final void stop() {
 		final CountDownLatch latch = new CountDownLatch(1);
 		stop(new Runnable() {
+
 			@Override
 			public void run() {
 				latch.countDown();
