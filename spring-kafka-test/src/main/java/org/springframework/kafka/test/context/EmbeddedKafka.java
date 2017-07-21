@@ -22,7 +22,6 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.Map;
 
 import org.springframework.core.annotation.AliasFor;
 import org.springframework.kafka.test.rule.KafkaEmbedded;
@@ -87,15 +86,15 @@ public @interface EmbeddedKafka {
 	/**
 	 * @return the topics to create
 	 */
-	String[] topics() default {};
+	String[] topics() default { };
 
 	/**
 	 * Properties in form {@literal key=value} that should be added
 	 * to the broker config before runs.
 	 * @return the properties to add
-	 * @see KafkaEmbedded#brokerProperties(Map)
+	 * @see KafkaEmbedded#brokerProperties(java.util.Map)
 	 */
-	String[] brokerProperties() default {};
+	String[] brokerProperties() default { };
 
 }
 
