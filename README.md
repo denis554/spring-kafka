@@ -1,4 +1,4 @@
-Spring Kafka <img src="https://build.spring.io/plugins/servlet/buildStatusImage/SK-MAS">
+Spring Kafka [<img src="https://build.spring.io/plugins/servlet/wittified/build-status/SK-MAS">](https://build.spring.io/browse/SK-MAS)
 [![Join the chat at https://gitter.im/spring-projects/spring-kafka](https://badges.gitter.im/spring-projects/spring-kafka.svg)](https://gitter.im/spring-projects/spring-kafka?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 ==================
 
