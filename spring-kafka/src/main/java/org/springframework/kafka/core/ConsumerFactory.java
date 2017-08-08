@@ -42,7 +42,7 @@ public interface ConsumerFactory<K, V> {
 	 * if present.
 	 * @param clientIdSuffix the suffix.
 	 * @return the consumer.
-	 * @since 2.0
+	 * @since 1.3
 	 */
 	Consumer<K, V> createConsumer(String clientIdSuffix);
 
@@ -53,7 +53,7 @@ public interface ConsumerFactory<K, V> {
 	 * @param groupId the group id.
 	 * @param clientIdSuffix the suffix.
 	 * @return the consumer.
-	 * @since 2.0
+	 * @since 1.3
 	 */
 	Consumer<K, V> createConsumer(String groupId, String clientIdSuffix);
 

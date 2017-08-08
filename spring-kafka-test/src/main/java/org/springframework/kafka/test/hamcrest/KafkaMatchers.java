@@ -66,7 +66,7 @@ public final class KafkaMatchers {
 	 * {@link org.apache.kafka.common.record.TimestampType#CREATE_TIME CreateTime}.
 	 * @param ts timestamp of the consumer record.
 	 * @return a Matcher that matches the timestamp in a consumer record.
-	 * @since 2.0
+	 * @since 1.3
 	 */
 	public static Matcher<ConsumerRecord<?, ?>> hasTimestamp(long ts) {
 		return hasTimestamp(TimestampType.CREATE_TIME, ts);
@@ -77,7 +77,7 @@ public final class KafkaMatchers {
 	 * @param type timestamp type of the record
 	 * @param ts timestamp of the consumer record.
 	 * @return a Matcher that matches the timestamp in a consumer record.
-	 * @since 2.0
+	 * @since 1.3
 	 */
 	public static Matcher<ConsumerRecord<?, ?>> hasTimestamp(TimestampType type, long ts) {
 		return new ConsumerRecordTimestampMatcher(type, ts);

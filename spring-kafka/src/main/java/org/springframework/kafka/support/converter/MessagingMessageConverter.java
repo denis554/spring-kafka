@@ -74,7 +74,7 @@ public class MessagingMessageConverter implements RecordMessageConverter {
 	/**
 	 * Set the header mapper to map headers.
 	 * @param headerMapper the mapper.
-	 * @since 2.0
+	 * @since 1.3
 	 */
 	public void setHeaderMapper(KafkaHeaderMapper headerMapper) {
 		this.headerMapper = headerMapper;

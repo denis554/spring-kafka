@@ -26,7 +26,7 @@ import org.springframework.messaging.MessageHeaders;
  *  Header mapper for Apache Kafka.
  *
  * @author Gary Russell
- * @since 2.0
+ * @since 1.3
  *
  */
 public interface KafkaHeaderMapper {

@@ -314,7 +314,7 @@ public class ContainerProperties {
 	 * Set the group id for this container. Overrides any {@code group.id} property
 	 * provided by the consumer factory configuration.
 	 * @param groupId the group id.
-	 * @since 2.0
+	 * @since 1.3
 	 */
 	public void setGroupId(String groupId) {
 		this.groupId = groupId;
@@ -397,7 +397,7 @@ public class ContainerProperties {
 	 * Set the transaction manager to start a transaction; only {@link AckMode#RECORD} and
 	 * {@link AckMode#BATCH} (default) are supported with transactions.
 	 * @param transactionManager the transaction manager.
-	 * @since 2.0
+	 * @since 1.3
 	 */
 	public void setTransactionManager(PlatformTransactionManager transactionManager) {
 		this.transactionManager = transactionManager;

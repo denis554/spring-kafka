@@ -30,7 +30,7 @@ import org.springframework.messaging.support.MessageBuilder;
 
 /**
  * @author Gary Russell
- * @since 2.0
+ * @since 1.3
  *
  */
 public class DefaultKafkaHeaderMapperTests {

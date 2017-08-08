@@ -68,7 +68,7 @@ import org.springframework.kafka.transaction.KafkaTransactionManager;
 
 /**
  * @author Gary Russell
- * @since 2.0
+ * @since 1.3
  *
  */
 public class TransactionalContainerTests {

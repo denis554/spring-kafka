@@ -32,7 +32,7 @@ import org.junit.rules.ExpectedException;
 /**
  * @author Biju Kunjummen
  *
- * @since 2.0
+ * @since 1.3
  */
 public class KafkaMatchersTests {
 

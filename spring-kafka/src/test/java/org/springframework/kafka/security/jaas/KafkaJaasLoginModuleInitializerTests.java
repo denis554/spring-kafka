@@ -42,7 +42,7 @@ import com.sun.security.auth.login.ConfigFile;
  * @author Marius Bogoevici
  * @author Gary Russell
  *
- * @since 2.0
+ * @since 1.3
  */
 @SuppressWarnings("restriction")
 @RunWith(SpringRunner.class)

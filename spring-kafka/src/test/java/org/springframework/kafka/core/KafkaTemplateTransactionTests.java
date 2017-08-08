@@ -60,7 +60,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * @author Gary Russell
- * @since 2.0
+ * @since 1.3
  *
  */
 public class KafkaTemplateTransactionTests {

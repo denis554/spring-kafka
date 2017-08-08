@@ -131,7 +131,7 @@ public abstract class AbstractKafkaListenerEndpoint<K, V>
 	 * Set the group id to override the {@code group.id} property in the
 	 * connectionFactory.
 	 * @param groupId the group id.
-	 * @since 2.0
+	 * @since 1.3
 	 */
 	public void setGroupId(String groupId) {
 		this.groupId = groupId;

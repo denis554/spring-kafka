@@ -124,7 +124,7 @@ public class DefaultKafkaProducerFactory<K, V> implements ProducerFactory<K, V>,
 	/**
 	 * Set the transactional.id prefix.
 	 * @param transactionIdPrefix the prefix.
-	 * @since 2.0
+	 * @since 1.3
 	 */
 	public void setTransactionIdPrefix(String transactionIdPrefix) {
 		Assert.notNull(transactionIdPrefix, "'transactionIdPrefix' cannot be null");
@@ -135,7 +135,7 @@ public class DefaultKafkaProducerFactory<K, V> implements ProducerFactory<K, V>,
 	 * Return an unmodifiable reference to the configuration map for this factory.
 	 * Useful for cloning to make a similar factory.
 	 * @return the configs.
-	 * @since 2.0
+	 * @since 1.3
 	 */
 	public Map<String, Object> getConfigurationProperties() {
 		return Collections.unmodifiableMap(this.configs);

@@ -109,7 +109,7 @@ public class TopicPartitionInitialOffset {
 	 * @param topic the topic.
 	 * @param partition the partition.
 	 * @param position {@link SeekPosition}.
-	 * @since 2.0
+	 * @since 1.3
 	 */
 	public TopicPartitionInitialOffset(String topic, int partition, SeekPosition position) {
 		this.topicPartition = new TopicPartition(topic, partition);

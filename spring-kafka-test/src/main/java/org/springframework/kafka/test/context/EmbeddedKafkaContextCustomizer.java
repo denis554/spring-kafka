@@ -36,7 +36,7 @@ import org.springframework.util.StringUtils;
  *
  * @author Artem Bilan
  *
- * @since 2.0
+ * @since 1.3
  */
 class EmbeddedKafkaContextCustomizer implements ContextCustomizer {
 

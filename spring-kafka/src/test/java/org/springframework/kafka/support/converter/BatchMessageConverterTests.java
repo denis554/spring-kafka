@@ -35,7 +35,7 @@ import org.springframework.messaging.MessageHeaders;
 
 /**
  * @author Biju Kunjummen
- * @since 2.0
+ * @since 1.3
  */
 public class BatchMessageConverterTests {
 

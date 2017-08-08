@@ -79,7 +79,7 @@ public interface KafkaOperations<K, V> {
 	 * @param key the key.
 	 * @param data the data.
 	 * @return a Future for the {@link SendResult}.
-	 * @since 2.0
+	 * @since 1.3
 	 */
 	ListenableFuture<SendResult<K, V>> sendDefault(Integer partition, Long timestamp, K key, V data);
 
@@ -118,7 +118,7 @@ public interface KafkaOperations<K, V> {
 	 * @param key the key.
 	 * @param data the data.
 	 * @return a Future for the {@link SendResult}.
-	 * @since 2.0
+	 * @since 1.3
 	 */
 	ListenableFuture<SendResult<K, V>> send(String topic, Integer partition, Long timestamp, K key, V data);
 
@@ -178,7 +178,7 @@ public interface KafkaOperations<K, V> {
 	 * @param <K> the key type.
 	 * @param <V> the value type.
 	 * @param <T> the return type.
-	 * @since 2.0
+	 * @since 1.3
 	 */
 	interface ProducerCallback<K, V, T> {
 
@@ -191,7 +191,7 @@ public interface KafkaOperations<K, V> {
 	 * @param <K> the key type.
 	 * @param <V> the value type.
 	 * @param <T> the return type.
-	 * @since 2.0
+	 * @since 1.3
 	 */
 	interface OperationsCallback<K, V, T> {
 

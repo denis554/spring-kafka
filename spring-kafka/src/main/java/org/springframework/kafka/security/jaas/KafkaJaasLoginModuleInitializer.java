@@ -37,7 +37,7 @@ import org.springframework.util.Assert;
  * @author Marius Bogoevici
  * @author Gary Russell
  *
- * @since 2.0
+ * @since 1.3
  */
 public class KafkaJaasLoginModuleInitializer implements SmartInitializingSingleton, DisposableBean {
 

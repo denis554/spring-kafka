@@ -46,7 +46,7 @@ public interface KafkaListenerEndpoint {
 	 * Return the groupId of this endpoint - if present, overrides the
 	 * {@code group.id} property of the consumer factory.
 	 * @return the group id; may be null.
-	 * @since 2.0
+	 * @since 1.3
 	 */
 	String getGroupId();
 

@@ -30,7 +30,7 @@ import org.springframework.test.context.ContextCustomizerFactory;
  *
  * @author Artem Bilan
  *
- * @since 2.0
+ * @since 1.3
  */
 class EmbeddedKafkaContextCustomizerFactory implements ContextCustomizerFactory {
 

@@ -54,7 +54,7 @@ public final class KafkaConditions {
 	/**
 	 * @param value the timestamp.
 	 * @return a Condition that matches the timestamp value in a consumer record.
-	 * @since 2.0
+	 * @since 1.3
 	 */
 	public static Condition<ConsumerRecord<?, ?>> timestamp(long value) {
 		return timestamp(TimestampType.CREATE_TIME, value);
@@ -64,7 +64,7 @@ public final class KafkaConditions {
 	 * @param type the type of timestamp
 	 * @param value the timestamp.
 	 * @return a Condition that matches the timestamp value in a consumer record.
-	 * @since 2.0
+	 * @since 1.3
 	 */
 	public static Condition<ConsumerRecord<?, ?>> timestamp(TimestampType type, long value) {
 		return new ConsumerRecordTimestampCondition(type, value);

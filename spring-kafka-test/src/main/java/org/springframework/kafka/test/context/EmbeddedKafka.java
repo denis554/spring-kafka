@@ -51,7 +51,7 @@ import org.springframework.kafka.test.rule.KafkaEmbedded;
  *
  * @author Artem Bilan
  *
- * @since 2.0
+ * @since 1.3
  *
  * @see KafkaEmbedded
  */

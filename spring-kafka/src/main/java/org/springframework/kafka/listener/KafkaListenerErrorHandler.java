@@ -28,7 +28,7 @@ import org.springframework.messaging.Message;
  *
  * @author Venil Noronha
  * @author Gary Russell
- * @since 2.0
+ * @since 1.3
  */
 @FunctionalInterface
 public interface KafkaListenerErrorHandler {
