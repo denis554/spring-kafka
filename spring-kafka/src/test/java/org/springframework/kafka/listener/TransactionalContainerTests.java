@@ -72,6 +72,8 @@ import org.springframework.transaction.support.DefaultTransactionStatus;
 
 /**
  * @author Gary Russell
+ * @author Artem Bilan
+ *
  * @since 1.3
  *
  */
@@ -228,11 +230,14 @@ public class TransactionalContainerTests {
 		ConsumerFactory cf = mock(ConsumerFactory.class);
 		willReturn(consumer).given(cf).createConsumer("group", null);
 		Producer producer = mock(Producer.class);
-		final CountDownLatch commitLatch = new CountDownLatch(1);
+
+		final CountDownLatch closeLatch = new CountDownLatch(1);
+
 		willAnswer(i -> {
-			commitLatch.countDown();
+			closeLatch.countDown();
 			return null;
-		}).given(producer).commitTransaction();
+		}).given(producer).close();
+
 		final ProducerFactory pf = mock(ProducerFactory.class);
 		given(pf.transactionCapable()).willReturn(true);
 		given(pf.createProducer()).willReturn(producer);
@@ -248,7 +253,9 @@ public class TransactionalContainerTests {
 		KafkaMessageListenerContainer container = new KafkaMessageListenerContainer<>(cf, props);
 		container.setBeanName("commit");
 		container.start();
-		assertThat(commitLatch.await(10, TimeUnit.SECONDS)).isTrue();
+
+		assertThat(closeLatch.await(10, TimeUnit.SECONDS)).isTrue();
+
 		InOrder inOrder = inOrder(producer);
 		inOrder.verify(producer).beginTransaction();
 		ArgumentCaptor<ProducerRecord> captor = ArgumentCaptor.forClass(ProducerRecord.class);
@@ -259,7 +266,7 @@ public class TransactionalContainerTests {
 		inOrder.verify(producer).commitTransaction();
 		inOrder.verify(producer).close();
 		container.stop();
-		verify(pf, times(1)).createProducer();
+		verify(pf).createProducer();
 	}
 
 	@Test
