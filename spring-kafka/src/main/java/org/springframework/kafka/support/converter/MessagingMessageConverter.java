@@ -102,8 +102,8 @@ public class MessagingMessageConverter implements RecordMessageConverter {
 			this.headerMapper.toHeaders(record.headers(), rawHeaders);
 		}
 		else {
-			if (logger.isDebugEnabled()) {
-				logger.debug(
+			if (this.logger.isDebugEnabled()) {
+				this.logger.debug(
 						"No header mapper is available; Jackson is required for the default mapper; "
 						+ "headers (if present) are not mapped but provided raw in "
 						+ KafkaHeaders.NATIVE_HEADERS);

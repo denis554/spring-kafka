@@ -147,8 +147,8 @@ public class BatchMessagingMessageConverter implements BatchMessageConverter {
 				convertedHeaders.add(converted);
 			}
 			else {
-				if (logger.isDebugEnabled() && !logged) {
-					logger.debug(
+				if (this.logger.isDebugEnabled() && !logged) {
+					this.logger.debug(
 						"No header mapper is available; Jackson is required for the default mapper; "
 						+ "headers (if present) are not mapped but provided raw in "
 						+ KafkaHeaders.NATIVE_HEADERS);

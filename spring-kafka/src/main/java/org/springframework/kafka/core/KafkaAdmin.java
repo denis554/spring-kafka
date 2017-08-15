@@ -51,7 +51,7 @@ public class KafkaAdmin implements ApplicationContextAware, SmartInitializingSin
 
 	private static final int DEFAULT_CLOSE_TIMEOUT = 10;
 
-	private final Log logger = LogFactory.getLog(KafkaAdmin.class);
+	private final static Log logger = LogFactory.getLog(KafkaAdmin.class);
 
 	private final Map<String, Object> config;
 
