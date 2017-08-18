@@ -1,5 +1,5 @@
 [[si-kafka]]
-=== Spring Integration Kafka
+=== Spring Integration for Apache Kafka
 
 ==== Introduction
 
@@ -225,3 +225,37 @@ public KafkaMessageDrivenChannelAdapter<String, String>
     return kafkaMessageDrivenChannelAdapter;
 }
 ----
+
+==== What's New in Spring Integration for Apache Kafka
+
+See the http://projects.spring.io/spring-kafka/[Spring for Apache Kafka Project Page] for a matrix of compatible `spring-kafka` and `kafka-clients` versions.
+
+===== 2.1.x
+
+The 2.1.x branch introduced the following changes:
+
+* Update to `spring-kafka` 1.1.x; including support of batch payloads
+* Support `sync` outbound requests via XML configuration
+* Support `payload-type` for inbound channel adapters
+* Support for Enhanced Error handling for the inbound channel adapter (2.1.1)
+* Support for send success/failure messages (2.1.2)
+
+===== 2.2.x
+
+The 2.2.x branch introduced the following changes:
+
+* Update to `spring-kafka` 1.2.x
+
+===== 2.3.x
+
+The 2.3.x branch introduced the following changes:
+
+* Update to `spring-kafka` 1.3.x; including support for transactions and header mapping provided by `kafka-clients` 0.11.0.0
+* Support for record timestamps
+
+===== 3.0.x
+
+* Update to `spring-kafka` 2.0.x and `kafka-clients` 0.11.0.0
+* Support `ConsumerAwareMessageListener` (`Consumer` is available in a message header)
+* Update to Spring Integration 5.0 and Java 8
+* Moved Java DSL to main project
