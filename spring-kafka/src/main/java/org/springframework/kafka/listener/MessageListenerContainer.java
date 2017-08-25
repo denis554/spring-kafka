@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,11 @@
 
 package org.springframework.kafka.listener;
 
+import java.util.Map;
+
+import org.apache.kafka.common.Metric;
+import org.apache.kafka.common.MetricName;
+
 import org.springframework.context.SmartLifecycle;
 
 /**
@@ -24,6 +29,7 @@ import org.springframework.context.SmartLifecycle;
  *
  * @author Stephane Nicoll
  * @author Gary Russell
+ * @author Vladimir Tsanev
  */
 public interface MessageListenerContainer extends SmartLifecycle {
 
@@ -33,5 +39,13 @@ public interface MessageListenerContainer extends SmartLifecycle {
 	 * @param messageListener the {@code object} to wrapped to the {@code MessageListener}.
 	 */
 	void setupMessageListener(Object messageListener);
+
+	/**
+	 * Return metrics kept by this container's consumer(s), grouped by {@code client-id}.
+	 * @return the consumer(s) metrics grouped by {@code client-id}
+	 * @since 1.3
+	 * @see org.apache.kafka.clients.consumer.Consumer#metrics()
+	 */
+	Map<String, Map<MetricName, ? extends Metric>> metrics();
 
 }

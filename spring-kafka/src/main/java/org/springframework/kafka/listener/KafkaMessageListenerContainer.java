@@ -41,6 +41,8 @@ import org.apache.kafka.clients.consumer.NoOffsetForPartitionException;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.consumer.OffsetCommitCallback;
 import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.common.Metric;
+import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
 
@@ -80,6 +82,7 @@ import org.springframework.util.concurrent.ListenableFutureCallback;
  * @author Martin Dam
  * @author Artem Bilan
  * @author Loic Talhouarne
+ * @author Vladimir Tsanev
  */
 public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListenerContainer<K, V> {
 
@@ -151,6 +154,20 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 		else {
 			return null;
 		}
+	}
+
+	@Override
+	public Map<String, Map<MetricName, ? extends Metric>> metrics() {
+		ListenerConsumer listenerConsumer = this.listenerConsumer;
+		if (listenerConsumer != null) {
+			Map<MetricName, ? extends Metric> metrics = listenerConsumer.consumer.metrics();
+			Iterator<MetricName> metricIterator = metrics.keySet().iterator();
+			if (metricIterator.hasNext()) {
+				String clientId = metricIterator.next().tags().get("client-id");
+				return Collections.singletonMap(clientId, metrics);
+			}
+		}
+		return Collections.emptyMap();
 	}
 
 	@Override

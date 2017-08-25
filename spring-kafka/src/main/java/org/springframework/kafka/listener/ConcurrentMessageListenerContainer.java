@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 the original author or authors.
+ * Copyright 2015-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,13 @@ package org.springframework.kafka.listener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.apache.kafka.common.Metric;
+import org.apache.kafka.common.MetricName;
 
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.listener.config.ContainerProperties;
@@ -42,6 +47,7 @@ import org.springframework.util.Assert;
  * @author Murali Reddy
  * @author Jerome Mirc
  * @author Artem Bilan
+ * @author Vladimir Tsanev
  */
 public class ConcurrentMessageListenerContainer<K, V> extends AbstractMessageListenerContainer<K, V> {
 
@@ -87,6 +93,15 @@ public class ConcurrentMessageListenerContainer<K, V> extends AbstractMessageLis
 	 */
 	public List<KafkaMessageListenerContainer<K, V>> getContainers() {
 		return Collections.unmodifiableList(this.containers);
+	}
+
+	@Override
+	public Map<String, Map<MetricName, ? extends Metric>> metrics() {
+		Map<String, Map<MetricName, ? extends Metric>> metrics = new HashMap<>();
+		for (KafkaMessageListenerContainer<K, V> container : this.containers) {
+			metrics.putAll(container.metrics());
+		}
+		return Collections.unmodifiableMap(metrics);
 	}
 
 	/*

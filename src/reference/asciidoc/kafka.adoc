@@ -505,6 +505,10 @@ each container will get one partition.
 NOTE: The `client.id` property (if set) will be appended with `-n` where `n` is the consumer instance according to the concurrency.
 This is required to provide unique names for MBeans when JMX is enabled.
 
+Starting with _version 1.3_, the `MessageListenerContainer` provides an access to the metrics of the underlying `KafkaConsumer`.
+In case of `ConcurrentMessageListenerContainer` the `metrics()` method returns the metrics for all the target `KafkaMessageListenerContainer` instances.
+The metrics are grouped into the `Map<MetricName, ? extends Metric>` by the `client-id` provided for the underlying `KafkaConsumer`.
+
 [[committing-offsets]]
 ====== Committing Offsets
 
