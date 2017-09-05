@@ -291,13 +291,13 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 		@SuppressWarnings("rawtypes")
 		private final KafkaTransactionManager kafkaTxManager =
 				this.transactionManager instanceof KafkaTransactionManager
-					? ((KafkaTransactionManager) this.transactionManager) : null;
+						? ((KafkaTransactionManager) this.transactionManager) : null;
 
 		private final TransactionTemplate transactionTemplate;
 
 		private final String consumerGroupId = this.containerProperties.getGroupId() == null
 				? (String) KafkaMessageListenerContainer.this.consumerFactory.getConfigurationProperties()
-						.get(ConsumerConfig.GROUP_ID_CONFIG)
+				.get(ConsumerConfig.GROUP_ID_CONFIG)
 				: this.containerProperties.getGroupId();
 
 		private volatile Map<TopicPartition, OffsetMetadata> definedPartitions;
@@ -443,8 +443,8 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 								protected void doInTransactionWithoutResult(TransactionStatus status) {
 									((KafkaResourceHolder) TransactionSynchronizationManager
 											.getResource(ListenerConsumer.this.kafkaTxManager.getProducerFactory()))
-													.getProducer().sendOffsetsToTransaction(offsets,
-															ListenerConsumer.this.consumerGroupId);
+											.getProducer().sendOffsetsToTransaction(offsets,
+											ListenerConsumer.this.consumerGroupId);
 								}
 
 							});
@@ -547,7 +547,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 			long lastAlertAt = lastReceive;
 			while (isRunning()) {
 				try {
-					if (!this.autoCommit) {
+					if (!this.autoCommit && !this.isRecordAck) {
 						processCommits();
 					}
 					processSeeks();
@@ -697,12 +697,13 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 				List<ConsumerRecord<K, V>> recordList) {
 			try {
 				this.transactionTemplate.execute(new TransactionCallbackWithoutResult() {
+
 					@Override
 					public void doInTransactionWithoutResult(TransactionStatus s) {
 						Producer producer = null;
 						if (ListenerConsumer.this.kafkaTxManager != null) {
 							producer = ((KafkaResourceHolder) TransactionSynchronizationManager
-								.getResource(ListenerConsumer.this.kafkaTxManager.getProducerFactory())).getProducer();
+									.getResource(ListenerConsumer.this.kafkaTxManager.getProducerFactory())).getProducer();
 						}
 						RuntimeException aborted = doInvokeBatchListener(records, recordList, producer);
 						if (aborted != null) {
@@ -880,7 +881,19 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 						this.listener.onMessage(record);
 						break;
 				}
-				if (!this.isAnyManualAck && !this.autoCommit) {
+				if (this.isRecordAck) {
+					Map<TopicPartition, OffsetAndMetadata> offsetsToCommit =
+							Collections.singletonMap(new TopicPartition(record.topic(), record.partition()),
+									new OffsetAndMetadata(record.offset() + 1));
+
+					if (this.containerProperties.isSyncCommits()) {
+						this.consumer.commitSync(offsetsToCommit);
+					}
+					else {
+						this.consumer.commitAsync(offsetsToCommit, this.commitCallback);
+					}
+				}
+				else if (!this.isAnyManualAck && !this.autoCommit) {
 					this.acks.add(record);
 				}
 				if (producer != null) {
