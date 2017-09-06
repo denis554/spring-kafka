@@ -1151,6 +1151,12 @@ public void jsonListener(Foo foo) {
 
 When using a `@KafkaListener`, the parameter type is provided to the message converter to assist with the conversion.
 
+[NOTE]
+====
+This type inference can only be achieved when the `@KafkaListener` annotation is declared at the method level.
+With a class-level `@KafkaListener`, the payload type is used to select which `@KafkaHandler` method to invoke so it must already have been converted before the method can be chosen.
+====
+
 NOTE: When using the `StringJsonMessageConverter`, you should use a `StringDeserializer` in the kafka consumer configuration and `StringSerializer` in the kafka producer configuration, when using Spring Integration or the `KafkaTemplate.send(Message<?> message)` method.
 
 [[headers]]
