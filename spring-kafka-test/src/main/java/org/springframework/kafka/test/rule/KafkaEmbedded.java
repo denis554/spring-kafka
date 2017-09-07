@@ -153,7 +153,7 @@ public class KafkaEmbedded extends ExternalResource implements KafkaRule, Initia
 	/**
 	 * Set explicit ports on which the kafka brokers will listen. Useful when running an
 	 * embedded broker that you want to access from other processes.
-	 * @param kafkaPort the ports.
+	 * @param kafkaPorts the ports.
 	 * @since 1.3
 	 */
 	public void setKafkaPorts(int... kafkaPorts) {
