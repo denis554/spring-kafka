@@ -1007,12 +1007,15 @@ It's important to understand that the application listener will get events for a
 check the listener id if you want to take specific action based on which container is idle.
 You can also use the `@EventListener` `condition` for this purpose.
 
-The events have 4 properties:
+The events have 5 properties:
 
 - `source` - the listener container instance
 - `id` - the listener id (or container bean name)
 - `idleTime` - the time the container had been idle when the event was published
 - `topicPartitions` - the topics/partitions that the container was assigned at the time the event was generated
+- `consumer` - a reference to the kafka `Consumer` object; for example, if the consumer was previously `pause()` d, it can be `resume()` d when the event is received.
+
+The event is published on the consumer thread, so it is safe to interact with the `Consumer` object.
 
 [source, xml]
 ----
