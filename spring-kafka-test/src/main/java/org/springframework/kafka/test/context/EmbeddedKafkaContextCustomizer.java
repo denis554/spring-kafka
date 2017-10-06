@@ -39,6 +39,7 @@ import org.springframework.util.StringUtils;
  * Registers {@link KafkaEmbedded} bean.
  *
  * @author Artem Bilan
+ * @author Elliot Metsger
  *
  * @since 1.3
  */
@@ -89,8 +90,7 @@ class EmbeddedKafkaContextCustomizer implements ContextCustomizer {
 				p.forEach((key, value) -> properties.putIfAbsent(key, environment.resolvePlaceholders((String) value)));
 			}
 			catch (IOException ex) {
-				throw new IllegalStateException(
-						"Failed to load broker properties from [" + propertiesResource + "]", ex);
+				throw new IllegalStateException("Failed to load broker properties from [" + propertiesResource + "]", ex);
 			}
 		}
 

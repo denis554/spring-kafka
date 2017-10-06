@@ -50,6 +50,7 @@ import org.springframework.kafka.test.rule.KafkaEmbedded;
  * </pre>
  *
  * @author Artem Bilan
+ * @author Elliot Metsger
  *
  * @since 1.3
  *
@@ -91,9 +92,9 @@ public @interface EmbeddedKafka {
 	/**
 	 * Properties in form {@literal key=value} that should be added
 	 * to the broker config before runs.
-	 * Properties may contain property placeholders.
-	 * They are resolved against the Spring {@code Environment} including {@code @TestPropertySource}.
+	 * Properties may contain property placeholders, e.g. {@code delete.topic.enable=${topic.delete:true}}.
 	 * @return the properties to add
+	 * @see #brokerPropertiesLocation()
 	 * @see KafkaEmbedded#brokerProperties(java.util.Map)
 	 */
 	String[] brokerProperties() default { };
@@ -102,11 +103,11 @@ public @interface EmbeddedKafka {
 	 * Spring {@code Resource} url specifying the location of properties that should be
 	 * added to the broker config.
 	 * The {@code brokerPropertiesLocation} url and the properties themselves may contain
-	 * placeholders that are resolved against the Spring {@code Environment}, including
-	 * any {@code @TestPropertySource}s.
+	 * placeholders that are resolved during initialization.
 	 * Properties specified by {@link #brokerProperties()} will override properties found
 	 * in {@code brokerPropertiesLocation}.
 	 * @return a {@code Resource} url specifying the location of properties to add
+	 * @see #brokerProperties()
 	 * @see KafkaEmbedded#brokerProperties(java.util.Map)
 	 */
 	String brokerPropertiesLocation() default "";

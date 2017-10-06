@@ -67,6 +67,7 @@ import org.springframework.util.concurrent.SettableListenableFuture;
  * @author Artem Bilan
  * @author Marius Bogoevici
  * @author Gary Russell
+ * @author Elliot Metsger
  *
  * @since 1.1.4
  */

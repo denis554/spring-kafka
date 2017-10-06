@@ -119,16 +119,16 @@ public class KafkaStreamsTests {
     @Autowired
     private KafkaEmbedded kafkaEmbedded;
 
-	@Test
-	public void someTest() {
-	    Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("testGroup", "true", this.kafkaEmbedded);
+    @Test
+    public void someTest() {
+        Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("testGroup", "true", this.kafkaEmbedded);
         consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         ConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps);
         Consumer<Integer, String> consumer = cf.createConsumer();
         this.embeddedKafka.consumeFromAnEmbeddedTopic(consumer, KafkaStreamsTests.STREAMING_TOPIC2);
         ConsumerRecords<Integer, String> replies = KafkaTestUtils.getRecords(consumer);
         assertThat(replies.count()).isGreaterThanOrEqualTo(1);
-	}
+    }
 
     @Configuration
     @EnableKafkaStreams
@@ -150,23 +150,19 @@ public class KafkaStreamsTests {
 }
 ----
 
-'''
-
-The `brokerProperties` and `brokerPropertiesLocation` attribute of `@EmbeddedKafka` supports standard Spring property placeholder resolution from the `Environment`.
-The `Environment` contains system properties, the system environment, _and_ properties from the classpath resource `/test.properties`, and all of these property sources are consulted when resolving property placeholders.
-For example:
+The `brokerProperties` and `brokerPropertiesLocation` attributes of `@EmbeddedKafka` support property placeholder resolutions:
 [source, java]
 ----
-@TestPropertySource(locations = { "classpath:/test.properties" })
-@EmbeddedKafka(topics = { "any-topic" },
+@TestPropertySource(locations = "classpath:/test.properties")
+@EmbeddedKafka(topics = "any-topic",
         brokerProperties = { "log.dir=${kafka.broker.logs-dir}",
-		                     "listeners=PLAINTEXT://localhost:${kafka.broker.port}",
-		                     "auto.create.topics.enable=${kafka.broker.topics-enable:true}" }
+                            "listeners=PLAINTEXT://localhost:${kafka.broker.port}",
+                            "auto.create.topics.enable=${kafka.broker.topics-enable:true}" }
         brokerPropertiesLocation = "classpath:/broker.properties")
 ----
-In this example, the property placeholders `${kafka.broker.logs-dir}` and `${kafka.broker.port}` are resolved from the Spring `Environment`.
-Additional broker properties are loaded from the `broker.properties` classpath resource specified by the `brokerPropertiesLocation`.
-Property placeholders are resolved for the `brokerPropertiesLocation` URL _and_ for any property placeholders found in the resource.
+In th example above, the property placeholders `${kafka.broker.logs-dir}` and `${kafka.broker.port}` are resolved from the Spring `Environment`.
+In addition the broker properties are loaded from the `broker.properties` classpath resource specified by the `brokerPropertiesLocation`.
+Property placeholders are resolved for the `brokerPropertiesLocation` URL and for any property placeholders found in the resource.
 Properties defined by `brokerProperties` override properties found in `brokerPropertiesLocation`.
 
 ==== Hamcrest Matchers
@@ -321,18 +317,15 @@ The above uses the hamcrest matchers; with `AssertJ`, the final part looks like 
 
 [source, java]
 ----
-...
-        assertThat(records.poll(10, TimeUnit.SECONDS)).has(value("foo"));
-        template.sendDefault(0, 2, "bar");
-        ConsumerRecord<Integer, String> received = records.poll(10, TimeUnit.SECONDS);
-        assertThat(received).has(key(2));
-        assertThat(received).has(partition(0));
-        assertThat(received).has(value("bar"));
-        template.send(TEMPLATE_TOPIC, 0, 2, "baz");
-        received = records.poll(10, TimeUnit.SECONDS);
-        assertThat(received).has(key(2));
-        assertThat(received).has(partition(0));
-        assertThat(received).has(value("baz"));
-    }
-}
+assertThat(records.poll(10, TimeUnit.SECONDS)).has(value("foo"));
+template.sendDefault(0, 2, "bar");
+ConsumerRecord<Integer, String> received = records.poll(10, TimeUnit.SECONDS);
+assertThat(received).has(key(2));
+assertThat(received).has(partition(0));
+assertThat(received).has(value("bar"));
+template.send(TEMPLATE_TOPIC, 0, 2, "baz");
+received = records.poll(10, TimeUnit.SECONDS);
+assertThat(received).has(key(2));
+assertThat(received).has(partition(0));
+assertThat(received).has(value("baz"));
 ----
