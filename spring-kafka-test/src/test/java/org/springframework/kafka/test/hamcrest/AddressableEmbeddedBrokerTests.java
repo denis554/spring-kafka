@@ -34,6 +34,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 /**
  * @author Gary Russell
+ * @author Kamill Sokol
  * @since 1.3
  *
  */
@@ -47,8 +48,12 @@ public class AddressableEmbeddedBrokerTests {
 	private KafkaEmbedded broker;
 
 	@Test
-	public void testPort() {
+	public void testKafkaEmbedded() {
 		assertThat(broker.getBrokersAsString()).isEqualTo("127.0.0.1:" + this.config.port);
+		assertThat(broker.getBrokersAsString())
+				.isEqualTo(System.getProperty(KafkaEmbedded.SPRING_EMBEDDED_KAFKA_BROKERS));
+		assertThat(broker.getZookeeperConnectionString())
+				.isEqualTo(System.getProperty(KafkaEmbedded.SPRING_EMBEDDED_ZOOKEEPER_CONNECT));
 	}
 
 	@Configuration
