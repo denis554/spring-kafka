@@ -74,12 +74,12 @@ subprojects { subproject ->
 		hamcrestVersion = '1.3'
 		jacksonVersion = '2.9.1'
 		junitVersion = '4.12'
-		kafkaVersion = '0.11.0.0'
-		mockitoVersion = '2.9.0'
+		kafkaVersion = '1.0.0'
+		mockitoVersion = '2.11.0'
 		scalaVersion = '2.11'
 		slf4jVersion = '1.7.25'
-		springRetryVersion = '1.2.0.RELEASE'
-		springVersion = '5.0.0.RELEASE'
+		springRetryVersion = '1.2.1.RELEASE'
+		springVersion = '5.0.1.RELEASE'
 
 		idPrefix = 'kafka'
 
