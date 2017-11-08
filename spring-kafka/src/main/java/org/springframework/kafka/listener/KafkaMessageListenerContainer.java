@@ -405,6 +405,8 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 			Assert.state(!this.isBatchListener || !this.isRecordAck, "Cannot use AckMode.RECORD with a batch listener");
 			if (this.transactionManager != null) {
 				this.transactionTemplate = new TransactionTemplate(this.transactionManager);
+				Assert.state(!(this.errorHandler instanceof RemainingRecordsErrorHandler),
+							"You cannot use a 'RemainingRecordsErrorHandler' with transactions");
 			}
 			else {
 				this.transactionTemplate = null;
@@ -875,7 +877,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 								producer = ((KafkaResourceHolder) TransactionSynchronizationManager
 										.getResource(ListenerConsumer.this.kafkaTxManager.getProducerFactory())).getProducer();
 							}
-							RuntimeException aborted = doInvokeRecordListener(record, producer);
+							RuntimeException aborted = doInvokeRecordListener(record, producer, null);
 							if (aborted != null) {
 								throw aborted;
 							}
@@ -898,7 +900,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 				if (this.logger.isTraceEnabled()) {
 					this.logger.trace("Processing " + record);
 				}
-				doInvokeRecordListener(record, null);
+				doInvokeRecordListener(record, null, iterator);
 			}
 		}
 
@@ -907,11 +909,14 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 		 * @param record the record.
 		 * @param producer the producer - only if we're running in a transaction, null
 		 * otherwise.
+		 * @param iterator the {@link ConsumerRecords} iterator - used only if a
+		 * {@link RemainingRecordsErrorHandler} is being used.
 		 * @return an exception.
 		 * @throws Error an error.
 		 */
 		private RuntimeException doInvokeRecordListener(final ConsumerRecord<K, V> record,
-				@SuppressWarnings("rawtypes") Producer producer) throws Error {
+				@SuppressWarnings("rawtypes") Producer producer,
+				Iterator<ConsumerRecord<K, V>> iterator) throws Error {
 			try {
 				switch (this.listenerType) {
 					case ACKNOWLEDGING_CONSUMER_AWARE:
@@ -960,13 +965,24 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 					throw e;
 				}
 				try {
-					this.errorHandler.handle(e, record, this.consumer);
-					if (producer != null) {
-						try {
-							sendOffsetsToTransaction(producer);
+					if (this.errorHandler instanceof RemainingRecordsErrorHandler) {
+						processCommits();
+						List<ConsumerRecord<?, ?>> records = new ArrayList<>();
+						records.add(record);
+						while (iterator.hasNext()) {
+							records.add(iterator.next());
 						}
-						catch (Exception e1) {
-							this.logger.error("Send offsets to transaction failed", e1);
+						((RemainingRecordsErrorHandler) this.errorHandler).handle(e, records, this.consumer);
+					}
+					else {
+						this.errorHandler.handle(e, record, this.consumer);
+						if (producer != null) {
+							try {
+								sendOffsetsToTransaction(producer);
+							}
+							catch (Exception e1) {
+								this.logger.error("Send offsets to transaction failed", e1);
+							}
 						}
 					}
 				}
