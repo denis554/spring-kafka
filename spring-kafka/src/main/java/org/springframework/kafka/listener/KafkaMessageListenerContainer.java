@@ -87,6 +87,7 @@ import org.springframework.util.concurrent.ListenableFutureCallback;
  * @author Artem Bilan
  * @author Loic Talhouarne
  * @author Vladimir Tsanev
+ * @author Yang Qiju
  */
 public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListenerContainer<K, V> {
 
@@ -343,6 +344,8 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 
 		private boolean fatalError;
 
+		private boolean taskSchedulerExplicitlySet;
+
 		@SuppressWarnings("unchecked")
 		ListenerConsumer(GenericMessageListener<?> listener, ListenerType listenerType) {
 			Assert.state(!this.isAnyManualAck || !this.autoCommit,
@@ -406,13 +409,14 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 			if (this.transactionManager != null) {
 				this.transactionTemplate = new TransactionTemplate(this.transactionManager);
 				Assert.state(!(this.errorHandler instanceof RemainingRecordsErrorHandler),
-							"You cannot use a 'RemainingRecordsErrorHandler' with transactions");
+						"You cannot use a 'RemainingRecordsErrorHandler' with transactions");
 			}
 			else {
 				this.transactionTemplate = null;
 			}
 			if (this.containerProperties.getScheduler() != null) {
 				this.taskScheduler = this.containerProperties.getScheduler();
+				this.taskSchedulerExplicitlySet = true;
 			}
 			else {
 				ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
@@ -663,6 +667,9 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 				KafkaMessageListenerContainer.this.stop();
 			}
 			this.monitorTask.cancel(true);
+			if (!this.taskSchedulerExplicitlySet) {
+				((ThreadPoolTaskScheduler) this.taskScheduler).destroy();
+			}
 			this.consumer.close();
 			if (this.logger.isInfoEnabled()) {
 				this.logger.info("Consumer stopped");
