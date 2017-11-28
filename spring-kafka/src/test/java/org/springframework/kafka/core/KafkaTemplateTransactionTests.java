@@ -60,6 +60,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * @author Gary Russell
+ * @author Nakul Mishra
+ *
  * @since 1.3
  *
  */
@@ -163,6 +165,29 @@ public class KafkaTemplateTransactionTests {
 		inOrder.verify(producer2).commitTransaction();
 		inOrder.verify(producer1).commitTransaction();
 		ctx.close();
+	}
+
+	@Test
+	public void testDefaultProducerIdempotentConfig() throws Exception {
+		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
+		DefaultKafkaProducerFactory<String, String> pf = new DefaultKafkaProducerFactory<>(
+				senderProps);
+		pf.setTransactionIdPrefix("my.transaction.");
+		pf.destroy();
+		assertThat(pf.getConfigurationProperties()
+				.get(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG)).isEqualTo(true);
+	}
+
+	@Test
+	public void testOverrideProducerIdempotentConfig() throws Exception {
+		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
+		senderProps.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, false);
+		DefaultKafkaProducerFactory<String, String> pf = new DefaultKafkaProducerFactory<>(
+				senderProps);
+		pf.setTransactionIdPrefix("my.transaction.");
+		pf.destroy();
+		assertThat(pf.getConfigurationProperties()
+				.get(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG)).isEqualTo(false);
 	}
 
 	@Configuration
