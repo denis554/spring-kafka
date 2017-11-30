@@ -45,6 +45,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 
+import org.springframework.beans.DirectFieldAccessor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -319,8 +320,7 @@ public class EnableKafkaIntegrationTests {
 		Object messageListener = container.getContainerProperties().getMessageListener();
 		DefaultJackson2JavaTypeMapper typeMapper = KafkaTestUtils.getPropertyValue(messageListener,
 				"messageConverter.typeMapper", DefaultJackson2JavaTypeMapper.class);
-		new DirectFieldAccessor(typeMapper).setPropertyValue("typePrecedence",
-				Jackson2JavaTypeMapper.TypePrecedence.TYPE_ID);
+		typeMapper.setTypePrecedence(Jackson2JavaTypeMapper.TypePrecedence.TYPE_ID);
 		assertThat(container).isNotNull();
 		Foo foo = new Foo();
 		foo.setBar("bar");
