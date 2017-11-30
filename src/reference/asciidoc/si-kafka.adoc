@@ -346,7 +346,7 @@ The 2.3.x branch introduced the following changes:
 
 ===== 3.0.x
 
-* Update to `spring-kafka` 2.0.x and `kafka-clients` 0.11.0.0
+* Update to `spring-kafka` 2.1.x and `kafka-clients` 1.0.0
 * Support `ConsumerAwareMessageListener` (`Consumer` is available in a message header)
 * Update to Spring Integration 5.0 and Java 8
 * Moved Java DSL to main project
