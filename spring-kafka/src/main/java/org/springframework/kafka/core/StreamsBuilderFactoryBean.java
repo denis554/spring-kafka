@@ -73,15 +73,15 @@ public class StreamsBuilderFactoryBean extends AbstractFactoryBean<StreamsBuilde
 
 	public void setClientSupplier(KafkaClientSupplier clientSupplier) {
 		Assert.notNull(clientSupplier, "'clientSupplier' must not be null");
-		this.clientSupplier = clientSupplier;
+		this.clientSupplier = clientSupplier; // NOSONAR (sync)
 	}
 
 	public void setStateListener(KafkaStreams.StateListener stateListener) {
-		this.stateListener = stateListener;
+		this.stateListener = stateListener; // NOSONAR (sync)
 	}
 
 	public void setUncaughtExceptionHandler(Thread.UncaughtExceptionHandler exceptionHandler) {
-		this.exceptionHandler = exceptionHandler;
+		this.exceptionHandler = exceptionHandler; // NOSONAR (sync)
 	}
 
 	/**
@@ -91,7 +91,7 @@ public class StreamsBuilderFactoryBean extends AbstractFactoryBean<StreamsBuilde
 	 * @see KafkaStreams#close(long, TimeUnit)
 	 */
 	public void setCloseTimeout(int closeTimeout) {
-		this.closeTimeout = closeTimeout;
+		this.closeTimeout = closeTimeout; // NOSONAR (sync)
 	}
 
 	@Override

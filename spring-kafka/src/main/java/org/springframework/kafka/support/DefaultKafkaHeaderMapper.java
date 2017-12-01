@@ -359,7 +359,7 @@ public class DefaultKafkaHeaderMapper implements KafkaHeaderMapper {
 		private final String untrustedType;
 
 		NonTrustedHeaderType(byte[] headerValue, String untrustedType) {
-			this.headerValue = headerValue;
+			this.headerValue = headerValue; // NOSONAR
 			this.untrustedType = untrustedType;
 		}
 
