@@ -14,3 +14,7 @@ See <<serdes>> for more information.
 
 Container Error handlers are now provided for both record and batch listeners that treat any exceptions thrown by the listener as fatal; they stop the container.
 See <<annotation-error-handling>> for more information.
+
+==== Migration Guide from 2.0
+
+https://github.com/spring-projects/spring-kafka/wiki/Spring-for-Apache-Kafka-2.0-to-2.1-Migration-Guide[2.0 to 2.1 Migration].
