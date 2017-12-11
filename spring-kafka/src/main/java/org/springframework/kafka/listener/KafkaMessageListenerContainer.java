@@ -88,6 +88,7 @@ import org.springframework.util.concurrent.ListenableFutureCallback;
  * @author Loic Talhouarne
  * @author Vladimir Tsanev
  * @author Yang Qiju
+ * @author Tom van den Berge
  */
 public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListenerContainer<K, V> {
 
@@ -1003,7 +1004,20 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 			}
 			catch (RuntimeException e) {
 				if (this.containerProperties.isAckOnError() && !this.autoCommit && producer == null) {
-					this.acks.add(record);
+					if (this.isRecordAck) {
+						Map<TopicPartition, OffsetAndMetadata> offsetsToCommit =
+								Collections.singletonMap(new TopicPartition(record.topic(), record.partition()),
+										new OffsetAndMetadata(record.offset() + 1));
+						if (this.containerProperties.isSyncCommits()) {
+							this.consumer.commitSync(offsetsToCommit);
+						}
+						else {
+							this.consumer.commitAsync(offsetsToCommit, this.commitCallback);
+						}
+					}
+					else if (!this.isAnyManualAck) {
+						this.acks.add(record);
+					}
 				}
 				if (this.errorHandler == null) {
 					throw e;
