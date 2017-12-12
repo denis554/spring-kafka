@@ -89,7 +89,6 @@ import org.springframework.kafka.test.utils.KafkaTestUtils;
  * @author Martin Dam
  * @author Artem Bilan
  * @author Loic Talhouarne
- * @author Tom van den Berge
  */
 public class KafkaMessageListenerContainerTests {
 
@@ -131,12 +130,11 @@ public class KafkaMessageListenerContainerTests {
 
 	private static String topic18 = "testTopic18";
 
-	private static String topic19 = "testTopic19";
 
 	@ClassRule
-	public static KafkaEmbedded embeddedKafka = new KafkaEmbedded(1, true, topic5,
-			topic6, topic7, topic8, topic9, topic10, topic11, topic12, topic13, topic14, topic15, topic16, topic17, topic18,
-			topic19);
+	public static KafkaEmbedded embeddedKafka = new KafkaEmbedded(1, true, topic1, topic2, topic3, topic4, topic5,
+			topic6, topic7, topic8, topic9, topic10, topic11, topic12, topic13, topic14, topic15, topic16, topic17,
+			topic18);
 
 	@Rule
 	public TestName testName = new TestName();
@@ -1618,6 +1616,7 @@ public class KafkaMessageListenerContainerTests {
 		consumer.close();
 		logger.info("Stop rebalance after failed record");
 	}
+
 	private Consumer<?, ?> spyOnConsumer(KafkaMessageListenerContainer<Integer, String> container) {
 		Consumer<?, ?> consumer = spy(
 				KafkaTestUtils.getPropertyValue(container, "listenerConsumer.consumer", Consumer.class));
@@ -1626,10 +1625,8 @@ public class KafkaMessageListenerContainerTests {
 		return consumer;
 	}
 
-	private KafkaMessageListenerContainer<Integer, String> spyOnContainer(
-			KafkaMessageListenerContainer<Integer, String> container,
+	private KafkaMessageListenerContainer<Integer, String> spyOnContainer(KafkaMessageListenerContainer<Integer, String> container,
 			final CountDownLatch stubbingComplete) {
-
 		KafkaMessageListenerContainer<Integer, String> spy = spy(container);
 		willAnswer(i -> {
 			if (stubbingComplete.getCount() > 0 && Thread.currentThread().getName().endsWith("-C-1")) {
