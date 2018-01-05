@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2017 the original author or authors.
+ * Copyright 2014-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,10 @@ import org.springframework.context.expression.StandardBeanExpressionResolver;
 import org.springframework.core.MethodIntrospector;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.core.convert.converter.GenericConverter;
+import org.springframework.format.Formatter;
+import org.springframework.format.FormatterRegistry;
 import org.springframework.format.support.DefaultFormattingConversionService;
 import org.springframework.kafka.config.KafkaListenerConfigUtils;
 import org.springframework.kafka.config.KafkaListenerContainerFactory;
@@ -98,6 +102,7 @@ import org.springframework.util.StringUtils;
  * @author Artem Bilan
  * @author Dariusz Szablinski
  * @author Venil Noronha
+ * @author Dimitri Penner
  *
  * @see KafkaListener
  * @see KafkaListenerErrorHandler
@@ -223,6 +228,9 @@ public class KafkaListenerAnnotationBeanPostProcessor<K, V>
 		MessageHandlerMethodFactory handlerMethodFactory = this.registrar.getMessageHandlerMethodFactory();
 		if (handlerMethodFactory != null) {
 			this.messageHandlerMethodFactory.setMessageHandlerMethodFactory(handlerMethodFactory);
+		}
+		else {
+			addFormatters(this.messageHandlerMethodFactory.defaultFormattingConversionService);
 		}
 
 		// Actually register all listeners
@@ -630,6 +638,27 @@ public class KafkaListenerAnnotationBeanPostProcessor<K, V>
 		return value;
 	}
 
+	private void addFormatters(FormatterRegistry registry) {
+		for (Converter<?, ?> converter : getBeansOfType(Converter.class)) {
+			registry.addConverter(converter);
+		}
+		for (GenericConverter converter : getBeansOfType(GenericConverter.class)) {
+			registry.addConverter(converter);
+		}
+		for (Formatter<?> formatter : getBeansOfType(Formatter.class)) {
+			registry.addFormatter(formatter);
+		}
+	}
+
+	private <T> Collection<T> getBeansOfType(Class<T> type) {
+		if (KafkaListenerAnnotationBeanPostProcessor.this.beanFactory instanceof ListableBeanFactory) {
+			return ((ListableBeanFactory) KafkaListenerAnnotationBeanPostProcessor.this.beanFactory).getBeansOfType(type).values();
+		}
+		else {
+			return Collections.emptySet();
+		}
+	}
+
 	/**
 	 * An {@link MessageHandlerMethodFactory} adapter that offers a configurable underlying
 	 * instance to use. Useful if the factory to use is determined once the endpoints
@@ -637,6 +666,8 @@ public class KafkaListenerAnnotationBeanPostProcessor<K, V>
 	 * @see KafkaListenerEndpointRegistrar#setMessageHandlerMethodFactory
 	 */
 	private class KafkaHandlerMethodFactoryAdapter implements MessageHandlerMethodFactory {
+
+		private DefaultFormattingConversionService defaultFormattingConversionService = new DefaultFormattingConversionService();
 
 		private MessageHandlerMethodFactory messageHandlerMethodFactory;
 
@@ -664,17 +695,17 @@ public class KafkaListenerAnnotationBeanPostProcessor<K, V>
 					(KafkaListenerAnnotationBeanPostProcessor.this.beanFactory instanceof ConfigurableBeanFactory ?
 							(ConfigurableBeanFactory) KafkaListenerAnnotationBeanPostProcessor.this.beanFactory : null);
 
-			DefaultFormattingConversionService conversionService = new DefaultFormattingConversionService();
-			defaultFactory.setConversionService(conversionService);
+
+			defaultFactory.setConversionService(this.defaultFormattingConversionService);
 
 			List<HandlerMethodArgumentResolver> argumentResolvers = new ArrayList<>();
 
 			// Annotation-based argument resolution
-			argumentResolvers.add(new HeaderMethodArgumentResolver(conversionService, cbf));
+			argumentResolvers.add(new HeaderMethodArgumentResolver(this.defaultFormattingConversionService, cbf));
 			argumentResolvers.add(new HeadersMethodArgumentResolver());
 
 			// Type-based argument resolution
-			final GenericMessageConverter messageConverter = new GenericMessageConverter(conversionService);
+			final GenericMessageConverter messageConverter = new GenericMessageConverter(this.defaultFormattingConversionService);
 			argumentResolvers.add(new MessageMethodArgumentResolver(messageConverter));
 			argumentResolvers.add(new PayloadArgumentResolver(messageConverter) {
 

@@ -1271,6 +1271,20 @@ public void listen(List<Foo> foos, @Header(KafkaHeaders.OFFSET) List<Long> offse
 
 Notice that you can still access the batch headers too.
 
+Starting with _versions 2.1.1_, the `org.springframework.core.convert.ConversionService` used by the default
+`org.springframework.messaging.handler.annotation.support.MessageHandlerMethodFactory` to reslove parameters for the invocation
+of a listener method is supplied with all beans implementing any of the following interfaces:
+
+ - `org.springframework.core.convert.converter.Converter`
+ - `org.springframework.core.convert.converter.GenericConverter`
+ - `org.springframework.format.Formatter`
+
+This allows you to further customize listener deserialization without changing the default configuration for
+ `ConsumerFactory` and `KafkaListenerContainerFactory`.
+
+IMPORTANT: Setting a custom `MessageHandlerMethodFactory` on the `KafkaListenerEndpointRegistrar` through a
+`KafkaListenerConfigurer` bean will disable this feature.
+
 [[headers]]
 ==== Message Headers
 
