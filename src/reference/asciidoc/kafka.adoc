@@ -766,7 +766,7 @@ You can use property placeholders or SpEL expressions within annotation properti
     groupId = "#{someBean.someProperty}.group")
 ----
 
-Starting with _version 2.1.2_, the SpEL expressions support a special token `__kafkaListener__` which is a pseudo bean name which represents the current bean instance within which this annotation exists.
+Starting with _version 2.1.2_, the SpEL expressions support a special token `__listener` which is a pseudo bean name which represents the current bean instance within which this annotation exists.
 
 For example, given...
 
