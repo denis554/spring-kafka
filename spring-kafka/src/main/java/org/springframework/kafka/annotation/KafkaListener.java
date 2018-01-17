@@ -174,4 +174,16 @@ public @interface KafkaListener {
 	 */
 	String clientIdPrefix() default "";
 
+	/**
+	 * A pseudo bean name used in SpEL expressions within this annotation to reference
+	 * the current bean within which this listener is defined. This allows access to
+	 * properties and methods within the enclosing bean.
+	 * Default '__listener'.
+	 * <p>
+	 * Example: {@code topics = "#{__listener.topicList}"}.
+	 * @return the pseudo bean name.
+	 * @since 2.1.2
+	 */
+	String beanRef() default "__listener";
+
 }
