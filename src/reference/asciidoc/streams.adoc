@@ -119,6 +119,9 @@ Only you need is to declare `StreamsConfig` bean with the `defaultKafkaStreamsCo
 A `StreamsBuilder` bean with the `defaultKafkaStreamsBuilder` name will be declare in the application context automatically.
 Any additional `StreamsBuilderFactoryBean` beans can be declared and used as well.
 
+By default, when the factory bean is stopped, the `KafkaStreams.cleanUp()` method is called.
+Starting with _version 2.1.2_, the factory bean has additional constructors, taking a `CleanupConfig` object that has properties to allow you to control whether the `cleanUp()` method is called during `start()`, `stop()`, or neither.
+
 ==== Kafka Streams Example
 
 Putting it all together:
