@@ -44,11 +44,12 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 /**
  * @author Pawel Szymczyk
+ * @author Artme Bilan
  */
 @RunWith(SpringRunner.class)
 @DirtiesContext
 @EmbeddedKafka
-public class StreamsBuilderFactoryBeanTest {
+public class StreamsBuilderFactoryBeanTests {
 
 	private static final String APPLICATION_ID = "testCleanupStreams";
 
@@ -84,18 +85,19 @@ public class StreamsBuilderFactoryBeanTest {
 		private String brokerAddresses;
 
 		@Bean(name = KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_BUILDER_BEAN_NAME)
-		public StreamsBuilderFactoryBean defaultKafkaStreamsBuilder() throws IOException {
+		public StreamsBuilderFactoryBean defaultKafkaStreamsBuilder() {
 			return new StreamsBuilderFactoryBean(kStreamsConfigs(), new CleanupConfig(true, true));
 		}
 
 		@Bean(name = KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_CONFIG_BEAN_NAME)
-		public StreamsConfig kStreamsConfigs() throws IOException {
+		public StreamsConfig kStreamsConfigs() {
 			Map<String, Object> props = new HashMap<>();
 			props.put(StreamsConfig.APPLICATION_ID_CONFIG, APPLICATION_ID);
 			props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, this.brokerAddresses);
 			props.put(StreamsConfig.STATE_DIR_CONFIG, stateStoreDir.toString());
 			return new StreamsConfig(props);
 		}
+
 	}
 
 }

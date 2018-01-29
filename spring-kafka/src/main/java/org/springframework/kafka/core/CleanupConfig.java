@@ -26,6 +26,7 @@ import org.apache.kafka.streams.KafkaStreams;
 public class CleanupConfig {
 
 	private final boolean onStart;
+
 	private final boolean onStop;
 
 	public CleanupConfig() {
@@ -44,4 +45,5 @@ public class CleanupConfig {
 	public boolean cleanupOnStop() {
 		return this.onStop;
 	}
+
 }

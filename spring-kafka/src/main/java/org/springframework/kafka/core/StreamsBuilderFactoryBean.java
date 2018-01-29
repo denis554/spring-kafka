@@ -44,6 +44,7 @@ public class StreamsBuilderFactoryBean extends AbstractFactoryBean<StreamsBuilde
 	private static final int DEFAULT_CLOSE_TIMEOUT = 10;
 
 	private final StreamsConfig streamsConfig;
+
 	private final CleanupConfig cleanupConfig;
 
 	private KafkaStreams kafkaStreams;
@@ -79,6 +80,7 @@ public class StreamsBuilderFactoryBean extends AbstractFactoryBean<StreamsBuilde
 	 */
 	public StreamsBuilderFactoryBean(StreamsConfig streamsConfig, CleanupConfig cleanupConfig) {
 		Assert.notNull(streamsConfig, "'streamsConfig' must not be null");
+		Assert.notNull(cleanupConfig, "'cleanupConfig' must not be null");
 		this.streamsConfig = streamsConfig;
 		this.cleanupConfig = cleanupConfig;
 	}
@@ -100,6 +102,7 @@ public class StreamsBuilderFactoryBean extends AbstractFactoryBean<StreamsBuilde
 	 */
 	public StreamsBuilderFactoryBean(Map<String, Object> streamsConfig, CleanupConfig cleanupConfig) {
 		Assert.notNull(streamsConfig, "'streamsConfig' must not be null");
+		Assert.notNull(cleanupConfig, "'cleanupConfig' must not be null");
 		this.streamsConfig = new StreamsConfig(streamsConfig);
 		this.cleanupConfig = cleanupConfig;
 	}
