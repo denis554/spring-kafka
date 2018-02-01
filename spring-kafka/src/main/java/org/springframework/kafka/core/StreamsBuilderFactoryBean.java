@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import org.springframework.util.Assert;
  *
  * @author Artem Bilan
  * @author Ivan Ursul
+ * @author Soby Chacko
  *
  * @since 1.1.4
  */
@@ -43,9 +44,9 @@ public class StreamsBuilderFactoryBean extends AbstractFactoryBean<StreamsBuilde
 
 	private static final int DEFAULT_CLOSE_TIMEOUT = 10;
 
-	private final StreamsConfig streamsConfig;
-
 	private final CleanupConfig cleanupConfig;
+
+	private StreamsConfig streamsConfig;
 
 	private KafkaStreams kafkaStreams;
 
@@ -53,7 +54,7 @@ public class StreamsBuilderFactoryBean extends AbstractFactoryBean<StreamsBuilde
 
 	private boolean autoStartup = true;
 
-	private int phase = Integer.MIN_VALUE;
+	private int phase = Integer.MAX_VALUE - 1000;
 
 	private KafkaStreams.StateListener stateListener;
 
@@ -62,6 +63,16 @@ public class StreamsBuilderFactoryBean extends AbstractFactoryBean<StreamsBuilde
 	private int closeTimeout = DEFAULT_CLOSE_TIMEOUT;
 
 	private volatile boolean running;
+
+	/**
+	 * Default constructor that creates the factory without a {@link StreamsConfig}.
+	 * It is the factory user's responsibility to properly set {@link StreamsConfig}
+	 * using {@link StreamsBuilderFactoryBean#setStreamsConfig(StreamsConfig)}
+	 * @since 2.1.3.
+	 */
+	public StreamsBuilderFactoryBean() {
+		this.cleanupConfig = new CleanupConfig();
+	}
 
 	/**
 	 * Construct an instance with the supplied streams configuration.
@@ -107,6 +118,16 @@ public class StreamsBuilderFactoryBean extends AbstractFactoryBean<StreamsBuilde
 		this.cleanupConfig = cleanupConfig;
 	}
 
+	/**
+	 * Set {@link StreamsConfig} on this factory.
+	 * @param streamsConfig the streams configuration.
+	 * @since 2.1.3
+	 */
+	public void setStreamsConfig(StreamsConfig streamsConfig) {
+		Assert.notNull(streamsConfig, "'streamsConfig' must not be null");
+		this.streamsConfig = streamsConfig;
+	}
+
 	public void setClientSupplier(KafkaClientSupplier clientSupplier) {
 		Assert.notNull(clientSupplier, "'clientSupplier' must not be null");
 		this.clientSupplier = clientSupplier; // NOSONAR (sync)
@@ -137,6 +158,9 @@ public class StreamsBuilderFactoryBean extends AbstractFactoryBean<StreamsBuilde
 
 	@Override
 	protected StreamsBuilder createInstance() throws Exception {
+		if (this.autoStartup) {
+			Assert.notNull(this.streamsConfig, "'streamsConfig' must not be null");
+		}
 		return new StreamsBuilder();
 	}
 
@@ -166,6 +190,7 @@ public class StreamsBuilderFactoryBean extends AbstractFactoryBean<StreamsBuilde
 	public synchronized void start() {
 		if (!this.running) {
 			try {
+				Assert.notNull(this.streamsConfig, "'streamsConfig' must not be null");
 				this.kafkaStreams = new KafkaStreams(getObject().build(), this.streamsConfig, this.clientSupplier);
 				this.kafkaStreams.setStateListener(this.stateListener);
 				this.kafkaStreams.setUncaughtExceptionHandler(this.exceptionHandler);
