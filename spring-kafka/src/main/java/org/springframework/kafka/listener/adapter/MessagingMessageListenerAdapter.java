@@ -20,6 +20,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -45,13 +47,17 @@ import org.springframework.kafka.listener.ConsumerSeekAware;
 import org.springframework.kafka.listener.ListenerExecutionFailedException;
 import org.springframework.kafka.listener.MessageListener;
 import org.springframework.kafka.support.Acknowledgment;
+import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.kafka.support.converter.MessagingMessageConverter;
 import org.springframework.kafka.support.converter.RecordMessageConverter;
+import org.springframework.lang.Nullable;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessagingException;
 import org.springframework.messaging.converter.MessageConversionException;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 /**
  * An abstract {@link MessageListener} adapter providing the necessary infrastructure
@@ -154,16 +160,22 @@ public abstract class MessagingMessageListenerAdapter<K, V> implements ConsumerS
 	/**
 	 * Set the topic to which to send any result from the method invocation.
 	 * May be a SpEL expression {@code !{...}} evaluated at runtime.
-	 * @param replyTopic the topic or expression.
+	 * @param replyTopicParam the topic or expression.
 	 * @since 2.0
 	 */
-	public void setReplyTopic(String replyTopic) {
+	public void setReplyTopic(String replyTopicParam) {
+		String replyTopic = replyTopicParam;
+		if (!StringUtils.hasText(replyTopic)) {
+			replyTopic = PARSER_CONTEXT.getExpressionPrefix() + "source.headers['"
+					+ KafkaHeaders.REPLY_TOPIC + "']" + PARSER_CONTEXT.getExpressionSuffix();
+		}
 		if (replyTopic.contains(PARSER_CONTEXT.getExpressionPrefix())) {
 			this.replyTopicExpression = PARSER.parseExpression(replyTopic, PARSER_CONTEXT);
 		}
 		else {
 			this.replyTopicExpression = new LiteralExpression(replyTopic);
 		}
+
 	}
 
 	/**
@@ -273,7 +285,7 @@ public abstract class MessagingMessageListenerAdapter<K, V> implements ConsumerS
 		String replyTopic = evaluateReplyTopic(request, source, resultArg);
 		Assert.state(replyTopic == null || this.replyTemplate != null,
 				"a KafkaTemplate is required to support replies");
-		sendResponse(result, replyTopic);
+		sendResponse(result, replyTopic, source);
 	}
 
 	private String evaluateReplyTopic(Object request, Object source, Object result) {
@@ -293,17 +305,48 @@ public abstract class MessagingMessageListenerAdapter<K, V> implements ConsumerS
 		}
 		else {
 			Object value = sendTo.getValue(this.evaluationContext, new ReplyExpressionRoot(request, source, result));
-			Assert.state(value instanceof String, "replyTopic expression must evaluate to a String or Address");
+			boolean isByteArray = value instanceof byte[];
+			if (!(value instanceof String || isByteArray)) {
+				throw new IllegalStateException(
+					"replyTopic expression must evaluate to a String or byte[], it is: "
+					+ (value == null ? null : value.getClass().getName()));
+			}
+			if (isByteArray) {
+				return new String((byte[]) value, StandardCharsets.UTF_8);
+			}
 			return (String) value;
 		}
 	}
 
-	@SuppressWarnings("unchecked")
+	/**
+	 * Send the result to the topic.
+	 *
+	 * @param result the result.
+	 * @param topic the topic.
+	 * @deprecated in favor of {@link #sendResponse(Object, String, Object)}.
+	 */
+	@Deprecated
 	protected void sendResponse(Object result, String topic) {
+		sendResponse(result, topic, null);
+	}
+
+	/**
+	 * Send the result to the topic.
+	 *
+	 * @param result the result.
+	 * @param topic the topic.
+	 * @param source the source (input).
+	 * @since 2.1.3
+	 */
+	@SuppressWarnings("unchecked")
+	protected void sendResponse(Object result, String topic, @Nullable Object source) {
 		if (topic == null) {
 			if (this.logger.isDebugEnabled()) {
 				this.logger.debug("No replyTopic to handle the reply: " + result);
 			}
+		}
+		else if (result instanceof Message) {
+			this.replyTemplate.send((Message<?>) result);
 		}
 		else {
 			if (result instanceof Collection) {
@@ -312,8 +355,32 @@ public abstract class MessagingMessageListenerAdapter<K, V> implements ConsumerS
 				});
 			}
 			else {
-				this.replyTemplate.send(topic, (V) result);
+				byte[] correlationId = null;
+				boolean sourceIsMessage = source instanceof Message;
+				if (sourceIsMessage
+						&& ((Message<?>) source).getHeaders().get(KafkaHeaders.CORRELATION_ID) != null) {
+					correlationId = ((Message<?>) source).getHeaders().get(KafkaHeaders.CORRELATION_ID, byte[].class);
+				}
+				if (sourceIsMessage) {
+					MessageBuilder<Object> builder = MessageBuilder.withPayload(result)
+							.setHeader(KafkaHeaders.TOPIC, topic);
+					if (correlationId != null) {
+						builder.setHeader(KafkaHeaders.CORRELATION_ID, correlationId);
+					}
+					setPartition(builder, ((Message<?>) source));
+					this.replyTemplate.send(builder.build());
+				}
+				else {
+					this.replyTemplate.send(topic, (V) result);
+				}
 			}
+		}
+	}
+
+	private void setPartition(MessageBuilder<Object> builder, Message<?> source) {
+		byte[] partitionBytes = source.getHeaders().get(KafkaHeaders.REPLY_PARTITION, byte[].class);
+		if (partitionBytes != null) {
+			builder.setHeader(KafkaHeaders.PARTITION_ID, ByteBuffer.wrap(partitionBytes).getInt());
 		}
 	}
 

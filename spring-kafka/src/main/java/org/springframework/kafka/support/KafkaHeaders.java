@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2017 the original author or authors.
+ * Copyright 2014-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,25 @@ public abstract class KafkaHeaders {
 	 */
 	public static final String BATCH_CONVERTED_HEADERS = PREFIX + "batchConvertedHeaders";
 
+	/**
+	 * The header containing information to correlate requests/replies.
+	 * Type: byte[].
+	 * @since 2.1.3
+	 */
+	public static final String CORRELATION_ID = PREFIX + "correlationId";
 
+	/**
+	 * The header containing the default reply topic.
+	 * Type: byte[].
+	 * @since 2.1.3
+	 */
+	public static final String REPLY_TOPIC = PREFIX + "replyTopic";
 
+	/**
+	 * The header containing a partition number on which to send the reply.
+	 * Type: binary (int) in byte[].
+	 * @since 2.1.3
+	 */
+	public static final String REPLY_PARTITION = PREFIX + "replyPartition";
 
 }
