@@ -1049,15 +1049,16 @@ When using `@KafkaListener`, set the `RecordFilterStrategy` (and optionally `ack
 
 In addition, a `FilteringBatchMessageListenerAdapter` is provided, for when using a batch <<message-listeners, message listener>>.
 
+[[retrying-deliveries]]
 ===== Retrying Deliveries
 
 If your listener throws an exception, the default behavior is to invoke the `ErrorHandler`, if configured, or logged otherwise.
 
 NOTE: Two error handler interfaces are provided `ErrorHandler` and `BatchErrorHandler`; the appropriate type must be configured to match the <<message-listeners, Message Listener>>.
 
-To retry deliveries, convenient listener adapters - `RetryingMessageListenerAdapter` and `RetryingAcknowledgingMessageListenerAdapter` are provided, depending on whether you are using a `MessageListener` or an `AcknowledgingMessageListener`.
+To retry deliveries, a convenient listener adapter `RetryingMessageListenerAdapter`  is provided.
 
-These can be configured with a `RetryTemplate` and `RecoveryCallback<Void>` - see the https://github.com/spring-projects/spring-retry[spring-retry]
+It can be configured with a `RetryTemplate` and `RecoveryCallback<Void>` - see the https://github.com/spring-projects/spring-retry[spring-retry]
 project for information about these components.
 If a recovery callback is not provided, the exception is thrown to the container after retries are exhausted.
 In that case, the `ErrorHandler` will be invoked, if configured, or logged otherwise.
@@ -1072,6 +1073,23 @@ See its javadocs for more information.
 
 A retry adapter is not provided for any of the batch <<message-listeners, message listeners>> because the framework has no knowledge of where, in a batch, the failure occurred.
 Users wishing retry capabilities, when using a batch listener, are advised to use a `RetryTemplate` within the listener itself.
+
+[[stateful-retry]]
+===== Stateful Retry
+
+It is important to understand that the retry discussed above suspends the consumer thread (if a `BackOffPolicy` is used); there are no calls to `Consumer.poll()` during the retries.
+Kafka has two properties to determine consumer health; the `session.timeout.ms` is used to determine if the consumer is active.
+Since version `0.10.1.0` heartbeats are sent on a background thread so a slow consumer no longer affects that.
+`max.poll.interval.ms` (default 5 minutes) is used to determine if a consumer appears to be hung (taking too long to process records from the last poll).
+If the time between `poll()` s exceeds this, the broker will revoke the assigned partitions and perform a rebalance.
+For lengthy retry sequences, with back off, this can easily happen.
+
+Since _version 2.1.3_, you can avoid this problem by using stateful retry in conjunction with a `SeekToCurrentErrorHandler`.
+In this case, each delivery attempt will throw the exception back to the container and the error handler will re-seek the unprocessed offsets and the same message will be redelivered by the next `poll()`.
+This avoids the problem of exceeding the `max.poll.interval.ms` property (as long as an individual delay between attempts does not exceed it).
+So, when using an `ExponentialBackOffPolicy`, it's important to ensure that the `maxInterval` is rather less than the `max.poll.interval.ms` property.
+To enable stateful retry, use the `RetryingMessageListenerAdapter` constructor that takes a `stateful` `boolean` argument (set it to `true`).
+When configuring using the listener container factory (for `@KafkaListener` s), set the factory's `statefulRetry` property to `true`.
 
 [[idle-containers]]
 ===== Detecting Idle and Non-Responsive Consumers
