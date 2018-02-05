@@ -18,6 +18,7 @@ package org.springframework.kafka.requestreply;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
@@ -26,6 +27,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.internals.RecordHeader;
 
@@ -101,6 +103,37 @@ public class ReplyingKafkaTemplate<K, V, R> extends KafkaTemplate<K, V> implemen
 	}
 
 	@Override
+	public boolean isRunning() {
+		return this.running;
+	}
+
+	@Override
+	public int getPhase() {
+		return this.phase;
+	}
+
+	public void setPhase(int phase) {
+		this.phase = phase;
+	}
+
+	@Override
+	public boolean isAutoStartup() {
+		return this.autoStartup;
+	}
+
+	public void setAutoStartup(boolean autoStartup) {
+		this.autoStartup = autoStartup;
+	}
+
+	/**
+	 * Return the topics/partitions assigned to the replying listener container.
+	 * @return the topics/partitions.
+	 */
+	public Collection<TopicPartition> getAssignedReplyTopicPartitions() {
+		return this.replyContainer.getAssignedPartitions();
+	}
+
+	@Override
 	public void afterPropertiesSet() throws Exception {
 		if (!this.schedulerSet) {
 			((ThreadPoolTaskScheduler) this.scheduler).initialize();
@@ -128,29 +161,6 @@ public class ReplyingKafkaTemplate<K, V, R> extends KafkaTemplate<K, V> implemen
 			this.replyContainer.stop();
 			this.futures.clear();
 		}
-	}
-
-	@Override
-	public boolean isRunning() {
-		return this.running;
-	}
-
-	@Override
-	public int getPhase() {
-		return this.phase;
-	}
-
-	public void setPhase(int phase) {
-		this.phase = phase;
-	}
-
-	@Override
-	public boolean isAutoStartup() {
-		return this.autoStartup;
-	}
-
-	public void setAutoStartup(boolean autoStartup) {
-		this.autoStartup = autoStartup;
 	}
 
 	@Override

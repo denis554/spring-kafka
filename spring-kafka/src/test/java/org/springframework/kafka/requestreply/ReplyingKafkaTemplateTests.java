@@ -190,6 +190,8 @@ public class ReplyingKafkaTemplateTests {
 		ReplyingKafkaTemplate<Integer, String, String> template = new ReplyingKafkaTemplate<>(this.config.pf(), container);
 		template.start();
 		assertThat(latch.await(30, TimeUnit.SECONDS)).isTrue();
+		assertThat(template.getAssignedReplyTopicPartitions().size()).isEqualTo(5);
+		assertThat(template.getAssignedReplyTopicPartitions().iterator().next().topic()).isEqualTo(topic);
 		return template;
 	}
 
