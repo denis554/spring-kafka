@@ -17,6 +17,7 @@
 package org.springframework.kafka.support.converter;
 
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
@@ -36,6 +37,7 @@ import org.springframework.kafka.support.KafkaNull;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.util.Assert;
 
 /**
  * A Messaging {@link MessageConverter} implementation for a message listener that
@@ -133,7 +135,21 @@ public class MessagingMessageConverter implements RecordMessageConverter {
 	@Override
 	public ProducerRecord<?, ?> fromMessage(Message<?> message, String defaultTopic) {
 		MessageHeaders headers = message.getHeaders();
-		String topic = headers.get(KafkaHeaders.TOPIC, String.class);
+		Object topicHeader = headers.get(KafkaHeaders.TOPIC);
+		String topic = null;
+		if (topicHeader instanceof byte[]) {
+			topic = new String(((byte[]) topicHeader), StandardCharsets.UTF_8);
+		}
+		else if (topicHeader instanceof String) {
+			topic = (String) topicHeader;
+		}
+		else if (topicHeader == null) {
+			Assert.state(defaultTopic != null, "With no topic header, a defaultTopic is required");
+		}
+		else {
+			throw new IllegalStateException(KafkaHeaders.TOPIC + " must be a String or byte[], not "
+					+ topicHeader.getClass());
+		}
 		Integer partition = headers.get(KafkaHeaders.PARTITION_ID, Integer.class);
 		Object key = headers.get(KafkaHeaders.MESSAGE_KEY);
 		Object payload = convertPayload(message);
