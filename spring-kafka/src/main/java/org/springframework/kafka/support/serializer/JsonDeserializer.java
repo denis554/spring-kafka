@@ -54,13 +54,27 @@ public class JsonDeserializer<T> implements ExtendedDeserializer<T> {
 
 	/**
 	 * Kafka config property for the default key type if no header.
+	 * @deprecated in favor of {@link #KEY_DEFAULT_TYPE}
 	 */
+	@Deprecated
 	public static final String DEFAULT_KEY_TYPE = "spring.json.key.default.type";
 
 	/**
 	 * Kafka config property for the default value type if no header.
+	 * @deprecated in favor of {@link #VALUE_DEFAULT_TYPE}
 	 */
+	@Deprecated
 	public static final String DEFAULT_VALUE_TYPE = "spring.json.default.value.type";
+
+	/**
+	 * Kafka config property for the default key type if no header.
+	 */
+	public static final String KEY_DEFAULT_TYPE = "spring.json.key.default.type";
+
+	/**
+	 * Kafka config property for the default value type if no header.
+	 */
+	public static final String VALUE_DEFAULT_TYPE = "spring.json.value.default.type";
 
 	/**
 	 * Kafka config property for trusted deserialization packages.
@@ -136,26 +150,39 @@ public class JsonDeserializer<T> implements ExtendedDeserializer<T> {
 	public void configure(Map<String, ?> configs, boolean isKey) {
 		setUseTypeMapperForKey(isKey);
 		try {
-			if (isKey && configs.containsKey(DEFAULT_KEY_TYPE)) {
-				if (configs.get(DEFAULT_KEY_TYPE) instanceof Class) {
-					this.targetType = (Class<T>) configs.get(DEFAULT_KEY_TYPE);
+			if (isKey && configs.containsKey(KEY_DEFAULT_TYPE)) {
+				if (configs.get(KEY_DEFAULT_TYPE) instanceof Class) {
+					this.targetType = (Class<T>) configs.get(KEY_DEFAULT_TYPE);
 				}
-				else if (configs.get(DEFAULT_KEY_TYPE) instanceof String) {
-					this.targetType = (Class<T>) ClassUtils.forName((String) configs.get(DEFAULT_KEY_TYPE), null);
+				else if (configs.get(KEY_DEFAULT_TYPE) instanceof String) {
+					this.targetType = (Class<T>) ClassUtils.forName((String) configs.get(KEY_DEFAULT_TYPE), null);
 				}
 				else {
-					throw new IllegalStateException(DEFAULT_KEY_TYPE + " must be Class or String");
+					throw new IllegalStateException(KEY_DEFAULT_TYPE + " must be Class or String");
 				}
 			}
-			else if (!isKey && configs.containsKey(DEFAULT_VALUE_TYPE)) {
-				if (configs.get(DEFAULT_VALUE_TYPE) instanceof Class) {
-					this.targetType = (Class<T>) configs.get(DEFAULT_VALUE_TYPE);
+			// TODO don't forget to remove these code after DEFAULT_VALUE_TYPE being removed.
+			else if (!isKey && configs.containsKey("spring.json.default.value.type")) {
+				if (configs.get("spring.json.default.value.type") instanceof Class) {
+					this.targetType = (Class<T>) configs.get("spring.json.default.value.type");
 				}
-				else if (configs.get(DEFAULT_VALUE_TYPE) instanceof String) {
-					this.targetType = (Class<T>) ClassUtils.forName((String) configs.get(DEFAULT_VALUE_TYPE), null);
+				else if (configs.get("spring.json.default.value.type") instanceof String) {
+					this.targetType = (Class<T>) ClassUtils
+						.forName((String) configs.get("spring.json.default.value.type"), null);
 				}
 				else {
-					throw new IllegalStateException(DEFAULT_VALUE_TYPE + " must be Class or String");
+					throw new IllegalStateException("spring.json.default.value.type must be Class or String");
+				}
+			}
+			else if (!isKey && configs.containsKey(VALUE_DEFAULT_TYPE)) {
+				if (configs.get(VALUE_DEFAULT_TYPE) instanceof Class) {
+					this.targetType = (Class<T>) configs.get(VALUE_DEFAULT_TYPE);
+				}
+				else if (configs.get(VALUE_DEFAULT_TYPE) instanceof String) {
+					this.targetType = (Class<T>) ClassUtils.forName((String) configs.get(VALUE_DEFAULT_TYPE), null);
+				}
+				else {
+					throw new IllegalStateException(VALUE_DEFAULT_TYPE + " must be Class or String");
 				}
 			}
 			addTargetPackageToTrusted();
@@ -226,5 +253,4 @@ public class JsonDeserializer<T> implements ExtendedDeserializer<T> {
 	public void close() {
 		// No-op
 	}
-
 }
