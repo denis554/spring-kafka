@@ -1071,7 +1071,7 @@ public class KafkaMessageListenerContainerTests {
 
 			@Override
 			public Consumer<Integer, String> createConsumer(String groupId, String clientIdPrefix,
-					String clientIdSufffix) {
+					String clientIdSuffix) {
 				return new KafkaConsumer<Integer, String>(props) {
 
 					@Override

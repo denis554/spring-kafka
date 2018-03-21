@@ -497,7 +497,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 			}
 			this.monitorTask = this.taskScheduler.scheduleAtFixedRate(() -> checkConsumer(),
 					this.containerProperties.getMonitorInterval() * 1000);
-			if (this.containerProperties.isLogContainerConfig() && this.logger.isInfoEnabled()) {
+			if (this.containerProperties.isLogContainerConfig()) {
 				this.logger.info(this);
 			}
 		}

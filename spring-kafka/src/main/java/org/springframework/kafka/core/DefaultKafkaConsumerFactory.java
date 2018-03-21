@@ -128,8 +128,8 @@ public class DefaultKafkaConsumerFactory<K, V> implements ConsumerFactory<K, V> 
 			}
 			if (shouldModifyClientId) {
 				modifiedConfigs.put(ConsumerConfig.CLIENT_ID_CONFIG,
-					(overrideClientIdPrefix ? clientIdPrefix
-							: modifiedConfigs.get(ConsumerConfig.CLIENT_ID_CONFIG)) + clientIdSuffix);
+						(overrideClientIdPrefix ? clientIdPrefix
+								: modifiedConfigs.get(ConsumerConfig.CLIENT_ID_CONFIG)) + clientIdSuffix);
 			}
 			return createKafkaConsumer(modifiedConfigs);
 		}
