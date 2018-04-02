@@ -18,6 +18,9 @@ package org.springframework.kafka.test.rule;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -43,6 +46,7 @@ import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
+import org.apache.kafka.common.utils.AppInfoParser;
 import org.apache.kafka.common.utils.Time;
 import org.junit.rules.ExternalResource;
 
@@ -84,6 +88,29 @@ public class KafkaEmbedded extends ExternalResource implements KafkaRule, Initia
 	public static final String SPRING_EMBEDDED_ZOOKEEPER_CONNECT = "spring.embedded.zookeeper.connect";
 
 	public static final long METADATA_PROPAGATION_TIMEOUT = 10000L;
+
+	private static final String clientVersion;
+
+	private static final Method testUtilsCreateBrokerConfigMethod;
+
+	static {
+		clientVersion = AppInfoParser.getVersion();
+		if (clientVersion.startsWith("1.1.")) {
+			try {
+				testUtilsCreateBrokerConfigMethod = TestUtils.class.getDeclaredMethod("createBrokerConfig",
+						int.class, String.class, boolean.class, boolean.class, int.class,
+						scala.Option.class, scala.Option.class, scala.Option.class,
+						boolean.class, boolean.class, int.class, boolean.class, int.class, boolean.class,
+						int.class, scala.Option.class, int.class, boolean.class);
+			}
+			catch (NoSuchMethodException | SecurityException e) {
+				throw new RuntimeException("Failed to determine TestUtils.createBrokerConfig() method");
+			}
+		}
+		else {
+			testUtilsCreateBrokerConfigMethod = null;
+		}
+	}
 
 	private final int count;
 
@@ -191,12 +218,7 @@ public class KafkaEmbedded extends ExternalResource implements KafkaRule, Initia
 				ZKStringSerializer$.MODULE$);
 		this.kafkaServers.clear();
 		for (int i = 0; i < this.count; i++) {
-			Properties brokerConfigProperties = TestUtils.createBrokerConfig(i, this.zkConnect, this.controlledShutdown,
-					true, this.kafkaPorts[i],
-					scala.Option.apply(null),
-					scala.Option.apply(null),
-					scala.Option.apply(null),
-					true, false, 0, false, 0, false, 0, scala.Option.apply(null), 1);
+			Properties brokerConfigProperties = createBrokerProperties(i);
 			brokerConfigProperties.setProperty(KafkaConfig.ReplicaSocketTimeoutMsProp(), "1000");
 			brokerConfigProperties.setProperty(KafkaConfig.ControllerSocketTimeoutMsProp(), "1000");
 			brokerConfigProperties.setProperty(KafkaConfig.OffsetsTopicReplicationFactorProp(), "1");
@@ -220,6 +242,31 @@ public class KafkaEmbedded extends ExternalResource implements KafkaRule, Initia
 		admin.close();
 		System.setProperty(SPRING_EMBEDDED_KAFKA_BROKERS, getBrokersAsString());
 		System.setProperty(SPRING_EMBEDDED_ZOOKEEPER_CONNECT, getZookeeperConnectionString());
+	}
+
+	public Properties createBrokerProperties(int i) {
+		if (testUtilsCreateBrokerConfigMethod == null) {
+			return TestUtils.createBrokerConfig(i, this.zkConnect, this.controlledShutdown,
+					true, this.kafkaPorts[i],
+					scala.Option.apply(null),
+					scala.Option.apply(null),
+					scala.Option.apply(null),
+					true, false, 0, false, 0, false, 0, scala.Option.apply(null), 1);
+		}
+		else {
+			try {
+				return (Properties) testUtilsCreateBrokerConfigMethod.invoke(null, i, this.zkConnect,
+					this.controlledShutdown,
+					true, this.kafkaPorts[i],
+					scala.Option.<SecurityProtocol>apply(null),
+					scala.Option.<File>apply(null),
+					scala.Option.<Properties>apply(null),
+					true, false, 0, false, 0, false, 0, scala.Option.<String>apply(null), 1, false);
+			}
+			catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+				throw new RuntimeException(e);
+			}
+		}
 	}
 
 
