@@ -1630,7 +1630,7 @@ If you don't wish your mapper to be enhanced in this way, for some reason, you s
 
 ==== Log Compaction
 
-When using https://cwiki.apache.org/confluence/display/KAFKA/Log+Compaction[Log Compaction], it is possible to send and receive messages with `null` payloads which identifies the deletion of a key.
+When using https://kafka.apache.org/documentation/#compaction[Log Compaction], it is possible to send and receive messages with `null` payloads which identifies the deletion of a key.
 
 Starting with _version 1.0.3_, this is now fully supported.
 
