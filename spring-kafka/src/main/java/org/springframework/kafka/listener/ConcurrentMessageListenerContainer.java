@@ -32,7 +32,6 @@ import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.TopicPartition;
 
 import org.springframework.kafka.core.ConsumerFactory;
-import org.springframework.kafka.listener.config.ContainerProperties;
 import org.springframework.kafka.support.TopicPartitionInitialOffset;
 import org.springframework.util.Assert;
 
@@ -161,6 +160,7 @@ public class ConcurrentMessageListenerContainer<K, V> extends AbstractMessageLis
 					container.setApplicationEventPublisher(getApplicationEventPublisher());
 				}
 				container.setClientIdSuffix("-" + i);
+				container.setGenericErrorHandler(getGenericErrorHandler());
 				container.start();
 				this.containers.add(container);
 			}

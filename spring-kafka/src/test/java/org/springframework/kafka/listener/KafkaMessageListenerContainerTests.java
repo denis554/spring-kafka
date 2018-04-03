@@ -76,9 +76,8 @@ import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.event.ConsumerPausedEvent;
 import org.springframework.kafka.event.ConsumerResumedEvent;
 import org.springframework.kafka.event.NonResponsiveConsumerEvent;
-import org.springframework.kafka.listener.AbstractMessageListenerContainer.AckMode;
+import org.springframework.kafka.listener.ContainerProperties.AckMode;
 import org.springframework.kafka.listener.adapter.FilteringMessageListenerAdapter;
-import org.springframework.kafka.listener.config.ContainerProperties;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.TopicPartitionInitialOffset;
 import org.springframework.kafka.support.TopicPartitionInitialOffset.SeekPosition;
@@ -925,17 +924,17 @@ public class KafkaMessageListenerContainerTests {
 		containerProps.setPollTimeout(100);
 		containerProps.setAckOnError(true);
 		final CountDownLatch latch = new CountDownLatch(4);
-		containerProps.setBatchErrorHandler((t, messages) -> {
-			new BatchLoggingErrorHandler().handle(t, messages);
-			for (int i = 0; i < messages.count(); i++) {
-				latch.countDown();
-			}
-		});
 
 		CountDownLatch stubbingComplete = new CountDownLatch(1);
 		KafkaMessageListenerContainer<Integer, String> container = spyOnContainer(
 				new KafkaMessageListenerContainer<>(cf, containerProps), stubbingComplete);
 		container.setBeanName("testBatchListenerErrors");
+		container.setBatchErrorHandler((t, messages) -> {
+			new BatchLoggingErrorHandler().handle(t, messages);
+			for (int i = 0; i < messages.count(); i++) {
+				latch.countDown();
+			}
+		});
 		container.start();
 		Consumer<?, ?> containerConsumer = spyOnConsumer(container);
 		final CountDownLatch commitLatch = new CountDownLatch(2);
@@ -1863,7 +1862,6 @@ public class KafkaMessageListenerContainerTests {
 		containerProps.setAckMode(AckMode.BATCH);
 		containerProps.setPollTimeout(100);
 		containerProps.setAckOnError(false);
-		containerProps.setErrorHandler(new SeekToCurrentErrorHandler());
 
 		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
 		ProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<>(senderProps);
@@ -1886,6 +1884,7 @@ public class KafkaMessageListenerContainerTests {
 		KafkaMessageListenerContainer<Integer, String> container =
 				new KafkaMessageListenerContainer<>(cf, containerProps);
 		container.setBeanName("testContainerException");
+		container.setErrorHandler(new SeekToCurrentErrorHandler());
 		container.start();
 		ContainerTestUtils.waitForAssignment(container, embeddedKafka.getPartitionsPerTopic());
 		container.pause();

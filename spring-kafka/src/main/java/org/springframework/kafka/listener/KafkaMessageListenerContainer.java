@@ -60,7 +60,7 @@ import org.springframework.kafka.event.ConsumerResumedEvent;
 import org.springframework.kafka.event.ListenerContainerIdleEvent;
 import org.springframework.kafka.event.NonResponsiveConsumerEvent;
 import org.springframework.kafka.listener.ConsumerSeekAware.ConsumerSeekCallback;
-import org.springframework.kafka.listener.config.ContainerProperties;
+import org.springframework.kafka.listener.ContainerProperties.AckMode;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.LogIfLevelEnabled;
 import org.springframework.kafka.support.TopicPartitionInitialOffset;
@@ -449,7 +449,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 				}
 				consumer.assign(new ArrayList<>(this.definedPartitions.keySet()));
 			}
-			GenericErrorHandler<?> errHandler = this.containerProperties.getGenericErrorHandler();
+			GenericErrorHandler<?> errHandler = KafkaMessageListenerContainer.this.getGenericErrorHandler();
 			this.genericListener = listener;
 			if (listener instanceof BatchMessageListener) {
 				this.listener = null;
@@ -636,7 +636,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 		}
 
 		private void validateErrorHandler(boolean batch) {
-			GenericErrorHandler<?> errHandler = this.containerProperties.getGenericErrorHandler();
+			GenericErrorHandler<?> errHandler = KafkaMessageListenerContainer.this.getGenericErrorHandler();
 			if (this.errorHandler == null) {
 				return;
 			}

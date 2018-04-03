@@ -125,7 +125,7 @@ public class DelegatingInvocableHandler {
 		Object result = handler.invoke(message, providedArgs);
 		Expression replyTo = this.handlerSendTo.get(handler);
 		if (replyTo != null) {
-			result = new MessagingMessageListenerAdapter.ResultHolder(result, replyTo);
+			result = new InvocationResult(result, replyTo);
 		}
 		return result;
 	}

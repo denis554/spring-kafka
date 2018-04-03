@@ -90,7 +90,7 @@ public class StatefulRetryTests {
 			ConcurrentKafkaListenerContainerFactory<Integer, String> factory =
 					new ConcurrentKafkaListenerContainerFactory<>();
 			factory.setConsumerFactory(consumerFactory());
-			factory.getContainerProperties().setErrorHandler(new SeekToCurrentErrorHandler() {
+			factory.setErrorHandler(new SeekToCurrentErrorHandler() {
 
 				@Override
 				public void handle(Exception thrownException, List<ConsumerRecord<?, ?>> records,

@@ -62,12 +62,13 @@ import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.event.ListenerContainerIdleEvent;
-import org.springframework.kafka.listener.AbstractMessageListenerContainer.AckMode;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.listener.ConsumerAwareErrorHandler;
 import org.springframework.kafka.listener.ConsumerAwareListenerErrorHandler;
 import org.springframework.kafka.listener.ConsumerAwareRebalanceListener;
 import org.springframework.kafka.listener.ConsumerSeekAware;
+import org.springframework.kafka.listener.ContainerProperties;
+import org.springframework.kafka.listener.ContainerProperties.AckMode;
 import org.springframework.kafka.listener.KafkaListenerErrorHandler;
 import org.springframework.kafka.listener.ListenerExecutionFailedException;
 import org.springframework.kafka.listener.MessageListenerContainer;
@@ -75,7 +76,6 @@ import org.springframework.kafka.listener.adapter.FilteringMessageListenerAdapte
 import org.springframework.kafka.listener.adapter.MessagingMessageListenerAdapter;
 import org.springframework.kafka.listener.adapter.RecordFilterStrategy;
 import org.springframework.kafka.listener.adapter.RetryingMessageListenerAdapter;
-import org.springframework.kafka.listener.config.ContainerProperties;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.kafka.support.KafkaNull;
@@ -669,7 +669,7 @@ public class EnableKafkaIntegrationTests {
 			factory.setConsumerFactory(consumerFactory());
 			factory.setRecordFilterStrategy(recordFilter());
 			factory.setReplyTemplate(partitionZeroReplyingTemplate());
-			factory.getContainerProperties().setErrorHandler((ConsumerAwareErrorHandler) (t, d, c) -> {
+			factory.setErrorHandler((ConsumerAwareErrorHandler) (t, d, c) -> {
 				this.globalErrorThrowable = t;
 				c.seek(new org.apache.kafka.common.TopicPartition(d.topic(), d.partition()), d.offset());
 			});
@@ -832,14 +832,15 @@ public class EnableKafkaIntegrationTests {
 
 		@Bean
 		public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<Integer, String>>
-		recordAckListenerContainerFactory() {
+				recordAckListenerContainerFactory() {
+
 			ConcurrentKafkaListenerContainerFactory<Integer, String> factory =
 					new ConcurrentKafkaListenerContainerFactory<>();
 			factory.setConsumerFactory(manualConsumerFactory("clientIdViaProps4"));
 			ContainerProperties props = factory.getContainerProperties();
 			props.setAckMode(AckMode.RECORD);
 			props.setAckOnError(true);
-			props.setErrorHandler(listen16ErrorHandler());
+			factory.setErrorHandler(listen16ErrorHandler());
 			return factory;
 		}
 

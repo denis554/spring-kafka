@@ -32,7 +32,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.kafka.core.ConsumerFactory;
-import org.springframework.kafka.listener.config.ContainerProperties;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -56,57 +55,6 @@ public abstract class AbstractMessageListenerContainer<K, V>
 
 	protected final Log logger = LogFactory.getLog(this.getClass()); // NOSONAR
 
-	/**
-	 * The offset commit behavior enumeration.
-	 */
-	public enum AckMode {
-
-		/**
-		 * Commit after each record is processed by the listener.
-		 */
-		RECORD,
-
-		/**
-		 * Commit whatever has already been processed before the next poll.
-		 */
-		BATCH,
-
-		/**
-		 * Commit pending updates after
-		 * {@link ContainerProperties#setAckTime(long) ackTime} has elapsed.
-		 */
-		TIME,
-
-		/**
-		 * Commit pending updates after
-		 * {@link ContainerProperties#setAckCount(int) ackCount} has been
-		 * exceeded.
-		 */
-		COUNT,
-
-		/**
-		 * Commit pending updates after
-		 * {@link ContainerProperties#setAckCount(int) ackCount} has been
-		 * exceeded or after {@link ContainerProperties#setAckTime(long)
-		 * ackTime} has elapsed.
-		 */
-		COUNT_TIME,
-
-		/**
-		 * User takes responsibility for acks using an
-		 * {@link AcknowledgingMessageListener}.
-		 */
-		MANUAL,
-
-		/**
-		 * User takes responsibility for acks using an
-		 * {@link AcknowledgingMessageListener}. The consumer
-		 * immediately processes the commit.
-		 */
-		MANUAL_IMMEDIATE,
-
-	}
-
 	protected final ConsumerFactory<K, V> consumerFactory; // NOSONAR (final)
 
 	private final ContainerProperties containerProperties;
@@ -116,6 +64,8 @@ public abstract class AbstractMessageListenerContainer<K, V>
 	private String beanName;
 
 	private ApplicationEventPublisher applicationEventPublisher;
+
+	private GenericErrorHandler<?> errorHandler;
 
 	private boolean autoStartup = true;
 
@@ -168,12 +118,6 @@ public abstract class AbstractMessageListenerContainer<K, V>
 		if (this.containerProperties.getConsumerRebalanceListener() == null) {
 			this.containerProperties.setConsumerRebalanceListener(createSimpleLoggingConsumerRebalanceListener());
 		}
-		if (containerProperties.getGenericErrorHandler() instanceof BatchErrorHandler) {
-			this.containerProperties.setBatchErrorHandler((BatchErrorHandler) containerProperties.getGenericErrorHandler());
-		}
-		else {
-			this.containerProperties.setErrorHandler((ErrorHandler) containerProperties.getGenericErrorHandler());
-		}
 	}
 
 	@Override
@@ -192,6 +136,42 @@ public abstract class AbstractMessageListenerContainer<K, V>
 
 	public ApplicationEventPublisher getApplicationEventPublisher() {
 		return this.applicationEventPublisher;
+	}
+
+	/**
+	 * Set the error handler to call when the listener throws an exception.
+	 * @param errorHandler the error handler.
+	 * @since 2.2
+	 */
+	public void setErrorHandler(ErrorHandler errorHandler) {
+		this.errorHandler = errorHandler;
+	}
+
+	/**
+	 * Set the error handler to call when the listener throws an exception.
+	 * @param errorHandler the error handler.
+	 * @since 2.2
+	 */
+	public void setGenericErrorHandler(GenericErrorHandler<?> errorHandler) {
+		this.errorHandler = errorHandler;
+	}
+
+	/**
+	 * Set the batch error handler to call when the listener throws an exception.
+	 * @param errorHandler the error handler.
+	 * @since 2.2
+	 */
+	public void setBatchErrorHandler(BatchErrorHandler errorHandler) {
+		this.errorHandler = errorHandler;
+	}
+
+	/**
+	 * Get the configured error handler.
+	 * @return the error handler.
+	 * @since 2.2
+	 */
+	protected GenericErrorHandler<?> getGenericErrorHandler() {
+		return this.errorHandler;
 	}
 
 	@Override

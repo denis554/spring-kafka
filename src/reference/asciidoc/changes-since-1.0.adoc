@@ -1,4 +1,64 @@
 [[migration]]
+=== Changes between 2.0 and 2.1
+
+==== Kafka Client Version
+
+This version requires the 1.0.0 `kafka-clients` or higher.
+
+NOTE: The 1.1.x client is supported, with _version 2.1.5_, but you will need to override dependencies as described in <<deps-for-11x>>.
+The 1.1.x client will be supported natively in _version 2.2_.
+
+==== JSON Improvements
+
+The `StringJsonMessageConverter` and `JsonSerializer` now add type information in `Headers`, allowing the converter and `JsonDeserializer` to create specific types on reception, based on the message itself rather than a fixed configured type.
+See <<serdes>> for more information.
+
+
+==== Container Stopping Error Handlers
+
+Container Error handlers are now provided for both record and batch listeners that treat any exceptions thrown by the listener as fatal; they stop the container.
+See <<annotation-error-handling>> for more information.
+
+==== Pausing/Resuming Containers
+
+The listener containers now have `pause()` and `resume()` methods (since _version 2.1.3_).
+See <<pause-resume>> for more information.
+
+==== Stateful Retry
+
+Starting with _version 2.1.3_, stateful retry can be configured; see <<stateful-retry>> for more information.
+
+==== Client ID
+
+Starting with _version 2.1.1_, it is now possible to set the `client.id` prefix on `@KafkaListener`.
+Previously, to customize the client id, you would need a separate consumer factory (and container factory) per listener.
+The prefix is suffixed with `-n` to provide unique client ids when using concurrency.
+
+
+==== Logging Offset Commits
+
+By default, logging of topic offset commits is performed with the DEBUG logging level.
+Starting with _version 2.1.2_, there is a new property in `ContainerProperties` called `commitLogLevel` which allows you to specify the log level for these messages.
+See <<kafka-container>> for more information.
+
+==== Default @KafkaHandler
+
+Starting with _version 2.1.3_, one of the `@KafkaHandler` s on a class-level `@KafkaListener` can be designated as the default.
+See <<class-level-kafkalistener>> for more information.
+
+==== ReplyingKafkaTemplate
+
+Starting with _version 2.1.3_, a subclass of `KafkaTemplate` is provided to support request/reply semantics.
+See <<replying-template>> for more information.
+
+==== ChainedKafkaTransactionManager
+
+_version 2.1.3_ introduced the `ChainedKafkaTransactionManager` see <<chained-transaction-manager>> for more information.
+
+==== Migration Guide from 2.0
+
+https://github.com/spring-projects/spring-kafka/wiki/Spring-for-Apache-Kafka-2.0-to-2.1-Migration-Guide[2.0 to 2.1 Migration].
+
 === Changes Between 1.3 and 2.0
 
 ==== Spring Framework and Java Versions

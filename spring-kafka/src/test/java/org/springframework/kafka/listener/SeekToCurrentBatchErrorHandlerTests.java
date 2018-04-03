@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -194,7 +194,7 @@ public class SeekToCurrentBatchErrorHandlerTests {
 			ConcurrentKafkaListenerContainerFactory factory = new ConcurrentKafkaListenerContainerFactory();
 			factory.setConsumerFactory(consumerFactory());
 			factory.getContainerProperties().setAckOnError(false);
-			factory.getContainerProperties().setBatchErrorHandler(new SeekToCurrentBatchErrorHandler());
+			factory.setBatchErrorHandler(new SeekToCurrentBatchErrorHandler());
 			factory.setBatchListener(true);
 			factory.getContainerProperties().setTransactionManager(tm());
 			return factory;

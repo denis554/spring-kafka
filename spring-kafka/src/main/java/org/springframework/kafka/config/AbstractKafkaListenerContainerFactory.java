@@ -26,9 +26,10 @@ import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.listener.AbstractMessageListenerContainer;
 import org.springframework.kafka.listener.BatchErrorHandler;
+import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.ErrorHandler;
+import org.springframework.kafka.listener.GenericErrorHandler;
 import org.springframework.kafka.listener.adapter.RecordFilterStrategy;
-import org.springframework.kafka.listener.config.ContainerProperties;
 import org.springframework.kafka.support.converter.MessageConverter;
 import org.springframework.retry.RecoveryCallback;
 import org.springframework.retry.support.RetryTemplate;
@@ -50,6 +51,8 @@ public abstract class AbstractKafkaListenerContainerFactory<C extends AbstractMe
 		implements KafkaListenerContainerFactory<C>, ApplicationEventPublisherAware {
 
 	private final ContainerProperties containerProperties = new ContainerProperties((Pattern) null);
+
+	private GenericErrorHandler<?> errorHandler;
 
 	private ConsumerFactory<K, V> consumerFactory;
 
@@ -192,6 +195,24 @@ public abstract class AbstractKafkaListenerContainerFactory<C extends AbstractMe
 	}
 
 	/**
+	 * Set the error handler to call when the listener throws an exception.
+	 * @param errorHandler the error handler.
+	 * @since 2.2
+	 */
+	public void setErrorHandler(ErrorHandler errorHandler) {
+		this.errorHandler = errorHandler;
+	}
+
+	/**
+	 * Set the batch error handler to call when the listener throws an exception.
+	 * @param errorHandler the error handler.
+	 * @since 2.2
+	 */
+	public void setBatchErrorHandler(BatchErrorHandler errorHandler) {
+		this.errorHandler = errorHandler;
+	}
+
+	/**
 	 * Obtain the properties template for this factory - set properties as needed
 	 * and they will be copied to a final properties instance for the endpoint.
 	 * @return the properties.
@@ -274,11 +295,8 @@ public abstract class AbstractKafkaListenerContainerFactory<C extends AbstractMe
 		if (this.containerProperties.getAckTime() > 0) {
 			properties.setAckTime(this.containerProperties.getAckTime());
 		}
-		if (this.containerProperties.getGenericErrorHandler() instanceof BatchErrorHandler) {
-			properties.setBatchErrorHandler((BatchErrorHandler) this.containerProperties.getGenericErrorHandler());
-		}
-		else {
-			properties.setErrorHandler((ErrorHandler) this.containerProperties.getGenericErrorHandler());
+		if (this.errorHandler != null) {
+			instance.setGenericErrorHandler(this.errorHandler);
 		}
 	}
 

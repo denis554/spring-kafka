@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.kafka.listener.config;
+package org.springframework.kafka.listener;
 
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -24,11 +24,6 @@ import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.OffsetCommitCallback;
 
 import org.springframework.core.task.AsyncListenableTaskExecutor;
-import org.springframework.kafka.listener.AbstractMessageListenerContainer;
-import org.springframework.kafka.listener.AbstractMessageListenerContainer.AckMode;
-import org.springframework.kafka.listener.BatchErrorHandler;
-import org.springframework.kafka.listener.ErrorHandler;
-import org.springframework.kafka.listener.GenericErrorHandler;
 import org.springframework.kafka.support.LogIfLevelEnabled;
 import org.springframework.kafka.support.TopicPartitionInitialOffset;
 import org.springframework.scheduling.TaskScheduler;
@@ -45,6 +40,57 @@ import org.springframework.util.StringUtils;
  * @author Johnny Lim
  */
 public class ContainerProperties {
+
+	/**
+	 * The offset commit behavior enumeration.
+	 */
+	public enum AckMode {
+
+		/**
+		 * Commit after each record is processed by the listener.
+		 */
+		RECORD,
+
+		/**
+		 * Commit whatever has already been processed before the next poll.
+		 */
+		BATCH,
+
+		/**
+		 * Commit pending updates after
+		 * {@link ContainerProperties#setAckTime(long) ackTime} has elapsed.
+		 */
+		TIME,
+
+		/**
+		 * Commit pending updates after
+		 * {@link ContainerProperties#setAckCount(int) ackCount} has been
+		 * exceeded.
+		 */
+		COUNT,
+
+		/**
+		 * Commit pending updates after
+		 * {@link ContainerProperties#setAckCount(int) ackCount} has been
+		 * exceeded or after {@link ContainerProperties#setAckTime(long)
+		 * ackTime} has elapsed.
+		 */
+		COUNT_TIME,
+
+		/**
+		 * User takes responsibility for acks using an
+		 * {@link AcknowledgingMessageListener}.
+		 */
+		MANUAL,
+
+		/**
+		 * User takes responsibility for acks using an
+		 * {@link AcknowledgingMessageListener}. The consumer
+		 * immediately processes the commit.
+		 */
+		MANUAL_IMMEDIATE,
+
+	}
 
 	private static final long DEFAULT_POLL_TIMEOUT = 1000L;
 
@@ -82,7 +128,7 @@ public class ContainerProperties {
 	 * {@link org.springframework.kafka.listener.AcknowledgingMessageListener}.
 	 * </ul>
 	 */
-	private AbstractMessageListenerContainer.AckMode ackMode = AckMode.BATCH;
+	private AckMode ackMode = AckMode.BATCH;
 
 	/**
 	 * The number of outstanding record count after which offsets should be
@@ -113,11 +159,6 @@ public class ContainerProperties {
 	 * The executor for threads that poll the consumer.
 	 */
 	private AsyncListenableTaskExecutor consumerTaskExecutor;
-
-	/**
-	 * The error handler to call when the listener throws an exception.
-	 */
-	private GenericErrorHandler<?> errorHandler;
 
 	/**
 	 * The timeout for shutting down the container. This is the maximum amount of
@@ -209,7 +250,7 @@ public class ContainerProperties {
 	 * </ul>
 	 * @param ackMode the {@link AckMode}; default BATCH.
 	 */
-	public void setAckMode(AbstractMessageListenerContainer.AckMode ackMode) {
+	public void setAckMode(AckMode ackMode) {
 		Assert.notNull(ackMode, "'ackMode' cannot be null");
 		this.ackMode = ackMode;
 	}
@@ -241,22 +282,6 @@ public class ContainerProperties {
 	public void setAckTime(long ackTime) {
 		Assert.state(ackTime > 0, "'ackTime' must be > 0");
 		this.ackTime = ackTime;
-	}
-
-	/**
-	 * Set the error handler to call when the listener throws an exception.
-	 * @param errorHandler the error handler.
-	 */
-	public void setErrorHandler(ErrorHandler errorHandler) {
-		this.errorHandler = errorHandler;
-	}
-
-	/**
-	 * Set the batch error handler to call when the listener throws an exception.
-	 * @param errorHandler the error handler.
-	 */
-	public void setBatchErrorHandler(BatchErrorHandler errorHandler) {
-		this.errorHandler = errorHandler;
 	}
 
 	/**
@@ -355,7 +380,7 @@ public class ContainerProperties {
 		return this.topicPartitions;
 	}
 
-	public AbstractMessageListenerContainer.AckMode getAckMode() {
+	public AckMode getAckMode() {
 		return this.ackMode;
 	}
 
@@ -377,10 +402,6 @@ public class ContainerProperties {
 
 	public AsyncListenableTaskExecutor getConsumerTaskExecutor() {
 		return this.consumerTaskExecutor;
-	}
-
-	public GenericErrorHandler<?> getGenericErrorHandler() {
-		return this.errorHandler;
 	}
 
 	public long getShutdownTimeout() {
@@ -542,7 +563,6 @@ public class ContainerProperties {
 				+ ", pollTimeout=" + this.pollTimeout
 				+ (this.consumerTaskExecutor != null
 						? ", consumerTaskExecutor=" + this.consumerTaskExecutor : "")
-				+ (this.errorHandler != null ? ", errorHandler=" + this.errorHandler : "")
 				+ ", shutdownTimeout=" + this.shutdownTimeout
 				+ (this.consumerRebalanceListener != null
 						? ", consumerRebalanceListener=" + this.consumerRebalanceListener : "")

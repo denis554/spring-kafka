@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.kafka.core.ConsumerFactory;
-import org.springframework.kafka.listener.AbstractMessageListenerContainer.AckMode;
+import org.springframework.kafka.listener.ContainerProperties.AckMode;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -208,7 +208,7 @@ public class SeekToCurrentOnErrorRecordModeTests {
 			ConcurrentKafkaListenerContainerFactory factory = new ConcurrentKafkaListenerContainerFactory();
 			factory.setConsumerFactory(consumerFactory());
 			factory.getContainerProperties().setAckOnError(false);
-			factory.getContainerProperties().setErrorHandler(new SeekToCurrentErrorHandler());
+			factory.setErrorHandler(new SeekToCurrentErrorHandler());
 			factory.getContainerProperties().setAckMode(AckMode.RECORD);
 			return factory;
 		}

@@ -52,8 +52,6 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
-import org.springframework.kafka.listener.AbstractMessageListenerContainer.AckMode;
-import org.springframework.kafka.listener.config.ContainerProperties;
 import org.springframework.kafka.support.TopicPartitionInitialOffset;
 import org.springframework.kafka.test.rule.KafkaEmbedded;
 import org.springframework.kafka.test.utils.ContainerTestUtils;
@@ -242,14 +240,14 @@ public class ConcurrentMessageListenerContainerTests {
 
 	@Test
 	public void testManualCommit() throws Exception {
-		testManualCommitGuts(AckMode.MANUAL, topic4);
-		testManualCommitGuts(AckMode.MANUAL_IMMEDIATE, topic5);
+		testManualCommitGuts(ContainerProperties.AckMode.MANUAL, topic4);
+		testManualCommitGuts(ContainerProperties.AckMode.MANUAL_IMMEDIATE, topic5);
 		// to be sure the commits worked ok so run the tests again and the second tests start at the committed offset.
-		testManualCommitGuts(AckMode.MANUAL, topic4);
-		testManualCommitGuts(AckMode.MANUAL_IMMEDIATE, topic5);
+		testManualCommitGuts(ContainerProperties.AckMode.MANUAL, topic4);
+		testManualCommitGuts(ContainerProperties.AckMode.MANUAL_IMMEDIATE, topic5);
 	}
 
-	private void testManualCommitGuts(AckMode ackMode, String topic) throws Exception {
+	private void testManualCommitGuts(ContainerProperties.AckMode ackMode, String topic) throws Exception {
 		this.logger.info("Start " + ackMode);
 		Map<String, Object> props = KafkaTestUtils.consumerProps("test" + ackMode, "false", embeddedKafka);
 		DefaultKafkaConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<>(props);
@@ -306,7 +304,7 @@ public class ConcurrentMessageListenerContainerTests {
 			ack.acknowledge();
 			latch.countDown();
 		});
-		containerProps.setAckMode(AckMode.MANUAL_IMMEDIATE);
+		containerProps.setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
 		containerProps.setSyncCommits(false);
 		final CountDownLatch commits = new CountDownLatch(8);
 		final AtomicReference<Exception> exceptionRef = new AtomicReference<>();
@@ -361,7 +359,7 @@ public class ConcurrentMessageListenerContainerTests {
 			bitSet.set((int) (message.partition() * 4 + message.offset()));
 			latch.countDown();
 		});
-		containerProps.setAckMode(AckMode.MANUAL_IMMEDIATE);
+		containerProps.setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
 
 		ConcurrentMessageListenerContainer<Integer, String> container =
 				new ConcurrentMessageListenerContainer<>(cf, containerProps);
@@ -440,12 +438,12 @@ public class ConcurrentMessageListenerContainerTests {
 			latch.countDown();
 			throw new RuntimeException("intended");
 		});
-		containerProps.setErrorHandler((thrownException, record) -> catchError.set(true));
 
 		ConcurrentMessageListenerContainer<Integer, String> container =
 				new ConcurrentMessageListenerContainer<>(cf, containerProps);
 		container.setConcurrency(2);
 		container.setBeanName("testException");
+		container.setErrorHandler((thrownException, record) -> catchError.set(true));
 
 		container.start();
 		ContainerTestUtils.waitForAssignment(container, embeddedKafka.getPartitionsPerTopic());
@@ -481,7 +479,7 @@ public class ConcurrentMessageListenerContainerTests {
 			}
 		});
 		containerProps.setSyncCommits(true);
-		containerProps.setAckMode(AckMode.RECORD);
+		containerProps.setAckMode(ContainerProperties.AckMode.RECORD);
 		containerProps.setAckOnError(false);
 		ConcurrentMessageListenerContainer<Integer, String> container = new ConcurrentMessageListenerContainer<>(cf,
 				containerProps);
@@ -546,7 +544,7 @@ public class ConcurrentMessageListenerContainerTests {
 		final CountDownLatch latch = new CountDownLatch(2);
 		ContainerProperties containerProps = new ContainerProperties(topic);
 		containerProps.setSyncCommits(true);
-		containerProps.setAckMode(AckMode.MANUAL_IMMEDIATE);
+		containerProps.setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
 		containerProps.setAckOnError(ackOnError);
 		containerProps.setMessageListener((AcknowledgingMessageListener<Integer, String>) (message, ack) -> {
 			ConcurrentMessageListenerContainerTests.this.logger.info("manualExisting: " + message);

@@ -24,7 +24,6 @@ import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.TopicPartition;
 
 import org.springframework.context.SmartLifecycle;
-import org.springframework.kafka.listener.config.ContainerProperties;
 
 /**
  * Internal abstraction used by the framework representing a message

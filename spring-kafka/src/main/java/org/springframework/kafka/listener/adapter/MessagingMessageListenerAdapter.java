@@ -281,7 +281,7 @@ public abstract class MessagingMessageListenerAdapter<K, V> implements ConsumerS
 			this.logger.debug("Listener method returned result [" + resultArg
 					+ "] - generating response message for it");
 		}
-		Object result = resultArg instanceof ResultHolder ? ((ResultHolder) resultArg).result : resultArg;
+		Object result = resultArg instanceof InvocationResult ? ((InvocationResult) resultArg).getResult() : resultArg;
 		String replyTopic = evaluateReplyTopic(request, source, resultArg);
 		Assert.state(replyTopic == null || this.replyTemplate != null,
 				"a KafkaTemplate is required to support replies");
@@ -290,8 +290,8 @@ public abstract class MessagingMessageListenerAdapter<K, V> implements ConsumerS
 
 	private String evaluateReplyTopic(Object request, Object source, Object result) {
 		String replyTo = null;
-		if (result instanceof ResultHolder) {
-			replyTo = evaluateTopic(request, source, result, ((ResultHolder) result).sendTo);
+		if (result instanceof InvocationResult) {
+			replyTo = evaluateTopic(request, source, result, ((InvocationResult) result).getSendTo());
 		}
 		else if (this.replyTopicExpression != null) {
 			replyTo = evaluateTopic(request, source, result, this.replyTopicExpression);
@@ -503,28 +503,6 @@ public abstract class MessagingMessageListenerAdapter<K, V> implements ConsumerS
 			}
 		}
 		return !parameterType.equals(Message.class); // could be Message without a generic type
-	}
-
-	/**
-	 * Result holder.
-	 * @since 2.0
-	 */
-	public static final class ResultHolder {
-
-		private final Object result;
-
-		private final Expression sendTo;
-
-		public ResultHolder(Object result, Expression sendTo) {
-			this.result = result;
-			this.sendTo = sendTo;
-		}
-
-		@Override
-		public String toString() {
-			return this.result.toString();
-		}
-
 	}
 
 	/**
