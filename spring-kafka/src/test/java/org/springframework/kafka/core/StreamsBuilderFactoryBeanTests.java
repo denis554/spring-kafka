@@ -28,12 +28,13 @@ import java.util.Map;
 import org.apache.kafka.streams.StreamsConfig;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.annotation.EnableKafkaStreams;
 import org.springframework.kafka.annotation.KafkaStreamsDefaultConfiguration;
 import org.springframework.kafka.test.context.EmbeddedKafka;
@@ -49,6 +50,7 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 @SpringJUnitConfig
 @DirtiesContext
 @EmbeddedKafka
+@DisabledOnOs(OS.WINDOWS)
 public class StreamsBuilderFactoryBeanTests {
 
 	private static final String APPLICATION_ID = "testCleanupStreams";
@@ -77,7 +79,6 @@ public class StreamsBuilderFactoryBeanTests {
 	}
 
 	@Configuration
-	@EnableKafka
 	@EnableKafkaStreams
 	public static class KafkaStreamsConfiguration {
 

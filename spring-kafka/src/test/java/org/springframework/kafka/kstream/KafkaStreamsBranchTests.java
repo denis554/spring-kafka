@@ -56,6 +56,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 /**
  * @author Elliot Kennedy
  * @author Artem Bilan
+ *
  * @since 1.3.3
  */
 @RunWith(SpringRunner.class)
@@ -102,6 +103,9 @@ public class KafkaStreamsBranchTests {
 
 		assertThat(trueValues).containsExactly("true", "true");
 		assertThat(falseValues).containsExactly("false");
+
+		falseConsumer.close();
+		trueConsumer.close();
 	}
 
 	private Consumer<String, String> createConsumer() {

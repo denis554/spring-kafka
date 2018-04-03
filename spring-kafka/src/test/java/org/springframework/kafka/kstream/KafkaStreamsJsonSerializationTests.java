@@ -34,6 +34,7 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Printed;
 import org.apache.kafka.streams.kstream.Produced;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -61,20 +62,24 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * @author Elliot Kennedy
+ * @author Artem Bilan
  */
 @RunWith(SpringRunner.class)
 @DirtiesContext
 @EmbeddedKafka(partitions = 1,
 		topics = {
-			KafkaStreamsJsonSerializationTests.OBJECT_INPUT_TOPIC,
-			KafkaStreamsJsonSerializationTests.OBJECT_OUTPUT_TOPIC
+				KafkaStreamsJsonSerializationTests.OBJECT_INPUT_TOPIC,
+				KafkaStreamsJsonSerializationTests.OBJECT_OUTPUT_TOPIC
 		})
 public class KafkaStreamsJsonSerializationTests {
 
 	public static final String OBJECT_INPUT_TOPIC = "object-input-topic";
+
 	public static final String OBJECT_OUTPUT_TOPIC = "object-output-topic";
 
-	public static final JsonSerde<JsonObjectKey> jsonObjectKeySerde = new JsonSerde<>(JsonObjectKey.class).setUseTypeMapperForKey(true);
+	public static final JsonSerde<JsonObjectKey> jsonObjectKeySerde =
+			new JsonSerde<>(JsonObjectKey.class).setUseTypeMapperForKey(true);
+
 	public static final JsonSerde<JsonObjectValue> jsonObjectValueSerde = new JsonSerde<>(JsonObjectValue.class);
 
 	@Autowired
@@ -87,14 +92,22 @@ public class KafkaStreamsJsonSerializationTests {
 
 	@Before
 	public void setup() throws Exception {
-		objectOutputTopicConsumer = consumer(OBJECT_OUTPUT_TOPIC, jsonObjectKeySerde, jsonObjectValueSerde);
+		this.objectOutputTopicConsumer = consumer(OBJECT_OUTPUT_TOPIC, jsonObjectKeySerde, jsonObjectValueSerde);
+	}
+
+	@After
+	public void teardown() {
+		if (this.objectOutputTopicConsumer != null) {
+			this.objectOutputTopicConsumer.close();
+		}
 	}
 
 	@Test
-	public void testJsonObjectSerialization() throws Exception {
+	public void testJsonObjectSerialization() {
 		template.send(OBJECT_INPUT_TOPIC, new JsonObjectKey(25), new JsonObjectValue("twenty-five"));
 
-		ConsumerRecords<JsonObjectKey, JsonObjectValue> outputTopicRecords = KafkaTestUtils.getRecords(objectOutputTopicConsumer);
+		ConsumerRecords<JsonObjectKey, JsonObjectValue> outputTopicRecords =
+				KafkaTestUtils.getRecords(this.objectOutputTopicConsumer);
 
 		assertThat(outputTopicRecords.count()).isEqualTo(1);
 		ConsumerRecord<JsonObjectKey, JsonObjectValue> output = outputTopicRecords.iterator().next();
@@ -112,7 +125,7 @@ public class KafkaStreamsJsonSerializationTests {
 		DefaultKafkaConsumerFactory<K, V> kafkaConsumerFactory =
 				new DefaultKafkaConsumerFactory<>(consumerProps, keySerde.deserializer(), valueSerde.deserializer());
 		Consumer<K, V> consumer = kafkaConsumerFactory.createConsumer();
-		kafkaEmbedded.consumeFromAnEmbeddedTopic(consumer, topic);
+		this.kafkaEmbedded.consumeFromAnEmbeddedTopic(consumer, topic);
 		return consumer;
 	}
 
@@ -135,6 +148,7 @@ public class KafkaStreamsJsonSerializationTests {
 					"key=" + key +
 					'}';
 		}
+
 	}
 
 	public static class JsonObjectValue {
@@ -160,6 +174,7 @@ public class KafkaStreamsJsonSerializationTests {
 					"value='" + value + '\'' +
 					'}';
 		}
+
 	}
 
 	@Configuration
@@ -205,6 +220,7 @@ public class KafkaStreamsJsonSerializationTests {
 
 			return testStream;
 		}
+
 	}
 
 }

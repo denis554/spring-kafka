@@ -356,6 +356,7 @@ public class TransactionalContainerTests {
 		assertThat(consumer.position(new TopicPartition(topic1, 0))).isEqualTo(1);
 		logger.info("Stop testRollbackRecord");
 		pf.destroy();
+		consumer.close();
 	}
 
 	@SuppressWarnings("serial")
