@@ -581,7 +581,7 @@ public class ConcurrentMessageListenerContainerTests {
 
 		// only one message should be acknowledged, because second, starting with "b"
 		// will throw RuntimeException and acknowledge() method will not invoke on it
-		for (int i = 0; i < 100; i++) {
+		for (int i = 0; i < 300; i++) {
 			if (consumer.position(new TopicPartition(topic, 0)) == 1) {
 				break;
 			}
