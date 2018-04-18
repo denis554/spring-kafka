@@ -233,7 +233,7 @@ apply plugin: DocbookReferencePlugin
 
 reference {
 	sourceFileName = 'index.xml'
-	sourceDir = file("$buildDir/reference-work/docbook")
+	sourceDir = file("$buildDir/asciidoc/docbook")
 	pdfFilename = 'spring-kafka-reference.pdf'
 	expandPlaceholders = ''
 }
