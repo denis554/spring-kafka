@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.apache.kafka.common.serialization.Deserializer;
  * @param <V> the value type.
  *
  * @author Gary Russell
+ * @author Artem Bilan
  */
 public interface ConsumerFactory<K, V> {
 
@@ -35,7 +36,9 @@ public interface ConsumerFactory<K, V> {
 	 * Create a consumer with the group id and client id as configured in the properties.
 	 * @return the consumer.
 	 */
-	Consumer<K, V> createConsumer();
+	default Consumer<K, V> createConsumer() {
+		return createConsumer(null);
+	}
 
 	/**
 	 * Create a consumer, appending the suffix to the {@code client.id} property,
@@ -44,7 +47,9 @@ public interface ConsumerFactory<K, V> {
 	 * @return the consumer.
 	 * @since 1.3
 	 */
-	Consumer<K, V> createConsumer(String clientIdSuffix);
+	default Consumer<K, V> createConsumer(String clientIdSuffix) {
+		return createConsumer(null, clientIdSuffix);
+	}
 
 	/**
 	 * Create a consumer with an explicit group id; in addition, the
@@ -55,7 +60,9 @@ public interface ConsumerFactory<K, V> {
 	 * @return the consumer.
 	 * @since 1.3
 	 */
-	Consumer<K, V> createConsumer(String groupId, String clientIdSuffix);
+	default Consumer<K, V> createConsumer(String groupId, String clientIdSuffix) {
+		return createConsumer(groupId, null, clientIdSuffix);
+	}
 
 	/**
 	 * Create a consumer with an explicit group id; in addition, the
@@ -63,16 +70,13 @@ public interface ConsumerFactory<K, V> {
 	 * {@code client.id} property, if present.
 	 * If a factory does not implement this method, {@link #createConsumer(String, String)}
 	 * is invoked, ignoring the prefix.
-	 * TODO: remove default in 2.2
 	 * @param groupId the group id.
 	 * @param clientIdPrefix the prefix.
 	 * @param clientIdSuffix the suffix.
 	 * @return the consumer.
 	 * @since 2.1.1
 	 */
-	default Consumer<K, V> createConsumer(String groupId, String clientIdPrefix, String clientIdSuffix) {
-		return createConsumer(groupId, clientIdSuffix);
-	}
+	Consumer<K, V> createConsumer(String groupId, String clientIdPrefix, String clientIdSuffix);
 
 	/**
 	 * Return true if consumers created by this factory use auto commit.
