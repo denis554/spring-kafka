@@ -26,8 +26,11 @@ import org.springframework.kafka.support.TopicPartitionInitialOffset;
  * A {@link KafkaListenerContainerFactory} implementation to build a
  * {@link ConcurrentMessageListenerContainer}.
  * <p>
- * This should be the default for most users and a good transition paths
- * for those that are used to build such container definitions manually.
+ * This should be the default for most users and a good transition paths for those that
+ * are used to building such container definitions manually.
+ *
+ * This factory is primarily for building containers for {@code KafkaListener} annotated
+ * methods but can also be used to create any container.
  *
  * @param <K> the key type.
  * @param <V> the value type.
@@ -81,3 +84,4 @@ public class ConcurrentKafkaListenerContainerFactory<K, V>
 	}
 
 }
+
