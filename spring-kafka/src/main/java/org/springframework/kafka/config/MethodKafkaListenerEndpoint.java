@@ -112,7 +112,9 @@ public class MethodKafkaListenerEndpoint<K, V> extends AbstractKafkaListenerEndp
 			if (ann != null) {
 				if (method.getReturnType().equals(void.class)) {
 					if (this.logger.isWarnEnabled()) {
-						this.logger.warn("Method has a void return type; @SendTo is ignored" +
+						this.logger.warn("Method "
+								+ method
+								+ " has a void return type; @SendTo is ignored" +
 								(this.errorHandler == null ? "" : " unless the error handler returns a result"));
 					}
 				}
