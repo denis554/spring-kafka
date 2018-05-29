@@ -23,11 +23,13 @@ import static org.springframework.kafka.test.assertj.KafkaConditions.partition;
 import static org.springframework.kafka.test.assertj.KafkaConditions.timestamp;
 import static org.springframework.kafka.test.assertj.KafkaConditions.value;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.kafka.clients.consumer.Consumer;
@@ -49,6 +51,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import org.springframework.kafka.support.Acknowledgment;
+import org.springframework.kafka.support.CompositeProducerListener;
 import org.springframework.kafka.support.DefaultKafkaHeaderMapper;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.kafka.support.ProducerListener;
@@ -242,23 +245,44 @@ public class KafkaTemplateTests {
 		DefaultKafkaProducerFactory<Integer, String> pf = new DefaultKafkaProducerFactory<>(senderProps);
 		KafkaTemplate<Integer, String> template = new KafkaTemplate<>(pf);
 		template.setDefaultTopic(INT_KEY_TOPIC);
-		final CountDownLatch latch = new CountDownLatch(1);
-		template.setProducerListener(new ProducerListener<Integer, String>() {
+		final CountDownLatch latch = new CountDownLatch(2);
+		final List<ProducerRecord<Integer, String>> records = new ArrayList<>();
+		final List<RecordMetadata> meta = new ArrayList<>();
+		final AtomicInteger onErrorDelegateCalls = new AtomicInteger();
+		class PL implements ProducerListener<Integer, String> {
 
 			@Override
-			public void onSuccess(String topic, Integer partition, Integer key, String value,
-					RecordMetadata recordMetadata) {
+			public void onSuccess(ProducerRecord<Integer, String> record, RecordMetadata recordMetadata) {
+				records.add(record);
+				meta.add(recordMetadata);
 				latch.countDown();
 			}
 
-		});
+			@Override
+			public void onError(ProducerRecord<Integer, String> producerRecord, Exception exception) {
+				assertThat(producerRecord).isNotNull();
+				assertThat(exception).isNotNull();
+				onErrorDelegateCalls.incrementAndGet();
+			}
+
+		}
+		PL pl1 = new PL();
+		PL pl2 = new PL();
+		CompositeProducerListener<Integer, String> cpl = new CompositeProducerListener<>(pl1, pl2);
+		template.setProducerListener(cpl);
 		template.sendDefault("foo");
 		template.flush();
 		assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
+		assertThat(records.get(0).value()).isEqualTo("foo");
+		assertThat(records.get(1).value()).isEqualTo("foo");
+		assertThat(meta.get(0).topic()).isEqualTo(INT_KEY_TOPIC);
+		assertThat(meta.get(1).topic()).isEqualTo(INT_KEY_TOPIC);
 
 		//Drain the topic
 		KafkaTestUtils.getSingleRecord(consumer, INT_KEY_TOPIC);
 		pf.destroy();
+		cpl.onError(records.get(0), new RuntimeException("x"));
+		assertThat(onErrorDelegateCalls.get()).isEqualTo(2);
 	}
 
 	@Test
