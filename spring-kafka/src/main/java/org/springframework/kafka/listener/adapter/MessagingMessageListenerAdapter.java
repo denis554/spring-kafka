@@ -432,7 +432,8 @@ public abstract class MessagingMessageListenerAdapter<K, V> implements ConsumerS
 										&& ((WildcardType) paramType).getUpperBounds() != null
 										&& ((WildcardType) paramType).getUpperBounds().length > 0
 										&& ((WildcardType) paramType).getUpperBounds()[0] instanceof ParameterizedType
-										&& ((ParameterizedType) ((WildcardType) paramType).getUpperBounds()[0]).getRawType().equals(ConsumerRecord.class))
+										&& ((ParameterizedType) ((WildcardType)
+											paramType).getUpperBounds()[0]).getRawType().equals(ConsumerRecord.class))
 							);
 							boolean messageHasGeneric = paramType instanceof ParameterizedType
 									&& ((ParameterizedType) paramType).getRawType().equals(Message.class);
