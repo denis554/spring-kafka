@@ -92,13 +92,13 @@ public class ContainerProperties {
 
 	}
 
-	private static final long DEFAULT_POLL_TIMEOUT = 1000L;
+	public static final long DEFAULT_POLL_TIMEOUT = 1000L;
 
-	private static final int DEFAULT_SHUTDOWN_TIMEOUT = 10000;
+	public static final int DEFAULT_SHUTDOWN_TIMEOUT = 10000;
 
-	private static final int DEFAULT_MONITOR_INTERVAL = 30;
+	public static final int DEFAULT_MONITOR_INTERVAL = 30;
 
-	private static final float DEFAULT_NO_POLL_THRESHOLD = 3f;
+	public static final float DEFAULT_NO_POLL_THRESHOLD = 3f;
 
 	/**
 	 * Topic names.
@@ -297,7 +297,7 @@ public class ContainerProperties {
 	/**
 	 * Set the timeout for shutting down the container. This is the maximum amount of
 	 * time that the invocation to {@code #stop(Runnable)} will block for, before
-	 * returning.
+	 * returning; default {@value #DEFAULT_SHUTDOWN_TIMEOUT}.
 	 * @param shutdownTimeout the shutdown timeout.
 	 */
 	public void setShutdownTimeout(long shutdownTimeout) {
