@@ -336,7 +336,7 @@ public abstract class MessagingMessageListenerAdapter<K, V> implements ConsumerS
 	 *
 	 * @param result the result.
 	 * @param topic the topic.
-	 * @deprecated in favor of {@link #sendResponse(Object, String, Object)}.
+	 * @deprecated in favor of {@link #sendResponse(Object, String, Object, boolean)}.
 	 */
 	@Deprecated
 	protected void sendResponse(Object result, String topic) {
