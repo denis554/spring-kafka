@@ -80,7 +80,7 @@ public abstract class AbstractKafkaListenerContainerFactory<C extends AbstractMe
 
 	private ApplicationEventPublisher applicationEventPublisher;
 
-	private KafkaTemplate<K, V> replyTemplate;
+	private KafkaTemplate<?, ?> replyTemplate;
 
 	private AfterRollbackProcessor<K, V> afterRollbackProcessor;
 
@@ -197,7 +197,7 @@ public abstract class AbstractKafkaListenerContainerFactory<C extends AbstractMe
 	 * @param replyTemplate the template.
 	 * @since 2.0
 	 */
-	public void setReplyTemplate(KafkaTemplate<K, V> replyTemplate) {
+	public void setReplyTemplate(KafkaTemplate<?, ?> replyTemplate) {
 		this.replyTemplate = replyTemplate;
 	}
 
