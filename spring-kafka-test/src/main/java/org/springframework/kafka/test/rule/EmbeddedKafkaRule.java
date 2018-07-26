@@ -91,6 +91,7 @@ public class EmbeddedKafkaRule extends ExternalResource implements TestRule {
 	 * Set explicit ports on which the kafka brokers will listen. Useful when running an
 	 * embedded broker that you want to access from other processes.
 	 * @param kafkaPorts the ports.
+	 * @return the rule.
 	 */
 	public EmbeddedKafkaRule kafkaPorts(int... kafkaPorts) {
 		this.embeddedKafka.kafkaPorts(kafkaPorts);

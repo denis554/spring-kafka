@@ -50,7 +50,6 @@ import org.apache.kafka.common.utils.Time;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.kafka.test.core.BrokerAddress;
-import org.springframework.kafka.test.rule.EmbeddedKafkaRule;
 import org.springframework.retry.backoff.ExponentialBackOffPolicy;
 import org.springframework.retry.policy.SimpleRetryPolicy;
 import org.springframework.retry.support.RetryTemplate;
@@ -80,7 +79,7 @@ import kafka.zk.EmbeddedZookeeper;
  */
 public class EmbeddedKafkaBroker implements InitializingBean, DisposableBean {
 
-	private static final Log logger = LogFactory.getLog(EmbeddedKafkaRule.class);
+	private static final Log logger = LogFactory.getLog(EmbeddedKafkaBroker.class);
 
 	public static final String BEAN_NAME = "embeddedKafka";
 
@@ -146,7 +145,7 @@ public class EmbeddedKafkaBroker implements InitializingBean, DisposableBean {
 	 * Specify the properties to configure Kafka Broker before start, e.g.
 	 * {@code auto.create.topics.enable}, {@code transaction.state.log.replication.factor} etc.
 	 * @param brokerProperties the properties to use for configuring Kafka Broker(s).
-	 * @return this for chaining configuration
+	 * @return this for chaining configuration.
 	 * @see KafkaConfig
 	 */
 	public EmbeddedKafkaBroker brokerProperties(Map<String, String> brokerProperties) {
@@ -158,7 +157,7 @@ public class EmbeddedKafkaBroker implements InitializingBean, DisposableBean {
 	 * Specify a broker property.
 	 * @param property the property name.
 	 * @param value the value.
-	 * @return the {@link EmbeddedKafkaRule}.
+	 * @return the {@link EmbeddedKafkaBroker}.
 	 */
 	public EmbeddedKafkaBroker brokerProperty(String property, Object value) {
 		this.brokerProperties.put(property, value);
@@ -169,6 +168,7 @@ public class EmbeddedKafkaBroker implements InitializingBean, DisposableBean {
 	 * Set explicit ports on which the kafka brokers will listen. Useful when running an
 	 * embedded broker that you want to access from other processes.
 	 * @param kafkaPorts the ports.
+	 * @return the {@link EmbeddedKafkaBroker}.
 	 */
 	public EmbeddedKafkaBroker kafkaPorts(int... kafkaPorts) {
 		Assert.isTrue(kafkaPorts.length == this.count, "A port must be provided for each instance ["
