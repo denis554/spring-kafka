@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class DefaultJackson2JavaTypeMapper extends AbstractJavaTypeMapper
 					"java.lang"
 			);
 
-	private final Set<String> trustedPackages = new LinkedHashSet<String>(TRUSTED_PACKAGES);
+	private final Set<String> trustedPackages = new LinkedHashSet<>(TRUSTED_PACKAGES);
 
 	private volatile TypePrecedence typePrecedence = TypePrecedence.INFERRED;
 
@@ -64,21 +64,7 @@ public class DefaultJackson2JavaTypeMapper extends AbstractJavaTypeMapper
 		return this.typePrecedence;
 	}
 
-	/**
-	 * Set the precedence for evaluating type information in message properties.
-	 * When using {@code @KafkaListener} at the method level, the framework attempts
-	 * to determine the target type for payload conversion from the method signature.
-	 * If so, this type is provided by the {@code MessagingMessageListenerAdapter}.
-	 * <p>
-	 * By default, if the type is concrete (not abstract, not an interface), this will
-	 * be used ahead of type information provided in the {@code __TypeId__} and
-	 * associated headers provided by the sender.
-	 * <p>
-	 * If you wish to force the use of the  {@code __TypeId__} and associated headers
-	 * (such as when the actual type is a subclass of the method argument type),
-	 * set the precedence to {@link Jackson2JavaTypeMapper.TypePrecedence#TYPE_ID}.
-	 * @param typePrecedence the precedence.
-	 */
+	@Override
 	public void setTypePrecedence(TypePrecedence typePrecedence) {
 		Assert.notNull(typePrecedence, "'typePrecedence' cannot be null");
 		this.typePrecedence = typePrecedence;
