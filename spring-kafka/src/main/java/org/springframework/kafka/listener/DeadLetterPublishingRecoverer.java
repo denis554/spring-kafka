@@ -67,7 +67,7 @@ public class DeadLetterPublishingRecoverer implements BiConsumer<ConsumerRecord<
 	/**
 	 * Create an instance with the provided template and destination resolving function,
 	 * that receives the failed consumer record and the exception and returns a
-	 * {@link TopicPartition}. If the partition in the {@link TopicPartition} is < 0, no
+	 * {@link TopicPartition}. If the partition in the {@link TopicPartition} is less than 0, no
 	 * partition is set when publishing to the topic.
 	 * @param template the {@link KafkaTemplate} to use for publishing.
 	 * @param destinationResolver the resolving function.
@@ -104,7 +104,7 @@ public class DeadLetterPublishingRecoverer implements BiConsumer<ConsumerRecord<
 	 * The default implementation simply copies the key and value from the consumer record
 	 * and adds the headers. The timestamp is not set (the original timestamp is in one of
 	 * the headers).
-	 * IMPORTANT: if the partition in the {@link TopicPartition} is < 0, it must be set to null
+	 * IMPORTANT: if the partition in the {@link TopicPartition} is less than 0, it must be set to null
 	 * in the {@link ProducerRecord}.
 	 * @param record the failed record
 	 * @param topicPartition the {@link TopicPartition} returned by the destination resolver.
