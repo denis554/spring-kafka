@@ -16,20 +16,24 @@
 
 package org.springframework.kafka.listener;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.function.BiConsumer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.common.TopicPartition;
+
+import org.springframework.kafka.support.SeekUtils;
+import org.springframework.lang.Nullable;
 
 /**
  * Default implementation of {@link AfterRollbackProcessor}. Seeks all
  * topic/partitions so the records will be re-fetched, including the failed
- * record.
+ * record. Starting with version 2.2 after a configurable number of failures
+ * for the same topic/partition/offset, that record will be skipped after
+ * calling a {@link BiConsumer} recoverer. The default recoverer simply logs
+ * the failed record.
  *
  * @param <K> the key type.
  * @param <V> the value type.
@@ -43,19 +47,52 @@ public class DefaultAfterRollbackProcessor<K, V> implements AfterRollbackProcess
 
 	private static final Log logger = LogFactory.getLog(DefaultAfterRollbackProcessor.class);
 
+	private final FailedRecordTracker failureTracker;
+
+	/**
+	 * Construct an instance with the default recoverer which simply logs the record after
+	 * {@value SeekUtils#DEFAULT_MAX_FAILURES} (maxFailures) have occurred for a
+	 * topic/partition/offset.
+	 * @since 2.2
+	 */
+	public DefaultAfterRollbackProcessor() {
+		this(null, SeekUtils.DEFAULT_MAX_FAILURES);
+	}
+
+	/**
+	 * Construct an instance with the provided recoverer which will be called after
+	 * {@value SeekUtils#DEFAULT_MAX_FAILURES} (maxFailures) have occurred for a
+	 * topic/partition/offset.
+	 * @param recoverer the recoverer.
+	 * @since 2.2
+	 */
+	public DefaultAfterRollbackProcessor(BiConsumer<ConsumerRecord<?, ?>, Exception> recoverer) {
+		this(recoverer, SeekUtils.DEFAULT_MAX_FAILURES);
+	}
+
+	/**
+	 * Construct an instance with the provided recoverer which will be called after
+	 * maxFailures have occurred for a topic/partition/offset.
+	 * @param recoverer the recoverer; if null, the default (logging) recoverer is used.
+	 * @param maxFailures the maxFailures.
+	 * @since 2.2
+	 */
+	public DefaultAfterRollbackProcessor(@Nullable BiConsumer<ConsumerRecord<?, ?>, Exception> recoverer,
+			int maxFailures) {
+		this.failureTracker = new FailedRecordTracker(recoverer, maxFailures, logger);
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public void process(List<ConsumerRecord<K, V>> records, Consumer<K, V> consumer) {
-		Map<TopicPartition, Long> partitions = new HashMap<>();
-		records.forEach(r -> partitions.computeIfAbsent(new TopicPartition(r.topic(), r.partition()),
-				offset -> r.offset()));
-		partitions.forEach((topicPartition, offset) -> {
-			try {
-				consumer.seek(topicPartition, offset);
-			}
-			catch (Exception e) {
-				logger.error("Failed to seek " + topicPartition + " to " + offset);
-			}
-		});
+	public void process(List<ConsumerRecord<K, V>> records, Consumer<K, V> consumer, Exception exception,
+			boolean recoverable) {
+		SeekUtils.doSeeks(((List) records),
+				consumer, exception, recoverable, this.failureTracker::skip, logger);
+	}
+
+	@Override
+	public void clearThreadState() {
+		this.failureTracker.clearThreadState();
 	}
 
 }
