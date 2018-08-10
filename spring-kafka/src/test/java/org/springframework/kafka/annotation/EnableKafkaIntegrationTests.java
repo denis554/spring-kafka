@@ -97,6 +97,7 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.support.GenericMessage;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.retry.support.RetryTemplate;
+import org.springframework.stereotype.Component;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -1109,6 +1110,7 @@ public class EnableKafkaIntegrationTests {
 
 	}
 
+	@Component
 	static class Listener implements ConsumerSeekAware {
 
 		private final ThreadLocal<ConsumerSeekCallback> seekCallBack = new ThreadLocal<>();
