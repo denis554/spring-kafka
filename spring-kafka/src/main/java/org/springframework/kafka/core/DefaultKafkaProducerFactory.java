@@ -201,6 +201,7 @@ public class DefaultKafkaProducerFactory<K, V> implements ProducerFactory<K, V>,
 	public void stop() {
 		try {
 			destroy();
+			this.running = false;
 		}
 		catch (Exception e) {
 			logger.error("Exception while closing producer", e);
