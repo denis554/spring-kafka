@@ -49,10 +49,8 @@ public interface GenericMessageListener<T> {
 	}
 
 	/**
-	 * Invoked with data from kafka and provides access to the {@link Consumer}
-	 * for operations such as pause/resume. Invoked with null data when a poll
-	 * returns no data (enabling resume). The default implementation throws
-	 * {@link UnsupportedOperationException}.
+	 * Invoked with data from kafka and provides access to the {@link Consumer}. The
+	 * default implementation throws {@link UnsupportedOperationException}.
 	 * @param data the data to be processed.
 	 * @param consumer the consumer.
 	 * @since 2.0
@@ -62,10 +60,8 @@ public interface GenericMessageListener<T> {
 	}
 
 	/**
-	 * Invoked with data from kafka and provides access to the {@link Consumer}
-	 * for operations such as pause/resume. Invoked with null data when a poll
-	 * returns no data (enabling resume). The default implementation throws
-	 * {@link UnsupportedOperationException}.
+	 * Invoked with data from kafka and provides access to the {@link Consumer}. The
+	 * default implementation throws {@link UnsupportedOperationException}.
 	 * @param data the data to be processed.
 	 * @param acknowledgment the acknowledgment.
 	 * @param consumer the consumer.
