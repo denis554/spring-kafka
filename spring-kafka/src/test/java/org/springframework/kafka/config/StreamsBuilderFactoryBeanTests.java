@@ -14,57 +14,72 @@
  * limitations under the License.
  */
 
-package org.springframework.kafka.core;
+package org.springframework.kafka.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.annotation.EnableKafkaStreams;
 import org.springframework.kafka.annotation.KafkaStreamsDefaultConfiguration;
-import org.springframework.kafka.config.KafkaStreamsConfiguration;
+import org.springframework.kafka.core.CleanupConfig;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
-
 /**
- * @author Nurettin Yilmaz
+ * @author Pawel Szymczyk
  * @author Artem Bilan
- *
- * @since 2.1.5
+ * @author Gary Russell
  */
 @SpringJUnitConfig
 @DirtiesContext
 @EmbeddedKafka
-public class KafkaStreamsCustomizerTests {
+@DisabledOnOs(OS.WINDOWS)
+public class StreamsBuilderFactoryBeanTests {
 
-	private static final String APPLICATION_ID = "testStreams";
+	private static final String APPLICATION_ID = "testCleanupStreams";
 
-	private static final TestStateListener STATE_LISTENER = new TestStateListener();
+	private static Path stateStoreDir;
+
+	@BeforeAll
+	public static void setup() throws IOException {
+		stateStoreDir = Files.createTempDirectory("test-state-dir");
+	}
 
 	@Autowired
 	private StreamsBuilderFactoryBean streamsBuilderFactoryBean;
 
 	@Test
-	public void testKafkaStreamsCustomizer() {
-		KafkaStreams.State state = this.streamsBuilderFactoryBean.getKafkaStreams().state();
-		assertThat(STATE_LISTENER.getCurrentState()).isEqualTo(state);
+	public void testCleanupStreams() throws IOException {
+		Path stateStore = Files.createDirectory(Paths.get(stateStoreDir.toString(), APPLICATION_ID, "0_0"));
+		assertThat(stateStore).exists();
+		streamsBuilderFactoryBean.stop();
+		assertThat(stateStore).doesNotExist();
+
+		stateStore = Files.createDirectory(Paths.get(stateStoreDir.toString(), APPLICATION_ID, "0_0"));
+		assertThat(stateStore).exists();
+		streamsBuilderFactoryBean.start();
+		assertThat(stateStore).doesNotExist();
 	}
 
 	@Configuration
-	@EnableKafka
 	@EnableKafkaStreams
 	public static class KafkaStreamsConfig {
 
@@ -73,10 +88,7 @@ public class KafkaStreamsCustomizerTests {
 
 		@Bean(name = KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_BUILDER_BEAN_NAME)
 		public StreamsBuilderFactoryBean defaultKafkaStreamsBuilder() {
-			StreamsBuilderFactoryBean streamsBuilderFactoryBean =
-					new StreamsBuilderFactoryBean(kStreamsConfigs());
-			streamsBuilderFactoryBean.setKafkaStreamsCustomizer(customizer());
-			return streamsBuilderFactoryBean;
+			return new StreamsBuilderFactoryBean(kStreamsConfigs(), new CleanupConfig(true, true));
 		}
 
 		@Bean(name = KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_CONFIG_BEAN_NAME)
@@ -84,27 +96,8 @@ public class KafkaStreamsCustomizerTests {
 			Map<String, Object> props = new HashMap<>();
 			props.put(StreamsConfig.APPLICATION_ID_CONFIG, APPLICATION_ID);
 			props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, this.brokerAddresses);
+			props.put(StreamsConfig.STATE_DIR_CONFIG, stateStoreDir.toString());
 			return new KafkaStreamsConfiguration(props);
-		}
-
-
-		private KafkaStreamsCustomizer customizer() {
-			return kafkaStreams -> kafkaStreams.setStateListener(STATE_LISTENER);
-		}
-
-	}
-
-	static class TestStateListener implements KafkaStreams.StateListener {
-
-		private KafkaStreams.State currentState;
-
-		@Override
-		public void onChange(KafkaStreams.State newState, KafkaStreams.State oldState) {
-			this.currentState = newState;
-		}
-
-		KafkaStreams.State getCurrentState() {
-			return this.currentState;
 		}
 
 	}
