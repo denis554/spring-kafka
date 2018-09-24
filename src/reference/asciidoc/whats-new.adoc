@@ -2,7 +2,7 @@
 
 ==== Kafka Client Version
 
-This version requires the 1.1.0 `kafka-clients` or higher.
+This version requires the 2.0.0 `kafka-clients` or higher.
 
 ==== Class/Package Changes
 
