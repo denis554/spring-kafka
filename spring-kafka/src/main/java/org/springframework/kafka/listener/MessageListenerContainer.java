@@ -33,7 +33,7 @@ import org.springframework.context.SmartLifecycle;
  * @author Gary Russell
  * @author Vladimir Tsanev
  */
-public interface MessageListenerContainer extends SmartLifecycle {
+	public interface MessageListenerContainer extends SmartLifecycle {
 
 	/**
 	 * Setup the message listener to use. Throws an {@link IllegalArgumentException}
