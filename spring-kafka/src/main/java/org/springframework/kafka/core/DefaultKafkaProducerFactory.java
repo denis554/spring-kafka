@@ -394,8 +394,8 @@ public class DefaultKafkaProducerFactory<K, V> implements ProducerFactory<K, V>,
 			this(delegate, cache, null);
 		}
 
-		CloseSafeProducer(Producer<K, V> delegate, BlockingQueue<CloseSafeProducer<K, V>> cache,
-				Consumer<CloseSafeProducer<K, V>> removeConsumerProducer) {
+		CloseSafeProducer(Producer<K, V> delegate, @Nullable BlockingQueue<CloseSafeProducer<K, V>> cache,
+				@Nullable Consumer<CloseSafeProducer<K, V>> removeConsumerProducer) {
 			this.delegate = delegate;
 			this.cache = cache;
 			this.removeConsumerProducer = removeConsumerProducer;

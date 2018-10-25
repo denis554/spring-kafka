@@ -33,14 +33,14 @@ public class DeserializationException extends KafkaException {
 
 	private final boolean isKey;
 
-	public DeserializationException(String message, byte[] data, boolean isKey, Throwable cause) {
+	public DeserializationException(String message, byte[] data, boolean isKey, Throwable cause) { // NOSONAR array reference
 		super(message, cause);
-		this.data = data;
+		this.data = data; // NOSONAR array reference
 		this.isKey = isKey;
 	}
 
 	public byte[] getData() {
-		return this.data;
+		return this.data; // NOSONAR array reference
 	}
 
 	public boolean isKey() {

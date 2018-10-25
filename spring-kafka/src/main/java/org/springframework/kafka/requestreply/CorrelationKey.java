@@ -35,9 +35,9 @@ public final class CorrelationKey {
 
 	private volatile Integer hashCode;
 
-	public CorrelationKey(byte[] correlationId) {
+	public CorrelationKey(byte[] correlationId) { // NOSONAR array reference
 		Assert.notNull(correlationId, "'correlationId' cannot be null");
-		this.correlationId = correlationId;
+		this.correlationId = correlationId; // NOSONAR array reference
 	}
 
 	public byte[] getCorrelationId() {
