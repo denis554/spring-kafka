@@ -352,7 +352,7 @@ public class KafkaListenerAnnotationBeanPostProcessor<K, V>
 		Method defaultMethod = null;
 		for (Method method : multiMethods) {
 			Method checked = checkProxy(method, bean);
-			if (AnnotationUtils.findAnnotation(method, KafkaHandler.class).isDefault()) {
+			if (AnnotationUtils.findAnnotation(method, KafkaHandler.class).isDefault()) { // NOSONAR never null
 				final Method toAssert = defaultMethod;
 				Assert.state(toAssert == null, () -> "Only one @KafkaHandler can be marked 'isDefault', found: "
 						+ toAssert.toString() + " and " + method.toString());

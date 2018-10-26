@@ -110,13 +110,12 @@ public class MethodKafkaListenerEndpoint<K, V> extends AbstractKafkaListenerEndp
 		if (method != null) {
 			SendTo ann = AnnotationUtils.getAnnotation(method, SendTo.class);
 			if (ann != null) {
-				if (method.getReturnType().equals(void.class)) {
-					if (this.logger.isWarnEnabled()) {
+				if (method.getReturnType().equals(void.class)
+					&& this.logger.isWarnEnabled()) {
 						this.logger.warn("Method "
 								+ method
 								+ " has a void return type; @SendTo is ignored" +
 								(this.errorHandler == null ? "" : " unless the error handler returns a result"));
-					}
 				}
 				String[] destinations = ann.value();
 				if (destinations.length > 1) {
