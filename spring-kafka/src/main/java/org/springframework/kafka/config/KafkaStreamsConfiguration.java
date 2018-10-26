@@ -21,14 +21,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.kafka.streams.StreamsBuilder;
-
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.util.Assert;
 
 /**
- * Wrapper for {@link StreamsBuilder} properties.
+ * Wrapper for {@link org.apache.kafka.streams.StreamsBuilder} properties.
  *
  * @author Gary Russell
  * @since 2.2

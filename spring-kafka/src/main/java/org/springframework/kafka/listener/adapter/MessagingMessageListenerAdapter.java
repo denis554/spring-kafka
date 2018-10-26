@@ -47,7 +47,6 @@ import org.springframework.expression.spel.support.StandardTypeConverter;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.listener.ConsumerSeekAware;
 import org.springframework.kafka.listener.ListenerExecutionFailedException;
-import org.springframework.kafka.listener.MessageListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.kafka.support.KafkaUtils;
@@ -65,8 +64,9 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 /**
- * An abstract {@link MessageListener} adapter providing the necessary infrastructure
- * to extract the payload of a {@link org.springframework.messaging.Message}.
+ * An abstract {@link org.springframework.kafka.listener.MessageListener} adapter
+ * providing the necessary infrastructure to extract the payload of a
+ * {@link org.springframework.messaging.Message}.
  *
  * @param <K> the key type.
  * @param <V> the value type.

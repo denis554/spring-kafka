@@ -34,7 +34,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
-import org.springframework.context.SmartLifecycle;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -53,7 +52,8 @@ public abstract class AbstractMessageListenerContainer<K, V>
 		implements GenericMessageListenerContainer<K, V>, BeanNameAware, ApplicationEventPublisherAware {
 
 	/**
-	 * The default {@link SmartLifecycle} phase for listener containers {@value #DEFAULT_PHASE}.
+	 * The default {@link org.springframework.context.SmartLifecycle} phase for listener
+	 * containers {@value #DEFAULT_PHASE}.
 	 */
 	public static final int DEFAULT_PHASE = Integer.MAX_VALUE - 100; // late phase
 

@@ -16,8 +16,6 @@
 
 package org.springframework.kafka.annotation;
 
-import org.apache.kafka.streams.StreamsConfig;
-
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.UnsatisfiedDependencyException;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -28,7 +26,7 @@ import org.springframework.kafka.config.StreamsBuilderFactoryBean;
 
 /**
  * {@code @Configuration} class that registers a {@link StreamsBuilderFactoryBean}
- * if {@link StreamsConfig} with the name
+ * if {@link org.apache.kafka.streams.StreamsConfig} with the name
  * {@link KafkaStreamsDefaultConfiguration#DEFAULT_STREAMS_CONFIG_BEAN_NAME} is present
  * in the application context. Otherwise a {@link UnsatisfiedDependencyException} is thrown.
  *
@@ -44,7 +42,7 @@ import org.springframework.kafka.config.StreamsBuilderFactoryBean;
 public class KafkaStreamsDefaultConfiguration {
 
 	/**
-	 * The bean name for the {@link StreamsConfig} to be used for the default
+	 * The bean name for the {@link org.apache.kafka.streams.StreamsConfig} to be used for the default
 	 * {@link StreamsBuilderFactoryBean} bean definition.
 	 */
 	public static final String DEFAULT_STREAMS_CONFIG_BEAN_NAME = "defaultKafkaStreamsConfig";

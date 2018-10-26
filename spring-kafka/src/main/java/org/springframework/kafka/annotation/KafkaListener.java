@@ -23,7 +23,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import org.springframework.kafka.listener.KafkaListenerErrorHandler;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 
 /**
@@ -144,8 +143,8 @@ public @interface KafkaListener {
 	String containerGroup() default "";
 
 	/**
-	 * Set an {@link KafkaListenerErrorHandler} to invoke if the listener method throws
-	 * an exception.
+	 * Set an {@link org.springframework.kafka.listener.KafkaListenerErrorHandler} to
+	 * invoke if the listener method throws an exception.
 	 * @return the error handler.
 	 * @since 1.3
 	 */

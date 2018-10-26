@@ -23,7 +23,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import org.springframework.context.annotation.Import;
-import org.springframework.kafka.config.StreamsBuilderFactoryBean;
 
 /**
  * Enable default Kafka Streams components. To be used on
@@ -43,12 +42,12 @@ import org.springframework.kafka.config.StreamsBuilderFactoryBean;
  * }
  * </pre>
  *
- * That {@link KafkaStreamsDefaultConfiguration#DEFAULT_STREAMS_CONFIG_BEAN_NAME} is required
- * to declare {@link StreamsBuilderFactoryBean} with the
- * {@link KafkaStreamsDefaultConfiguration#DEFAULT_STREAMS_BUILDER_BEAN_NAME}.
+ * That {@link KafkaStreamsDefaultConfiguration#DEFAULT_STREAMS_CONFIG_BEAN_NAME} is
+ * required to declare {@link org.springframework.kafka.config.StreamsBuilderFactoryBean}
+ * with the {@link KafkaStreamsDefaultConfiguration#DEFAULT_STREAMS_BUILDER_BEAN_NAME}.
  * <p>
- * Also to enable Kafka Streams feature you should be sure that the {@code kafka-streams} jar is
- * on classpath.
+ * Also to enable Kafka Streams feature you should be sure that the {@code kafka-streams}
+ * jar is on classpath.
  *
  * @author Artem Bilan
  *

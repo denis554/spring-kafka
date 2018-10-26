@@ -27,7 +27,6 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.springframework.kafka.listener.BatchAcknowledgingConsumerAwareMessageListener;
 import org.springframework.kafka.listener.KafkaListenerErrorHandler;
 import org.springframework.kafka.listener.ListenerExecutionFailedException;
-import org.springframework.kafka.listener.MessageListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaNull;
 import org.springframework.kafka.support.converter.BatchMessageConverter;
@@ -107,9 +106,10 @@ public class BatchMessagingMessageListenerAdapter<K, V> extends MessagingMessage
 	}
 
 	/**
-	 * Kafka {@link MessageListener} entry point.
-	 * <p> Delegate the message to the target listener method,
-	 * with appropriate conversion of the message argument.
+	 * Kafka {@link org.springframework.kafka.listener.MessageListener} entry point.
+	 * <p>
+	 * Delegate the message to the target listener method, with appropriate conversion of
+	 * the message argument.
 	 * @param records the incoming list of Kafka {@link ConsumerRecord}.
 	 * @param acknowledgment the acknowledgment.
 	 * @param consumer the consumer.

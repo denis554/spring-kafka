@@ -16,10 +16,8 @@
 
 package org.springframework.kafka.core;
 
-import org.apache.kafka.streams.KafkaStreams;
-
 /**
- * Specifies time of {@link KafkaStreams#cleanUp()} execution.
+ * Specifies time of {@link org.apache.kafka.streams.KafkaStreams#cleanUp()} execution.
  *
  * @author Pawel Szymczyk
  */
