@@ -679,7 +679,8 @@ When using Spring Boot:
 
 [source]
 ----
-spring.kafka.consumer.properties.partition.assignment.strategy=org.apache.kafka.clients.consumer.RoundRobinAssignor
+spring.kafka.consumer.properties.partition.assignment.strategy=\
+org.apache.kafka.clients.consumer.RoundRobinAssignor
 ----
 ====
 

@@ -115,6 +115,7 @@ stream.through(Serdes.Integer(), new JsonSerde<>(Foo.class), "foos");
 
 IMPORTANT: Since Kafka Streams do not support headers, the `addTypeInfo` property on the `JsonSerializer` is ignored.
 
+[[streams-config]]
 ==== Configuration
 
 To configure the Kafka Streams environment, the `StreamsBuilderFactoryBean` requires a `KafkaStreamsConfiguration` instance.
@@ -139,7 +140,7 @@ Putting it all together:
 @Configuration
 @EnableKafka
 @EnableKafkaStreams
-public static class KafkaStreamsConfiguration {
+public static class KafkaStreamsConfig {
 
     @Bean(name = KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_CONFIG_BEAN_NAME)
     public KafkaStreamsConfiguration kStreamsConfigs() {
