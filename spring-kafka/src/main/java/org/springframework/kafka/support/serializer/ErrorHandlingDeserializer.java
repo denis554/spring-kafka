@@ -17,8 +17,10 @@
 package org.springframework.kafka.support.serializer;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.ExtendedDeserializer;
 
 import org.springframework.util.Assert;
@@ -28,11 +30,15 @@ import org.springframework.util.ClassUtils;
  * Delegating key/value deserializer that catches exceptions, returning them
  * in the consumer record.
  *
+ * @param <T> class of the entity, representing messages
+ *
  * @author Gary Russell
+ * @author Artem Bilan
+ *
  * @since 2.2
  *
  */
-public class ErrorHandlingDeserializer implements ExtendedDeserializer<Object> {
+public class ErrorHandlingDeserializer<T> implements ExtendedDeserializer<T> {
 
 	/**
 	 * Property name for the delegate key deserializer.
@@ -44,36 +50,46 @@ public class ErrorHandlingDeserializer implements ExtendedDeserializer<Object> {
 	 */
 	public static final String VALUE_DESERIALIZER_CLASS = "spring.deserializer.value.delegate.class";
 
-	private ExtendedDeserializer<Object> delegate;
+	private ExtendedDeserializer<T> delegate;
 
 	private boolean isKey;
 
 	public ErrorHandlingDeserializer() {
-		super();
 	}
 
-	public ErrorHandlingDeserializer(ExtendedDeserializer<Object> delegate) {
-		this.delegate = delegate;
+	public ErrorHandlingDeserializer(Deserializer<T> delegate) {
+		this.delegate =
+				delegate instanceof ExtendedDeserializer
+						? (ExtendedDeserializer<T>) delegate
+						: ExtendedDeserializer.Wrapper.ensureExtended(delegate);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public void configure(Map<String, ?> configs, boolean isKey) {
 		if (isKey && configs.containsKey(KEY_DESERIALIZER_CLASS)) {
-				try {
-					Object value = configs.get(KEY_DESERIALIZER_CLASS);
-					Class<?> clazz = value instanceof Class ? (Class<?>) value : ClassUtils.forName((String) value, null);
-					this.delegate = (ExtendedDeserializer<Object>) clazz.newInstance();
-				}
-				catch (ClassNotFoundException | LinkageError | InstantiationException | IllegalAccessException e) {
-					throw new IllegalStateException(e);
-				}
+			try {
+				Object value = configs.get(KEY_DESERIALIZER_CLASS);
+				Class<?> clazz = value instanceof Class ? (Class<?>) value : ClassUtils.forName((String) value, null);
+				Object delegate = clazz.newInstance();
+				this.delegate =
+						delegate instanceof ExtendedDeserializer
+								? (ExtendedDeserializer<T>) delegate
+								: ExtendedDeserializer.Wrapper.ensureExtended((Deserializer<T>) delegate);
+			}
+			catch (ClassNotFoundException | LinkageError | InstantiationException | IllegalAccessException e) {
+				throw new IllegalStateException(e);
+			}
 		}
 		else if (!isKey && configs.containsKey(VALUE_DESERIALIZER_CLASS)) {
 			try {
 				Object value = configs.get(VALUE_DESERIALIZER_CLASS);
 				Class<?> clazz = value instanceof Class ? (Class<?>) value : ClassUtils.forName((String) value, null);
-				this.delegate = (ExtendedDeserializer<Object>) clazz.newInstance();
+				Object delegate = clazz.newInstance();
+				this.delegate =
+						delegate instanceof ExtendedDeserializer
+								? (ExtendedDeserializer<T>) delegate
+								: ExtendedDeserializer.Wrapper.ensureExtended((Deserializer<T>) delegate);
 			}
 			catch (ClassNotFoundException | LinkageError | InstantiationException | IllegalAccessException e) {
 				throw new IllegalStateException(e);
@@ -85,12 +101,22 @@ public class ErrorHandlingDeserializer implements ExtendedDeserializer<Object> {
 	}
 
 	@Override
-	public Object deserialize(String topic, byte[] data) {
+	public T deserialize(String topic, byte[] data) {
 		try {
 			return this.delegate.deserialize(topic, data);
 		}
 		catch (Exception e) {
-			return new DeserializationException("Failed to deserialize", data, this.isKey, e);
+			return deserializationException(null, data, e);
+		}
+	}
+
+	@Override
+	public T deserialize(String topic, Headers headers, byte[] data) {
+		try {
+			return this.delegate.deserialize(topic, headers, data);
+		}
+		catch (Exception e) {
+			return deserializationException(headers, data, e);
 		}
 	}
 
@@ -99,14 +125,13 @@ public class ErrorHandlingDeserializer implements ExtendedDeserializer<Object> {
 		this.delegate.close();
 	}
 
-	@Override
-	public Object deserialize(String topic, Headers headers, byte[] data) {
-		try {
-			return this.delegate.deserialize(topic, headers, data);
-		}
-		catch (Exception e) {
-			return new DeserializationException("Failed to deserialize", data, this.isKey, e);
-		}
+	@SuppressWarnings("unchecked")
+	private T deserializationException(Headers headers, byte[] data, Exception e) {
+		// We need this container to trick a generic type. It doesn't matter at runtime anyway.
+		AtomicReference<T> reference =
+				(AtomicReference<T>) new AtomicReference<>(
+						new DeserializationException("Failed to deserialize", headers, data, this.isKey, e));
+		return reference.get();
 	}
 
 }
