@@ -276,8 +276,16 @@ public class KafkaTemplate<K, V> implements KafkaOperations<K, V> {
 		this.producers.set(producer);
 		try {
 			T result = callback.doInOperations(this);
-			producer.commitTransaction();
+			try {
+				producer.commitTransaction();
+			}
+			catch (Exception e) {
+				throw new SkipAbortException(e);
+			}
 			return result;
+		}
+		catch (SkipAbortException e) {
+			throw ((RuntimeException) e.getCause());
 		}
 		catch (Exception e) {
 			producer.abortTransaction();
@@ -409,6 +417,15 @@ public class KafkaTemplate<K, V> implements KafkaOperations<K, V> {
 		else {
 			return this.producerFactory.createProducer();
 		}
+	}
+
+	@SuppressWarnings("serial")
+	private static final class SkipAbortException extends RuntimeException {
+
+		SkipAbortException(Throwable cause) {
+			super(cause);
+		}
+
 	}
 
 }
