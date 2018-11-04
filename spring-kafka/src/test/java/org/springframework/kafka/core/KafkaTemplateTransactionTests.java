@@ -23,6 +23,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.kafka.test.assertj.KafkaConditions.key;
@@ -41,6 +43,7 @@ import org.apache.kafka.clients.producer.MockProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.errors.ProducerFencedException;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.assertj.core.api.Assertions;
@@ -264,6 +267,77 @@ public class KafkaTemplateTransactionTests {
 
 		assertThat(producer.transactionCommitted()).isFalse();
 		assertThat(producer.closed()).isTrue();
+	}
+
+	@Test
+	public void testNoAbortAfterCommitFailure() {
+		MockProducer<String, String> producer = spy(new MockProducer<>());
+		producer.initTransactions();
+
+		@SuppressWarnings("unchecked")
+		ProducerFactory<String, String> pf = mock(ProducerFactory.class);
+		given(pf.transactionCapable()).willReturn(true);
+		given(pf.createProducer()).willReturn(producer);
+
+		KafkaTemplate<String, String> template = new KafkaTemplate<>(pf);
+		template.setDefaultTopic(STRING_KEY_TOPIC);
+
+		assertThatThrownBy(() -> template.executeInTransaction(t -> {
+			producer.fenceProducer();
+			return null;
+		})).isInstanceOf(ProducerFencedException.class);
+
+		assertThat(producer.transactionCommitted()).isFalse();
+		assertThat(producer.transactionAborted()).isFalse();
+		assertThat(producer.closed()).isTrue();
+		verify(producer, never()).abortTransaction();
+	}
+
+	@Test
+	public void testFencedOnBegin() {
+		MockProducer<String, String> producer = spy(new MockProducer<>());
+		producer.initTransactions();
+		producer.fenceProducer();
+
+		@SuppressWarnings("unchecked")
+		ProducerFactory<String, String> pf = mock(ProducerFactory.class);
+		given(pf.transactionCapable()).willReturn(true);
+		given(pf.createProducer()).willReturn(producer);
+
+		KafkaTemplate<String, String> template = new KafkaTemplate<>(pf);
+		template.setDefaultTopic(STRING_KEY_TOPIC);
+
+		assertThatThrownBy(() -> template.executeInTransaction(t -> {
+			return null;
+		})).isInstanceOf(ProducerFencedException.class);
+
+		assertThat(producer.transactionCommitted()).isFalse();
+		assertThat(producer.transactionAborted()).isFalse();
+		assertThat(producer.closed()).isTrue();
+		verify(producer, never()).commitTransaction();
+	}
+
+	@Test
+	public void testAbort() {
+		MockProducer<String, String> producer = spy(new MockProducer<>());
+		producer.initTransactions();
+
+		@SuppressWarnings("unchecked")
+		ProducerFactory<String, String> pf = mock(ProducerFactory.class);
+		given(pf.transactionCapable()).willReturn(true);
+		given(pf.createProducer()).willReturn(producer);
+
+		KafkaTemplate<String, String> template = new KafkaTemplate<>(pf);
+		template.setDefaultTopic(STRING_KEY_TOPIC);
+
+		assertThatThrownBy(() -> template.executeInTransaction(t -> {
+			throw new RuntimeException("foo");
+		})).isExactlyInstanceOf(RuntimeException.class).withFailMessage("foo");
+
+		assertThat(producer.transactionCommitted()).isFalse();
+		assertThat(producer.transactionAborted()).isTrue();
+		assertThat(producer.closed()).isTrue();
+		verify(producer, never()).commitTransaction();
 	}
 
 	@Configuration

@@ -26,7 +26,9 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.ExtendedDeserializer;
+import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.Test;
 
@@ -72,6 +74,32 @@ public class ErrorHandlingDeserializerTests {
 		assertThat(this.config.keyErrorCount).isEqualTo(1);
 		assertThat(this.config.valueErrorCount).isEqualTo(1);
 		assertThat(this.config.headers).isNotNull();
+	}
+
+	@Test
+	public void unitTests() {
+		ErrorHandlingDeserializer<String> ehd = new ErrorHandlingDeserializer<>(new StringDeserializer());
+		assertThat(ehd.deserialize("topic", "foo".getBytes())).isEqualTo("foo");
+		ehd.close();
+		ehd = new ErrorHandlingDeserializer<>(new Deserializer<String>() {
+
+			@Override
+			public void configure(Map<String, ?> configs, boolean isKey) {
+			}
+
+			@Override
+			public String deserialize(String topic, byte[] data) {
+				throw new RuntimeException("fail");
+			}
+
+			@Override
+			public void close() {
+			}
+
+		});
+		Object result = ehd.deserialize("topic", "foo".getBytes());
+		assertThat(result).isInstanceOf(DeserializationException.class);
+		ehd.close();
 	}
 
 	@Configuration
