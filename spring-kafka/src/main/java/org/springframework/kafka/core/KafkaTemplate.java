@@ -284,8 +284,8 @@ public class KafkaTemplate<K, V> implements KafkaOperations<K, V> {
 			}
 			return result;
 		}
-		catch (SkipAbortException e) {
-			throw ((RuntimeException) e.getCause());
+		catch (SkipAbortException e) { // NOSONAR - exception flow control
+			throw ((RuntimeException) e.getCause()); // NOSONAR - lost stack trace
 		}
 		catch (Exception e) {
 			producer.abortTransaction();

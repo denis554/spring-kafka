@@ -58,24 +58,16 @@ public class ErrorHandlingDeserializer<T> implements ExtendedDeserializer<T> {
 	}
 
 	public ErrorHandlingDeserializer(Deserializer<T> delegate) {
-		this.delegate =
-				delegate instanceof ExtendedDeserializer
-						? (ExtendedDeserializer<T>) delegate
-						: ExtendedDeserializer.Wrapper.ensureExtended(delegate);
+		this.delegate = setupDelegate(delegate);
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public void configure(Map<String, ?> configs, boolean isKey) {
 		if (isKey && configs.containsKey(KEY_DESERIALIZER_CLASS)) {
 			try {
 				Object value = configs.get(KEY_DESERIALIZER_CLASS);
 				Class<?> clazz = value instanceof Class ? (Class<?>) value : ClassUtils.forName((String) value, null);
-				Object delegate = clazz.newInstance();
-				this.delegate =
-						delegate instanceof ExtendedDeserializer
-								? (ExtendedDeserializer<T>) delegate
-								: ExtendedDeserializer.Wrapper.ensureExtended((Deserializer<T>) delegate);
+				this.delegate = setupDelegate(clazz.newInstance());
 			}
 			catch (ClassNotFoundException | LinkageError | InstantiationException | IllegalAccessException e) {
 				throw new IllegalStateException(e);
@@ -85,11 +77,7 @@ public class ErrorHandlingDeserializer<T> implements ExtendedDeserializer<T> {
 			try {
 				Object value = configs.get(VALUE_DESERIALIZER_CLASS);
 				Class<?> clazz = value instanceof Class ? (Class<?>) value : ClassUtils.forName((String) value, null);
-				Object delegate = clazz.newInstance();
-				this.delegate =
-						delegate instanceof ExtendedDeserializer
-								? (ExtendedDeserializer<T>) delegate
-								: ExtendedDeserializer.Wrapper.ensureExtended((Deserializer<T>) delegate);
+				this.delegate = setupDelegate(clazz.newInstance());
 			}
 			catch (ClassNotFoundException | LinkageError | InstantiationException | IllegalAccessException e) {
 				throw new IllegalStateException(e);
@@ -98,6 +86,14 @@ public class ErrorHandlingDeserializer<T> implements ExtendedDeserializer<T> {
 		Assert.state(this.delegate != null, "No delegate deserializer configured");
 		this.delegate.configure(configs, isKey);
 		this.isKey = isKey;
+	}
+
+	@SuppressWarnings("unchecked")
+	private ExtendedDeserializer<T> setupDelegate(Object delegate) {
+		Assert.isInstanceOf(Deserializer.class, delegate, "'delegate' must be a 'Deserializer', not a ");
+		return delegate instanceof ExtendedDeserializer
+				? (ExtendedDeserializer<T>) delegate
+				: ExtendedDeserializer.Wrapper.ensureExtended((Deserializer<T>) delegate);
 	}
 
 	@Override
