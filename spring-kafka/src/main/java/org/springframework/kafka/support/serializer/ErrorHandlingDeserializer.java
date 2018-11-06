@@ -34,10 +34,12 @@ import org.springframework.util.ClassUtils;
  *
  * @author Gary Russell
  * @author Artem Bilan
+ * @deprecated in favor of {@link ErrorHandlingDeserializer2}.
  *
  * @since 2.2
  *
  */
+@Deprecated
 public class ErrorHandlingDeserializer<T> implements ExtendedDeserializer<T> {
 
 	/**
