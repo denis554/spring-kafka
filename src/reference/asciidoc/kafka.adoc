@@ -2259,7 +2259,7 @@ public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<Integer,
     ConcurrentKafkaListenerContainerFactory<Integer, String> factory =
             new ConcurrentKafkaListenerContainerFactory<>();
     ...
-    factory.getContainerProperties().setErrorHandler(myErrorHandler);
+    factory.setErrorHandler(myErrorHandler);
     ...
     return factory;
 }
@@ -2332,8 +2332,8 @@ public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerCont
     ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory();
     factory.setConsumerFactory(consumerFactory());
     factory.getContainerProperties().setAckOnError(false);
-    factory.getContainerProperties().setErrorHandler(new SeekToCurrentErrorHandler());
     factory.getContainerProperties().setAckMode(AckMode.RECORD);
+    factory.setErrorHandler(new SeekToCurrentErrorHandler());
     return factory;
 }
 ----
