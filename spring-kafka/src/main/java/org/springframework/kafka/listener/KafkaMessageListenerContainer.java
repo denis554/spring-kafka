@@ -124,6 +124,10 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 
 	private String clientIdSuffix;
 
+	private Runnable emergencyStop = () -> stop(() -> {
+		// NOSONAR
+	});
+
 	/**
 	 * Construct an instance with the supplied configuration properties.
 	 * @param consumerFactory the consumer factory.
@@ -178,6 +182,17 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 		else {
 			this.topicPartitions = containerProperties.getTopicPartitions();
 		}
+	}
+
+	/**
+	 * Set a {@link Runnable} to call whenever an {@link Error} occurs on a listener
+	 * thread.
+	 * @param emergencyStop the Runnable.
+	 * @since 2.2.1
+	 */
+	public void setEmergencyStop(Runnable emergencyStop) {
+		Assert.notNull(emergencyStop, "'emergencyStop' cannot be null");
+		this.emergencyStop = emergencyStop;
 	}
 
 	/**
@@ -801,7 +816,20 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 				catch (Exception e) {
 					handleConsumerException(e);
 				}
+				catch (Error e) { // NOSONAR - rethrown
+					Runnable runnable = KafkaMessageListenerContainer.this.emergencyStop;
+					if (runnable != null) {
+						runnable.run();
+					}
+					this.logger.error("Stopping container due to an Error", e);
+					wrapUp();
+					throw e;
+				}
 			}
+			wrapUp();
+		}
+
+		public void wrapUp() {
 			ProducerFactoryUtils.clearConsumerGroupId();
 			if (!this.fatalError) {
 				if (this.kafkaTxManager == null) {
@@ -818,7 +846,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 				}
 			}
 			else {
-				ListenerConsumer.this.logger.error("No offset and no reset policy; stopping container");
+				this.logger.error("No offset and no reset policy; stopping container");
 				KafkaMessageListenerContainer.this.stop();
 			}
 			this.monitorTask.cancel(true);

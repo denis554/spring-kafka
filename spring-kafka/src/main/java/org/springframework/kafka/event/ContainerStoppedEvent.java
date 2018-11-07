@@ -17,29 +17,26 @@
 package org.springframework.kafka.event;
 
 /**
- * An event published when a consumer is stopped. While it is best practice to use
- * stateless listeners, you can consume this event to clean up any thread-based resources
- * (remove ThreadLocals, destroy thread-scoped beans etc), as long as the context event
- * multicaster is not modified to use an async task executor.
+ * An event published when a container is stopped.
  *
  * @author Gary Russell
  * @since 2.2
  *
  */
 @SuppressWarnings("serial")
-public class ConsumerStoppedEvent extends KafkaEvent {
+public class ContainerStoppedEvent extends KafkaEvent {
 
 	/**
 	 * Construct an instance with the provided source.
 	 * @param source the container.
 	 */
-	public ConsumerStoppedEvent(Object source) {
+	public ContainerStoppedEvent(Object source) {
 		super(source);
 	}
 
 	@Override
 	public String toString() {
-		return "ConsumerStoppedEvent [source=" + getSource() + "]";
+		return "ContainerStoppedEvent [source=" + getSource() + "]";
 	}
 
 }
