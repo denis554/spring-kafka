@@ -406,14 +406,16 @@ public class KafkaListenerAnnotationBeanPostProcessor<K, V>
 								"but not found in any interface(s) for bean JDK proxy. Either " +
 								"pull the method up to an interface or switch to subclass (CGLIB) " +
 								"proxies by setting proxy-target-class/proxyTargetClass " +
-								"attribute to 'true'", method.getName(), method.getDeclaringClass().getSimpleName()), ex);
+								"attribute to 'true'", method.getName(),
+						method.getDeclaringClass().getSimpleName()), ex);
 			}
 		}
 		return method;
 	}
 
-	protected void processListener(MethodKafkaListenerEndpoint<?, ?> endpoint, KafkaListener kafkaListener, Object bean,
-			Object adminTarget, String beanName) {
+	protected void processListener(MethodKafkaListenerEndpoint<?, ?> endpoint, KafkaListener kafkaListener,
+			Object bean, Object adminTarget, String beanName) {
+
 		String beanRef = kafkaListener.beanRef();
 		if (StringUtils.hasText(beanRef)) {
 			this.listenerScope.addListener(beanRef, bean);
@@ -672,9 +674,9 @@ public class KafkaListenerAnnotationBeanPostProcessor<K, V>
 			result = Integer.parseInt((String) resolved);
 		}
 		else if (resolved instanceof Number) {
-			result =((Number) resolved).intValue();
+			result = ((Number) resolved).intValue();
 		}
-		else  if (resolved != null) {
+		else if (resolved != null) {
 			throw new IllegalStateException(
 					"The [" + attribute + "] must resolve to an Number or a String that can be parsed as an Integer. "
 							+ "Resolved to [" + resolved.getClass() + "] for [" + value + "]");
@@ -777,8 +779,9 @@ public class KafkaListenerAnnotationBeanPostProcessor<K, V>
 			defaultFactory.setBeanFactory(KafkaListenerAnnotationBeanPostProcessor.this.beanFactory);
 
 			ConfigurableBeanFactory cbf =
-					(KafkaListenerAnnotationBeanPostProcessor.this.beanFactory instanceof ConfigurableBeanFactory ?
-							(ConfigurableBeanFactory) KafkaListenerAnnotationBeanPostProcessor.this.beanFactory : null);
+					KafkaListenerAnnotationBeanPostProcessor.this.beanFactory instanceof ConfigurableBeanFactory ?
+							(ConfigurableBeanFactory) KafkaListenerAnnotationBeanPostProcessor.this.beanFactory :
+							null;
 
 
 			this.defaultFormattingConversionService.addConverter(
