@@ -317,7 +317,7 @@ public abstract class AbstractMessageListenerContainer<K, V>
 					}
 				});
 				try {
-					latch.await(this.containerProperties.getShutdownTimeout(), TimeUnit.MILLISECONDS);
+					latch.await(this.containerProperties.getShutdownTimeout(), TimeUnit.MILLISECONDS); // NOSONAR
 					publishContainerStoppedEvent();
 				}
 				catch (InterruptedException e) {

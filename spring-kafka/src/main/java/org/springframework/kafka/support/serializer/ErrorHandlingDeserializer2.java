@@ -189,7 +189,7 @@ public class ErrorHandlingDeserializer2<T> implements ExtendedDeserializer<T> {
 				new ObjectOutputStream(stream).writeObject(exception);
 			}
 			catch (IOException ex2) {
-				throw new IllegalStateException("Could not serialize a DeserializationException", ex2);
+				throw new IllegalStateException("Could not serialize a DeserializationException", ex2); // NOSONAR
 			}
 		}
 		headers.add(

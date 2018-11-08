@@ -35,7 +35,7 @@ import org.springframework.lang.Nullable;
 public class DeserializationException extends KafkaException {
 
 	@Nullable
-	private Headers headers;
+	private transient Headers headers;
 
 	private final byte[] data;
 
