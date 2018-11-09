@@ -23,8 +23,6 @@ import org.junit.rules.TestRule;
 
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 
-import kafka.server.KafkaConfig;
-
 /**
  * A {@link TestRule} wrapper around an {@link EmbeddedKafkaBroker}.
  *
@@ -68,7 +66,7 @@ public class EmbeddedKafkaRule extends ExternalResource implements TestRule {
 	 * {@code auto.create.topics.enable}, {@code transaction.state.log.replication.factor} etc.
 	 * @param brokerProperties the properties to use for configuring Kafka Broker(s).
 	 * @return this for chaining configuration
-	 * @see KafkaConfig
+	 * @see kafka.server.KafkaConfig
 	 */
 	public EmbeddedKafkaRule brokerProperties(Map<String, String> brokerProperties) {
 		this.embeddedKafka.brokerProperties(brokerProperties);

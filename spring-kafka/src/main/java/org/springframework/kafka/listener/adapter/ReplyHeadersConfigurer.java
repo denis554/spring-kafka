@@ -18,9 +18,7 @@ package org.springframework.kafka.listener.adapter;
 
 import java.util.Map;
 
-import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.lang.Nullable;
-import org.springframework.messaging.MessageHeaders;
 
 /**
  * A strategy for configuring which headers, if any, should be set in a reply message.
@@ -34,8 +32,10 @@ public interface ReplyHeadersConfigurer {
 
 	/**
 	 * Return true if the header should be copied to the reply message.
-	 * {@link KafkaHeaders#CORRELATION_ID} will not be offered; it is always copied.
-	 * {@link MessageHeaders#ID} and {@link MessageHeaders#TIMESTAMP} are never copied.
+	 * {@link org.springframework.kafka.support.KafkaHeaders#CORRELATION_ID} will not be
+	 * offered; it is always copied.
+	 * {@link org.springframework.messaging.MessageHeaders#ID} and
+	 * {@link org.springframework.messaging.MessageHeaders#TIMESTAMP} are never copied.
 	 * {@code KafkaHeaders.RECEIVED*} headers are never copied.
 	 * @param headerName the header name.
 	 * @param headerValue the header value.

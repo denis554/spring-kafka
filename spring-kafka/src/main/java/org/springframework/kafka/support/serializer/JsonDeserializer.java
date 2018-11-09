@@ -22,7 +22,6 @@ import java.util.Map;
 
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.header.Headers;
-import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.ExtendedDeserializer;
 
 import org.springframework.core.ResolvableType;
@@ -42,7 +41,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 
 /**
- * Generic {@link Deserializer} for receiving JSON from Kafka and return Java objects.
+ * Generic {@link org.apache.kafka.common.serialization.Deserializer Deserializer} for
+ * receiving JSON from Kafka and return Java objects.
  *
  * @param <T> class of the entity, representing messages
  *

@@ -30,7 +30,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.core.BrokerAddress;
 
-import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
 import kafka.zk.EmbeddedZookeeper;
 
@@ -88,7 +87,7 @@ public class KafkaEmbedded extends EmbeddedKafkaRule implements KafkaRule, Initi
 	 * {@code auto.create.topics.enable}, {@code transaction.state.log.replication.factor} etc.
 	 * @param brokerProperties the properties to use for configuring Kafka Broker(s).
 	 * @return this for chaining configuration
-	 * @see KafkaConfig
+	 * @see kafka.server.KafkaConfig
 	 */
 	@Override
 	public KafkaEmbedded brokerProperties(Map<String, String> brokerProperties) {

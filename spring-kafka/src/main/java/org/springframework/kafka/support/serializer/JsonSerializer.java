@@ -23,7 +23,6 @@ import java.util.Map;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.serialization.ExtendedSerializer;
-import org.apache.kafka.common.serialization.Serializer;
 
 import org.springframework.kafka.support.converter.AbstractJavaTypeMapper;
 import org.springframework.kafka.support.converter.DefaultJackson2JavaTypeMapper;
@@ -38,7 +37,8 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Generic {@link Serializer} for sending Java objects to Kafka as JSON.
+ * Generic {@link org.apache.kafka.common.serialization.Serializer Serializer} for sending
+ * Java objects to Kafka as JSON.
  *
  * @param <T> class of the entity, representing messages
  *

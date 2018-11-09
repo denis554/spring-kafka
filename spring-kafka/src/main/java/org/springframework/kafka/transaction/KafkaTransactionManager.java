@@ -16,9 +16,7 @@
 
 package org.springframework.kafka.transaction;
 
-import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaResourceHolder;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.core.ProducerFactoryUtils;
 import org.springframework.transaction.CannotCreateTransactionException;
@@ -26,7 +24,6 @@ import org.springframework.transaction.InvalidIsolationLevelException;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.AbstractPlatformTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionStatus;
-import org.springframework.transaction.support.ResourceTransactionManager;
 import org.springframework.transaction.support.SmartTransactionObject;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
@@ -45,13 +42,14 @@ import org.springframework.util.Assert;
  *
  * <p>
  * Application code is required to retrieve the transactional Kafka resources via
- * {@link ProducerFactoryUtils#getTransactionalResourceHolder(ProducerFactory)}.
- * Spring's {@link KafkaTemplate} will auto detect a thread-bound Producer and
- * automatically participate in it.
+ * {@link ProducerFactoryUtils#getTransactionalResourceHolder(ProducerFactory)}. Spring's
+ * {@link org.springframework.kafka.core.KafkaTemplate KafkaTemplate} will auto detect a
+ * thread-bound Producer and automatically participate in it.
  *
  * <p>
- * <b>The use of {@link DefaultKafkaProducerFactory} as a target for this transaction
- * manager is strongly recommended.</b> Because it caches producers for reuse.
+ * <b>The use of {@link org.springframework.kafka.core.DefaultKafkaProducerFactory
+ * DefaultKafkaProducerFactory} as a target for this transaction manager is strongly
+ * recommended.</b> Because it caches producers for reuse.
  *
  * <p>
  * Transaction synchronization is turned off by default, as this manager might be used
@@ -98,9 +96,10 @@ public class KafkaTransactionManager<K, V> extends AbstractPlatformTransactionMa
 	/**
 	 * Return the producer factory.
 	 * @return the producer factory.
-	 * @deprecated - in a future release {@link KafkaAwareTransactionManager} will
-	 * not be a sub interface of {@link ResourceTransactionManager}.
-	 * TODO: Remove in 3.0
+	 * @deprecated - in a future release {@link KafkaAwareTransactionManager} will not be
+	 * a sub interface of
+	 * {@link org.springframework.transaction.support.ResourceTransactionManager
+	 * ResourceTransactionManager}. TODO: Remove in 3.0
 	 */
 	@Deprecated
 	@Override

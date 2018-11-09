@@ -24,15 +24,14 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import org.springframework.core.annotation.AliasFor;
-import org.springframework.kafka.test.EmbeddedKafkaBroker;
 
 /**
  * Annotation that can be specified on a test class that runs Spring Kafka based tests.
  * Provides the following features over and above the regular <em>Spring TestContext
  * Framework</em>:
  * <ul>
- * <li>Registers a {@link EmbeddedKafkaBroker} bean with the
- * {@link EmbeddedKafkaBroker#BEAN_NAME} bean name.
+ * <li>Registers a {@link org.springframework.kafka.test.EmbeddedKafkaBroker} bean with the
+ * {@link org.springframework.kafka.test.EmbeddedKafkaBroker#BEAN_NAME} bean name.
  * </li>
  * </ul>
  * <p>
@@ -57,7 +56,7 @@ import org.springframework.kafka.test.EmbeddedKafkaBroker;
  *
  * @since 1.3
  *
- * @see EmbeddedKafkaBroker
+ * @see org.springframework.kafka.test.EmbeddedKafkaBroker
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
@@ -98,25 +97,24 @@ public @interface EmbeddedKafka {
 	String[] topics() default { };
 
 	/**
-	 * Properties in form {@literal key=value} that should be added
-	 * to the broker config before runs.
-	 * Properties may contain property placeholders, e.g. {@code delete.topic.enable=${topic.delete:true}}.
+	 * Properties in form {@literal key=value} that should be added to the broker config
+	 * before runs. Properties may contain property placeholders, e.g.
+	 * {@code delete.topic.enable=${topic.delete:true}}.
 	 * @return the properties to add
 	 * @see #brokerPropertiesLocation()
-	 * @see EmbeddedKafkaBroker#brokerProperties(java.util.Map)
+	 * @see org.springframework.kafka.test.EmbeddedKafkaBroker#brokerProperties(java.util.Map)
 	 */
 	String[] brokerProperties() default { };
 
 	/**
 	 * Spring {@code Resource} url specifying the location of properties that should be
-	 * added to the broker config.
-	 * The {@code brokerPropertiesLocation} url and the properties themselves may contain
-	 * placeholders that are resolved during initialization.
-	 * Properties specified by {@link #brokerProperties()} will override properties found
-	 * in {@code brokerPropertiesLocation}.
+	 * added to the broker config. The {@code brokerPropertiesLocation} url and the
+	 * properties themselves may contain placeholders that are resolved during
+	 * initialization. Properties specified by {@link #brokerProperties()} will override
+	 * properties found in {@code brokerPropertiesLocation}.
 	 * @return a {@code Resource} url specifying the location of properties to add
 	 * @see #brokerProperties()
-	 * @see EmbeddedKafkaBroker#brokerProperties(java.util.Map)
+	 * @see org.springframework.kafka.test.EmbeddedKafkaBroker#brokerProperties(java.util.Map)
 	 */
 	String brokerPropertiesLocation() default "";
 

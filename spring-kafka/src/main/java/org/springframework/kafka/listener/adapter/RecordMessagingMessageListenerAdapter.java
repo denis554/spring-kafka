@@ -24,7 +24,6 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.listener.AcknowledgingConsumerAwareMessageListener;
 import org.springframework.kafka.listener.KafkaListenerErrorHandler;
 import org.springframework.kafka.listener.ListenerExecutionFailedException;
-import org.springframework.kafka.listener.MessageListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.messaging.Message;
 
@@ -63,7 +62,7 @@ public class RecordMessagingMessageListenerAdapter<K, V> extends MessagingMessag
 	}
 
 	/**
-	 * Kafka {@link MessageListener} entry point.
+	 * Kafka {@link AcknowledgingConsumerAwareMessageListener} entry point.
 	 * <p> Delegate the message to the target listener method,
 	 * with appropriate conversion of the message argument.
 	 * @param record the incoming Kafka {@link ConsumerRecord}.
