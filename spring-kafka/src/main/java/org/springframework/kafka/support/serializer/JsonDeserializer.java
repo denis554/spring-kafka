@@ -329,17 +329,13 @@ public class JsonDeserializer<T> implements ExtendedDeserializer<T> {
 	}
 
 	@Override
-	public T deserialize(String topic, byte[] data) {
+	public T deserialize(String topic, @Nullable byte[] data) {
 		if (data == null) {
 			return null;
 		}
 		Assert.state(this.reader != null, "No headers available and no default type provided");
 		try {
-			T result = null;
-			if (data != null) {
-				result = this.reader.readValue(data);
-			}
-			return result;
+			return this.reader.readValue(data);
 		}
 		catch (IOException e) {
 			throw new SerializationException("Can't deserialize data [" + Arrays.toString(data) +

@@ -28,6 +28,7 @@ import org.apache.kafka.common.serialization.Serializer;
 import org.springframework.kafka.support.converter.AbstractJavaTypeMapper;
 import org.springframework.kafka.support.converter.DefaultJackson2JavaTypeMapper;
 import org.springframework.kafka.support.converter.Jackson2JavaTypeMapper;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
@@ -160,7 +161,7 @@ public class JsonSerializer<T> implements ExtendedSerializer<T> {
 	}
 
 	@Override
-	public byte[] serialize(String topic, Headers headers, T data) {
+	public byte[] serialize(String topic, Headers headers, @Nullable T data) {
 		if (data == null) {
 			return null;
 		}
@@ -176,11 +177,7 @@ public class JsonSerializer<T> implements ExtendedSerializer<T> {
 			return null;
 		}
 		try {
-			byte[] result = null;
-			if (data != null) {
-				result = this.objectMapper.writeValueAsBytes(data);
-			}
-			return result;
+			return this.objectMapper.writeValueAsBytes(data);
 		}
 		catch (IOException ex) {
 			throw new SerializationException("Can't serialize data [" + data + "] for topic [" + topic + "]", ex);
