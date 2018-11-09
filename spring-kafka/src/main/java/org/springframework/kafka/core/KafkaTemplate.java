@@ -22,9 +22,9 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.PartitionInfo;
@@ -352,7 +352,8 @@ public class KafkaTemplate<K, V> implements KafkaOperations<K, V> {
 	/**
 	 * Send the producer record.
 	 * @param producerRecord the producer record.
-	 * @return a Future for the {@link RecordMetadata}.
+	 * @return a Future for the {@link org.apache.kafka.clients.producer.RecordMetadata
+	 * RecordMetadata}.
 	 */
 	protected ListenableFuture<SendResult<K, V>> doSend(final ProducerRecord<K, V> producerRecord) {
 		if (this.transactional) {
@@ -368,7 +369,19 @@ public class KafkaTemplate<K, V> implements KafkaOperations<K, V> {
 			this.logger.trace("Sending: " + producerRecord);
 		}
 		final SettableListenableFuture<SendResult<K, V>> future = new SettableListenableFuture<>();
-		producer.send(producerRecord, (metadata, exception) -> {
+		producer.send(producerRecord, buildCallback(producerRecord, producer, future));
+		if (this.autoFlush) {
+			flush();
+		}
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("Sent: " + producerRecord);
+		}
+		return future;
+	}
+
+	private Callback buildCallback(final ProducerRecord<K, V> producerRecord, final Producer<K, V> producer,
+			final SettableListenableFuture<SendResult<K, V>> future) {
+		return (metadata, exception) -> {
 			try {
 				if (exception == null) {
 					future.set(new SendResult<>(producerRecord, metadata));
@@ -394,14 +407,7 @@ public class KafkaTemplate<K, V> implements KafkaOperations<K, V> {
 					closeProducer(producer, false);
 				}
 			}
-		});
-		if (this.autoFlush) {
-			flush();
-		}
-		if (this.logger.isTraceEnabled()) {
-			this.logger.trace("Sent: " + producerRecord);
-		}
-		return future;
+		};
 	}
 
 
