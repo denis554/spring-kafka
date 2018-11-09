@@ -42,7 +42,6 @@ public interface KafkaListenerErrorHandler {
 	 * {@link ListenerExecutionFailedException}.
 	 * @return the return value is ignored unless the annotated method has a
 	 * {@code @SendTo} annotation.
-	 * @throws Exception an exception which may be the original or different.
 	 */
 	Object handleError(Message<?> message, ListenerExecutionFailedException exception);
 
@@ -54,7 +53,6 @@ public interface KafkaListenerErrorHandler {
 	 * @param consumer the consumer.
 	 * @return the return value is ignored unless the annotated method has a
 	 * {@code @SendTo} annotation.
-	 * @throws Exception an exception which may be the original or different.
 	 */
 	default Object handleError(Message<?> message, ListenerExecutionFailedException exception,
 			Consumer<?, ?> consumer) {
