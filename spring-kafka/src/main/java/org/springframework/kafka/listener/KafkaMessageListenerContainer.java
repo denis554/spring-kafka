@@ -1611,7 +1611,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 
 	private static final class LoggingCommitCallback implements OffsetCommitCallback {
 
-		private static final Log logger = LogFactory.getLog(LoggingCommitCallback.class);
+		private static final Log logger = LogFactory.getLog(LoggingCommitCallback.class); // NOSONAR
 
 		LoggingCommitCallback() {
 			super();

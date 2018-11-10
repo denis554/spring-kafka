@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 the original author or authors.
+ * Copyright 2015-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,11 @@ import org.springframework.util.ObjectUtils;
  */
 public class LoggingErrorHandler implements ErrorHandler {
 
-	private static final Log log = LogFactory.getLog(LoggingErrorHandler.class);
+	private static final Log logger = LogFactory.getLog(LoggingErrorHandler.class); // NOSONAR
 
 	@Override
 	public void handle(Exception thrownException, ConsumerRecord<?, ?> record) {
-		log.error("Error while processing: " + ObjectUtils.nullSafeToString(record), thrownException);
+		logger.error("Error while processing: " + ObjectUtils.nullSafeToString(record), thrownException);
 	}
 
 }

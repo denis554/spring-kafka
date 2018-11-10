@@ -25,7 +25,7 @@ package org.springframework.kafka.support;
  */
 public final class TransactionSupport {
 
-	private static final ThreadLocal<String> transactionIdSuffix = new ThreadLocal<>();
+	private static final ThreadLocal<String> transactionIdSuffix = new ThreadLocal<>(); // NOSONAR
 
 	private TransactionSupport() {
 		super();

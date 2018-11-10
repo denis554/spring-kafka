@@ -80,7 +80,7 @@ import kafka.zk.EmbeddedZookeeper;
  */
 public class EmbeddedKafkaBroker implements InitializingBean, DisposableBean {
 
-	private static final Log logger = LogFactory.getLog(EmbeddedKafkaBroker.class);
+	private static final Log logger = LogFactory.getLog(EmbeddedKafkaBroker.class); // NOSONAR
 
 	public static final String BEAN_NAME = "embeddedKafka";
 

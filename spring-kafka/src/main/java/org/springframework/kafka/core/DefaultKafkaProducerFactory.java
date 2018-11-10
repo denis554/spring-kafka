@@ -87,7 +87,7 @@ public class DefaultKafkaProducerFactory<K, V> implements ProducerFactory<K, V>,
 
 	private static final int DEFAULT_PHYSICAL_CLOSE_TIMEOUT = 30;
 
-	private static final Log logger = LogFactory.getLog(DefaultKafkaProducerFactory.class);
+	private static final Log logger = LogFactory.getLog(DefaultKafkaProducerFactory.class); // NOSONAR
 
 	private final Map<String, Object> configs;
 

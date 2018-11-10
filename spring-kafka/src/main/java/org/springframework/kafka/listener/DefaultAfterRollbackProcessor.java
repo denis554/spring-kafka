@@ -45,7 +45,7 @@ import org.springframework.lang.Nullable;
  */
 public class DefaultAfterRollbackProcessor<K, V> implements AfterRollbackProcessor<K, V> {
 
-	private static final Log logger = LogFactory.getLog(DefaultAfterRollbackProcessor.class);
+	private static final Log logger = LogFactory.getLog(DefaultAfterRollbackProcessor.class); // NOSONAR
 
 	private final FailedRecordTracker failureTracker;
 

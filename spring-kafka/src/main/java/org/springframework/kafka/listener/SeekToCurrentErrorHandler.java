@@ -39,7 +39,7 @@ import org.springframework.lang.Nullable;
  */
 public class SeekToCurrentErrorHandler implements ContainerAwareErrorHandler {
 
-	private static final Log logger = LogFactory.getLog(SeekToCurrentErrorHandler.class);
+	private static final Log logger = LogFactory.getLog(SeekToCurrentErrorHandler.class); // NOSONAR
 
 	private final FailedRecordTracker failureTracker;
 

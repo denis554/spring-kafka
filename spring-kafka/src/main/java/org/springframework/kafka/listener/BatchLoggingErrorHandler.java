@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 the original author or authors.
+ * Copyright 2016-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
  */
 public class BatchLoggingErrorHandler implements BatchErrorHandler {
 
-	private static final Log log = LogFactory.getLog(BatchLoggingErrorHandler.class);
+	private static final Log logger = LogFactory.getLog(BatchLoggingErrorHandler.class); // NOSONAR
 
 	@Override
 	public void handle(Exception thrownException, ConsumerRecords<?, ?> data) {
@@ -45,7 +45,7 @@ public class BatchLoggingErrorHandler implements BatchErrorHandler {
 				message.append(iterator.next()).append('\n');
 			}
 		}
-		log.error(message.substring(0, message.length() - 1), thrownException);
+		logger.error(message.substring(0, message.length() - 1), thrownException);
 	}
 
 }

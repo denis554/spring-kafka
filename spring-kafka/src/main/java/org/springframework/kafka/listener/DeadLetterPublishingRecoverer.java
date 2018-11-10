@@ -45,7 +45,7 @@ import org.springframework.util.Assert;
  */
 public class DeadLetterPublishingRecoverer implements BiConsumer<ConsumerRecord<?, ?>, Exception> {
 
-	private static final Log logger = LogFactory.getLog(DeadLetterPublishingRecoverer.class);
+	private static final Log logger = LogFactory.getLog(DeadLetterPublishingRecoverer.class); // NOSONAR
 
 	private final KafkaTemplate<Object, Object> template;
 

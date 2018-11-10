@@ -37,7 +37,7 @@ import org.springframework.util.PatternMatchUtils;
  */
 public abstract class AbstractKafkaHeaderMapper implements KafkaHeaderMapper {
 
-	protected final Log logger = LogFactory.getLog(getClass());
+	protected final Log logger = LogFactory.getLog(getClass()); // NOSONAR
 
 	private static final List<SimplePatternBasedHeaderMatcher> NEVER_MAPPED = Arrays.asList(
 			new SimplePatternBasedHeaderMatcher("!" + KafkaHeaders.ACKNOWLEDGMENT),

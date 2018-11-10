@@ -48,7 +48,7 @@ import org.springframework.util.Assert;
  */
 public final class KafkaTestUtils {
 
-	private static final Log logger = LogFactory.getLog(KafkaTestUtils.class);
+	private static final Log logger = LogFactory.getLog(KafkaTestUtils.class); // NOSONAR
 
 	private KafkaTestUtils() {
 		// private ctor

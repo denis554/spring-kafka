@@ -28,9 +28,9 @@ import org.springframework.util.ClassUtils;
  */
 public final class JacksonPresent {
 
-	private static final ClassLoader classLoader = JacksonPresent.class.getClassLoader();
+	private static final ClassLoader classLoader = JacksonPresent.class.getClassLoader();  // NOSONAR
 
-	private static final boolean jackson2Present =
+	private static final boolean jackson2Present = // NOSONAR
 			ClassUtils.isPresent("com.fasterxml.jackson.databind.ObjectMapper", classLoader) &&
 					ClassUtils.isPresent("com.fasterxml.jackson.core.JsonGenerator", classLoader);
 

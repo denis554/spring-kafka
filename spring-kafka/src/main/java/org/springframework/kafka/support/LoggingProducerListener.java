@@ -37,7 +37,7 @@ public class LoggingProducerListener<K, V> implements ProducerListener<K, V> {
 	 */
 	public static final int DEFAULT_MAX_CONTENT_LOGGED = 100;
 
-	private static final Log log = LogFactory.getLog(LoggingProducerListener.class);
+	private static final Log logger = LogFactory.getLog(LoggingProducerListener.class); // NOSONAR
 
 	private boolean includeContents = true;
 
@@ -65,7 +65,7 @@ public class LoggingProducerListener<K, V> implements ProducerListener<K, V> {
 
 	@Override
 	public void onError(String topic, Integer partition, K key, V value, Exception exception) {
-		if (log.isErrorEnabled()) {
+		if (logger.isErrorEnabled()) {
 			StringBuffer logOutput = new StringBuffer();
 			logOutput.append("Exception thrown when sending a message");
 			if (this.includeContents) {
@@ -79,7 +79,7 @@ public class LoggingProducerListener<K, V> implements ProducerListener<K, V> {
 				logOutput.append(" and partition " + partition);
 			}
 			logOutput.append(":");
-			log.error(logOutput, exception);
+			logger.error(logOutput, exception);
 		}
 	}
 
