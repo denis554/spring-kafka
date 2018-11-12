@@ -43,11 +43,9 @@ import org.springframework.kafka.listener.BatchMessageListener;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.GenericMessageListenerContainer;
 import org.springframework.kafka.support.KafkaHeaders;
-import org.springframework.kafka.support.SendResult;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.util.Assert;
-import org.springframework.util.concurrent.ListenableFuture;
 
 /**
  * A KafkaTemplate that implements request/reply semantics.
@@ -101,18 +99,18 @@ public class ReplyingKafkaTemplate<K, V, R> extends KafkaTemplate<K, V> implemen
 		this.replyContainer = replyContainer;
 		this.replyContainer.setupMessageListener(this);
 		ContainerProperties properties = this.replyContainer.getContainerProperties();
-		String replyTopic = null;
-		byte[] replyPartition = null;
+		String tempReplyTopic = null;
+		byte[] tempReplyPartition = null;
 		if (properties.getTopics() != null && properties.getTopics().length == 1) {
-			replyTopic = properties.getTopics()[0];
+			tempReplyTopic = properties.getTopics()[0];
 		}
 		else if (properties.getTopicPartitions() != null && properties.getTopicPartitions().length == 1) {
-			replyTopic = properties.getTopicPartitions()[0].topic();
+			tempReplyTopic = properties.getTopicPartitions()[0].topic();
 			ByteBuffer buffer = ByteBuffer.allocate(4); // NOSONAR magic #
 			buffer.putInt(properties.getTopicPartitions()[0].partition());
-			replyPartition = buffer.array();
+			tempReplyPartition = buffer.array();
 		}
-		if (replyTopic == null) {
+		if (tempReplyTopic == null) {
 			this.replyTopic = null;
 			this.replyPartition = null;
 			this.logger.debug("Could not determine container's reply topic/partition; senders must populate "
@@ -120,8 +118,8 @@ public class ReplyingKafkaTemplate<K, V, R> extends KafkaTemplate<K, V> implemen
 					+ KafkaHeaders.REPLY_PARTITION + " header");
 		}
 		else {
-			this.replyTopic = replyTopic.getBytes(StandardCharsets.UTF_8);
-			this.replyPartition = replyPartition;
+			this.replyTopic = tempReplyTopic.getBytes(StandardCharsets.UTF_8);
+			this.replyPartition = tempReplyPartition;
 		}
 	}
 
@@ -178,7 +176,7 @@ public class ReplyingKafkaTemplate<K, V, R> extends KafkaTemplate<K, V> implemen
 	}
 
 	@Override
-	public void afterPropertiesSet() throws Exception {
+	public void afterPropertiesSet() {
 		if (!this.schedulerSet) {
 			((ThreadPoolTaskScheduler) this.scheduler).initialize();
 		}
@@ -245,6 +243,11 @@ public class ReplyingKafkaTemplate<K, V, R> extends KafkaTemplate<K, V> implemen
 			this.futures.remove(correlationId);
 			throw new KafkaException("Send failed", e);
 		}
+		scheduleTimeout(record, correlationId);
+		return future;
+	}
+
+	private void scheduleTimeout(ProducerRecord<K, V> record, CorrelationKey correlationId) {
 		this.scheduler.schedule(() -> {
 			RequestReplyFuture<K, V, R> removed = this.futures.remove(correlationId);
 			if (removed != null) {
@@ -254,11 +257,10 @@ public class ReplyingKafkaTemplate<K, V, R> extends KafkaTemplate<K, V> implemen
 				removed.setException(new KafkaException("Reply timed out"));
 			}
 		}, Instant.now().plusMillis(this.replyTimeout));
-		return future;
 	}
 
 	@Override
-	public void destroy() throws Exception {
+	public void destroy() {
 		if (!this.schedulerSet) {
 			((ThreadPoolTaskScheduler) this.scheduler).destroy();
 		}
@@ -328,17 +330,12 @@ public class ReplyingKafkaTemplate<K, V, R> extends KafkaTemplate<K, V> implemen
 	 * @param <K> the key type.
 	 * @param <V> the outbound data type.
 	 * @param <R> the reply data type.
-	 *
+	 * TODO: Remove this in 2.3 - adds no value to the super class
 	 */
 	public static class TemplateRequestReplyFuture<K, V, R> extends RequestReplyFuture<K, V, R> {
 
 		TemplateRequestReplyFuture() {
 			super();
-		}
-
-		@Override
-		protected void setSendFuture(ListenableFuture<SendResult<K, V>> sendFuture) {
-			super.setSendFuture(sendFuture);
 		}
 
 	}

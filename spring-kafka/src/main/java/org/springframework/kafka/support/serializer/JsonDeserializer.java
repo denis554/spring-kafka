@@ -54,24 +54,28 @@ import com.fasterxml.jackson.databind.ObjectReader;
  */
 public class JsonDeserializer<T> implements ExtendedDeserializer<T> {
 
+	private static final String KEY_DEFAULT_TYPE_STRING = "spring.json.key.default.type";
+
+	private static final String DEPRECATED_DEFAULT_VALUE_TYPE = "spring.json.default.value.type";
+
 	/**
 	 * Kafka config property for the default key type if no header.
 	 * @deprecated in favor of {@link #KEY_DEFAULT_TYPE}
 	 */
 	@Deprecated
-	public static final String DEFAULT_KEY_TYPE = "spring.json.key.default.type";
+	public static final String DEFAULT_KEY_TYPE = KEY_DEFAULT_TYPE_STRING;
 
 	/**
 	 * Kafka config property for the default value type if no header.
 	 * @deprecated in favor of {@link #VALUE_DEFAULT_TYPE}
 	 */
 	@Deprecated
-	public static final String DEFAULT_VALUE_TYPE = "spring.json.default.value.type";
+	public static final String DEFAULT_VALUE_TYPE = DEPRECATED_DEFAULT_VALUE_TYPE;
 
 	/**
 	 * Kafka config property for the default key type if no header.
 	 */
-	public static final String KEY_DEFAULT_TYPE = "spring.json.key.default.type";
+	public static final String KEY_DEFAULT_TYPE = KEY_DEFAULT_TYPE_STRING;
 
 	/**
 	 * Kafka config property for the default value type if no header.
@@ -94,13 +98,13 @@ public class JsonDeserializer<T> implements ExtendedDeserializer<T> {
 	 */
 	public static final String REMOVE_TYPE_INFO_HEADERS = "spring.json.remove.type.headers";
 
-	protected final ObjectMapper objectMapper;
+	protected final ObjectMapper objectMapper; // NOSONAR
 
-	protected Class<T> targetType;
+	protected Class<T> targetType; // NOSONAR
+
+	protected Jackson2JavaTypeMapper typeMapper = new DefaultJackson2JavaTypeMapper(); // NOSONAR
 
 	private volatile ObjectReader reader;
-
-	protected Jackson2JavaTypeMapper typeMapper = new DefaultJackson2JavaTypeMapper();
 
 	private boolean typeMapperExplicitlySet = false;
 
@@ -202,11 +206,9 @@ public class JsonDeserializer<T> implements ExtendedDeserializer<T> {
 	 * @since 2.1.3
 	 */
 	public void setUseTypeMapperForKey(boolean isKey) {
-		if (!this.typeMapperExplicitlySet) {
-			if (this.getTypeMapper() instanceof AbstractJavaTypeMapper) {
-				AbstractJavaTypeMapper typeMapper = (AbstractJavaTypeMapper) this.getTypeMapper();
-				typeMapper.setUseForKey(isKey);
-			}
+		if (!this.typeMapperExplicitlySet
+				&& this.getTypeMapper() instanceof AbstractJavaTypeMapper) {
+			((AbstractJavaTypeMapper) this.getTypeMapper()).setUseForKey(isKey);
 		}
 	}
 
@@ -220,45 +222,36 @@ public class JsonDeserializer<T> implements ExtendedDeserializer<T> {
 		this.removeTypeHeaders = removeTypeHeaders;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public void configure(Map<String, ?> configs, boolean isKey) {
 		setUseTypeMapperForKey(isKey);
+		setupTarget(configs, isKey);
+		if (configs.containsKey(TRUSTED_PACKAGES)
+				&& configs.get(TRUSTED_PACKAGES) instanceof String) {
+			this.typeMapper.addTrustedPackages(
+					StringUtils.commaDelimitedListToStringArray((String) configs.get(TRUSTED_PACKAGES)));
+		}
+		if (configs.containsKey(TYPE_MAPPINGS) && !this.typeMapperExplicitlySet
+				&& this.typeMapper instanceof AbstractJavaTypeMapper) {
+			((AbstractJavaTypeMapper) this.typeMapper).setIdClassMapping(
+					JsonSerializer.createMappings((String) configs.get(JsonSerializer.TYPE_MAPPINGS)));
+		}
+		if (configs.containsKey(REMOVE_TYPE_INFO_HEADERS)) {
+			this.removeTypeHeaders = Boolean.parseBoolean((String) configs.get(REMOVE_TYPE_INFO_HEADERS));
+		}
+	}
+
+	private void setupTarget(Map<String, ?> configs, boolean isKey) {
 		try {
 			if (isKey && configs.containsKey(KEY_DEFAULT_TYPE)) {
-				if (configs.get(KEY_DEFAULT_TYPE) instanceof Class) {
-					this.targetType = (Class<T>) configs.get(KEY_DEFAULT_TYPE);
-				}
-				else if (configs.get(KEY_DEFAULT_TYPE) instanceof String) {
-					this.targetType = (Class<T>) ClassUtils.forName((String) configs.get(KEY_DEFAULT_TYPE), null);
-				}
-				else {
-					throw new IllegalStateException(KEY_DEFAULT_TYPE + " must be Class or String");
-				}
+				setupTargetType(configs, KEY_DEFAULT_TYPE);
 			}
 			// TODO don't forget to remove these code after DEFAULT_VALUE_TYPE being removed.
-			else if (!isKey && configs.containsKey("spring.json.default.value.type")) {
-				if (configs.get("spring.json.default.value.type") instanceof Class) {
-					this.targetType = (Class<T>) configs.get("spring.json.default.value.type");
-				}
-				else if (configs.get("spring.json.default.value.type") instanceof String) {
-					this.targetType = (Class<T>) ClassUtils
-						.forName((String) configs.get("spring.json.default.value.type"), null);
-				}
-				else {
-					throw new IllegalStateException("spring.json.default.value.type must be Class or String");
-				}
+			else if (!isKey && configs.containsKey(DEPRECATED_DEFAULT_VALUE_TYPE)) {
+				setupTargetType(configs, DEPRECATED_DEFAULT_VALUE_TYPE);
 			}
 			else if (!isKey && configs.containsKey(VALUE_DEFAULT_TYPE)) {
-				if (configs.get(VALUE_DEFAULT_TYPE) instanceof Class) {
-					this.targetType = (Class<T>) configs.get(VALUE_DEFAULT_TYPE);
-				}
-				else if (configs.get(VALUE_DEFAULT_TYPE) instanceof String) {
-					this.targetType = (Class<T>) ClassUtils.forName((String) configs.get(VALUE_DEFAULT_TYPE), null);
-				}
-				else {
-					throw new IllegalStateException(VALUE_DEFAULT_TYPE + " must be Class or String");
-				}
+				setupTargetType(configs, VALUE_DEFAULT_TYPE);
 			}
 
 			if (this.targetType != null) {
@@ -269,19 +262,18 @@ public class JsonDeserializer<T> implements ExtendedDeserializer<T> {
 		catch (ClassNotFoundException | LinkageError e) {
 			throw new IllegalStateException(e);
 		}
-		if (configs.containsKey(TRUSTED_PACKAGES)) {
-			if (configs.get(TRUSTED_PACKAGES) instanceof String) {
-				this.typeMapper.addTrustedPackages(
-						StringUtils.commaDelimitedListToStringArray((String) configs.get(TRUSTED_PACKAGES)));
-			}
+	}
+
+	@SuppressWarnings("unchecked")
+	private void setupTargetType(Map<String, ?> configs, String key) throws ClassNotFoundException, LinkageError {
+		if (configs.get(key) instanceof Class) {
+			this.targetType = (Class<T>) configs.get(key);
 		}
-		if (configs.containsKey(TYPE_MAPPINGS) && !this.typeMapperExplicitlySet
-				&& this.typeMapper instanceof AbstractJavaTypeMapper) {
-			((AbstractJavaTypeMapper) this.typeMapper).setIdClassMapping(
-					JsonSerializer.createMappings((String) configs.get(JsonSerializer.TYPE_MAPPINGS)));
+		else if (configs.get(key) instanceof String) {
+			this.targetType = (Class<T>) ClassUtils.forName((String) configs.get(key), null);
 		}
-		if (configs.containsKey(REMOVE_TYPE_INFO_HEADERS)) {
-			this.removeTypeHeaders = Boolean.parseBoolean((String) configs.get(REMOVE_TYPE_INFO_HEADERS));
+		else {
+			throw new IllegalStateException(key + " must be Class or String");
 		}
 	}
 
@@ -305,22 +297,22 @@ public class JsonDeserializer<T> implements ExtendedDeserializer<T> {
 		if (data == null) {
 			return null;
 		}
-		ObjectReader reader = null;
+		ObjectReader deserReader = null;
 		if (this.typeMapper.getTypePrecedence().equals(TypePrecedence.TYPE_ID)) {
 			JavaType javaType = this.typeMapper.toJavaType(headers);
 			if (javaType != null) {
-				reader = this.objectMapper.readerFor(javaType);
+				deserReader = this.objectMapper.readerFor(javaType);
 			}
 		}
 		if (this.removeTypeHeaders) {
 			this.typeMapper.removeHeaders(headers);
 		}
-		if (reader == null) {
-			reader = this.reader;
+		if (deserReader == null) {
+			deserReader = this.reader;
 		}
-		Assert.state(reader != null, "No type information in headers and no default type provided");
+		Assert.state(deserReader != null, "No type information in headers and no default type provided");
 		try {
-			return reader.readValue(data);
+			return deserReader.readValue(data);
 		}
 		catch (IOException e) {
 			throw new SerializationException("Can't deserialize data [" + Arrays.toString(data) +
