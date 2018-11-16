@@ -51,6 +51,7 @@ import com.fasterxml.jackson.databind.ObjectReader;
  * @author Gary Russell
  * @author Yanming Zhou
  * @author Elliot Kennedy
+ * @author Torsten Schleede
  */
 public class JsonDeserializer<T> implements ExtendedDeserializer<T> {
 
@@ -287,9 +288,17 @@ public class JsonDeserializer<T> implements ExtendedDeserializer<T> {
 	}
 
 	private void addTargetPackageToTrusted() {
-		if (this.targetType != null) {
-			addTrustedPackages(this.targetType.getPackage().getName());
+		String targetPackageName = getTargetPackageName();
+		if (targetPackageName != null) {
+			addTrustedPackages(targetPackageName);
 		}
+	}
+
+	private String getTargetPackageName() {
+		if (this.targetType != null) {
+			return ClassUtils.getPackageName(this.targetType).replaceFirst("\\[L", "");
+		}
+		return null;
 	}
 
 	@Override
