@@ -182,7 +182,7 @@ public class JsonDeserializer<T> implements ExtendedDeserializer<T> {
 			this.reader = this.objectMapper.readerFor(this.targetType);
 		}
 
-		addTargetPackageToTrusted();
+		addTargetPackageToTrusted(); // NOSONAR - false positive - method is private
 		this.typeMapper.setTypePrecedence(useHeadersIfPresent ? TypePrecedence.TYPE_ID : TypePrecedence.INFERRED);
 	}
 
