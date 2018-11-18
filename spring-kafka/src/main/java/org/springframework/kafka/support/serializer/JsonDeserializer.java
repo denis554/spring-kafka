@@ -182,7 +182,7 @@ public class JsonDeserializer<T> implements ExtendedDeserializer<T> {
 			this.reader = this.objectMapper.readerFor(this.targetType);
 		}
 
-		addTargetPackageToTrusted(); // NOSONAR - false positive - method is private
+		addTargetPackageToTrusted();
 		this.typeMapper.setTypePrecedence(useHeadersIfPresent ? TypePrecedence.TYPE_ID : TypePrecedence.INFERRED);
 	}
 
@@ -284,13 +284,13 @@ public class JsonDeserializer<T> implements ExtendedDeserializer<T> {
 	 * @since 2.1
 	 */
 	public void addTrustedPackages(String... packages) {
-		this.typeMapper.addTrustedPackages(packages);
+		doAddTrustedPackages(packages);
 	}
 
 	private void addTargetPackageToTrusted() {
 		String targetPackageName = getTargetPackageName();
 		if (targetPackageName != null) {
-			addTrustedPackages(targetPackageName);
+			doAddTrustedPackages(targetPackageName);
 		}
 	}
 
@@ -299,6 +299,10 @@ public class JsonDeserializer<T> implements ExtendedDeserializer<T> {
 			return ClassUtils.getPackageName(this.targetType).replaceFirst("\\[L", "");
 		}
 		return null;
+	}
+
+	private void doAddTrustedPackages(String... packages) {
+		this.typeMapper.addTrustedPackages(packages);
 	}
 
 	@Override
