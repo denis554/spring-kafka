@@ -776,7 +776,10 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 							? this.consumer : null, this.consumerPaused);
 					this.lastAlertAt = now;
 					if (this.genericListener instanceof ConsumerSeekAware) {
-						seekPartitions(getAssignedPartitions(), true);
+						Collection<TopicPartition> partitions = getAssignedPartitions();
+						if (partitions != null) {
+							seekPartitions(partitions, true);
+						}
 					}
 				}
 			}
