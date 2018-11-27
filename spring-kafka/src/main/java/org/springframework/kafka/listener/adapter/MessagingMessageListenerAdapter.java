@@ -433,7 +433,7 @@ public abstract class MessagingMessageListenerAdapter<K, V> implements ConsumerS
 							&& !key.startsWith(KafkaHeaders.RECEIVED);
 				})
 				.filter(e -> this.replyHeadersConfigurer.shouldCopy(e.getKey(), e.getValue()))
-				.collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 			if (headersToCopy.size() > 0) {
 				builder.copyHeaders(headersToCopy);
 			}
