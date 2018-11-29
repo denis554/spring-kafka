@@ -19,13 +19,16 @@ package org.springframework.kafka.support;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.junit.Test;
 
 import org.springframework.kafka.support.DefaultKafkaHeaderMapper.NonTrustedHeaderType;
+import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.ExecutorSubscribableChannel;
@@ -81,6 +84,30 @@ public class DefaultKafkaHeaderMapperTests {
 		assertThat(headers.get("baz")).isEqualTo("qux");
 		assertThat(headers.get("fix")).isEqualTo(new Foo());
 		assertThat(headers).hasSize(7);
+	}
+
+	@Test
+	public void testMimeBackwardsCompat() {
+		DefaultKafkaHeaderMapper mapper = new DefaultKafkaHeaderMapper();
+		MessageHeaders headers = new MessageHeaders(
+				Collections.singletonMap("foo", MimeType.valueOf("application/json")));
+
+		RecordHeaders recordHeaders = new RecordHeaders();
+		mapper.fromHeaders(headers, recordHeaders);
+		Map<String, Object> receivedHeaders = new HashMap<>();
+		mapper.toHeaders(recordHeaders, receivedHeaders);
+		Object fooHeader = receivedHeaders.get("foo");
+		assertThat(fooHeader).isInstanceOf(String.class);
+		assertThat(fooHeader).isEqualTo("application/json");
+
+		KafkaTestUtils.getPropertyValue(mapper, "toStringClasses", Set.class).clear();
+		recordHeaders = new RecordHeaders();
+		mapper.fromHeaders(headers, recordHeaders);
+		receivedHeaders = new HashMap<>();
+		mapper.toHeaders(recordHeaders, receivedHeaders);
+		fooHeader = receivedHeaders.get("foo");
+		assertThat(fooHeader).isInstanceOf(MimeType.class);
+		assertThat(fooHeader).isEqualTo(MimeType.valueOf("application/json"));
 	}
 
 	public static final class Foo {
