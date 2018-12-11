@@ -1666,7 +1666,7 @@ public class KafkaMessageListenerContainer<K, V> extends AbstractMessageListener
 									protected void doInTransactionWithoutResult(TransactionStatus status) {
 										((KafkaResourceHolder) TransactionSynchronizationManager
 												.getResource(ListenerConsumer.this.kafkaTxManager.getProducerFactory()))
-												.getProducer().sendOffsetsToTransaction(
+												.getProducer().sendOffsetsToTransaction( // NODSONAR never null
 														Collections.singletonMap(partition, offsetAndMetadata),
 														ListenerConsumer.this.consumerGroupId);
 									}
