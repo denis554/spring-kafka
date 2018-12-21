@@ -36,8 +36,10 @@ import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.MimeType;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.std.StdNodeBasedDeserializer;
@@ -248,7 +250,6 @@ public class DefaultKafkaHeaderMapper extends AbstractKafkaHeaderMapper {
 	@Override
 	public void toHeaders(Headers source, final Map<String, Object> headers) {
 		final Map<String, String> jsonTypes = decodeJsonTypes(source);
-		final ObjectMapper headerObjectMapper = getObjectMapper();
 		source.forEach(h -> {
 			if (!(h.key().equals(JSON_TYPES))) {
 				if (jsonTypes != null && jsonTypes.containsKey(h.key())) {
@@ -266,20 +267,7 @@ public class DefaultKafkaHeaderMapper extends AbstractKafkaHeaderMapper {
 					}
 					if (trusted) {
 						try {
-							Object value = headerObjectMapper.readValue(h.value(), type);
-							if (type.equals(NonTrustedHeaderType.class)) {
-								// Upstream NTHT propagated; may be trusted here...
-								NonTrustedHeaderType nth = (NonTrustedHeaderType) value;
-								if (trusted(nth.getUntrustedType())) {
-									try {
-										type = ClassUtils.forName(nth.getUntrustedType(), null);
-										value = headerObjectMapper.readValue(nth.getHeaderValue(), type);
-									}
-									catch (Exception e) {
-										logger.error("Could not decode header: " + nth, e);
-									}
-								}
-							}
+							Object value = decodeValue(h, type);
 							headers.put(h.key(), value);
 						}
 						catch (IOException e) {
@@ -298,6 +286,27 @@ public class DefaultKafkaHeaderMapper extends AbstractKafkaHeaderMapper {
 				}
 			}
 		});
+	}
+
+	private Object decodeValue(Header h, Class<?> type)
+			throws IOException, JsonParseException, JsonMappingException, LinkageError {
+
+		final ObjectMapper headerObjectMapper = getObjectMapper();
+		Object value = headerObjectMapper.readValue(h.value(), type);
+		if (type.equals(NonTrustedHeaderType.class)) {
+			// Upstream NTHT propagated; may be trusted here...
+			NonTrustedHeaderType nth = (NonTrustedHeaderType) value;
+			if (trusted(nth.getUntrustedType())) {
+				try {
+					type = ClassUtils.forName(nth.getUntrustedType(), null);
+					value = headerObjectMapper.readValue(nth.getHeaderValue(), type);
+				}
+				catch (Exception e) {
+					logger.error("Could not decode header: " + nth, e);
+				}
+			}
+		}
+		return value;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -388,7 +397,7 @@ public class DefaultKafkaHeaderMapper extends AbstractKafkaHeaderMapper {
 		}
 
 
-		public void setHeaderValue(byte[] headerValue) {
+		public void setHeaderValue(byte[] headerValue) { // NOSONAR
 			this.headerValue = headerValue; // NOSONAR array reference
 		}
 
