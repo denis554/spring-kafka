@@ -298,8 +298,8 @@ public class DefaultKafkaHeaderMapper extends AbstractKafkaHeaderMapper {
 			NonTrustedHeaderType nth = (NonTrustedHeaderType) value;
 			if (trusted(nth.getUntrustedType())) {
 				try {
-					type = ClassUtils.forName(nth.getUntrustedType(), null);
-					value = headerObjectMapper.readValue(nth.getHeaderValue(), type);
+					value = headerObjectMapper.readValue(nth.getHeaderValue(),
+							ClassUtils.forName(nth.getUntrustedType(), null));
 				}
 				catch (Exception e) {
 					logger.error("Could not decode header: " + nth, e);
