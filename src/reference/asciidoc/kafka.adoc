@@ -981,10 +981,12 @@ public void pollResults(ConsumerRecords<?, ?> records) {
 IMPORTANT: If the container factory has a `RecordFilterStrategy` configured, it will be ignored for `ConsumerRecords<?, ?>` listeners, with a WARNing log emitted.
 Records can only be filtered with a batch listener if the `<List<?>>` form of listener is used.
 
-Starting with _version 2.0_, the `id` attribute (if present) is used as the Kafka `group.id` property, overriding the configured property in the consumer factory, if present.
+====== Annotation Properties
+
+Starting with _version 2.0_, the `id` property (if present) is used as the Kafka consumer `group.id` property, overriding the configured property in the consumer factory, if present.
 You can also set `groupId` explicitly, or set `idIsGroup` to false, to restore the previous behavior of using the consumer factory `group.id`.
 
-You can use property placeholders or SpEL expressions within annotation properties, for example...
+You can use property placeholders or SpEL expressions within most annotation properties, for example...
 
 [source, java]
 ----
