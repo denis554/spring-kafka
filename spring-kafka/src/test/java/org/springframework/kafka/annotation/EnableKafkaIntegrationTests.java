@@ -439,7 +439,7 @@ public class EnableKafkaIntegrationTests {
 		assertThat(this.recordFilter.called).isTrue();
 		assertThat(this.config.listen10Exception).isNotNull();
 
-		assertThat(this.config.spyLatch.await(10, TimeUnit.SECONDS)).isTrue();
+		assertThat(this.config.spyLatch.await(30, TimeUnit.SECONDS)).isTrue();
 	}
 
 	@Test
@@ -669,7 +669,7 @@ public class EnableKafkaIntegrationTests {
 	@Test
 	public void testBadAckConfig() throws Exception {
 		template.send("annotated28", 0, 1, "foo1");
-		assertThat(this.config.badAckLatch.await(10, TimeUnit.SECONDS)).isTrue();
+		assertThat(this.config.badAckLatch.await(30, TimeUnit.SECONDS)).isTrue();
 		assertThat(this.config.badAckException).isInstanceOf(IllegalStateException.class);
 		assertThat(this.config.badAckException.getMessage())
 				.isEqualTo("No Acknowledgment available as an argument, "
@@ -685,12 +685,12 @@ public class EnableKafkaIntegrationTests {
 		Foo foo = new Foo("foo");
 		willReturn(foo).given(converterDelegate).convert("{'bar':'foo'}");
 		template.send("annotated32", 0, 1, "{'bar':'foo'}");
-		assertThat(this.listener.latch20.await(10, TimeUnit.SECONDS)).isTrue();
+		assertThat(this.listener.latch20.await(30, TimeUnit.SECONDS)).isTrue();
 		assertThat(this.listener.listen16foo).isEqualTo(foo);
 
 		willThrow(new RuntimeException()).given(converterDelegate).convert("foobar");
 		template.send("annotated32", 0, 1, "foobar");
-		assertThat(this.config.listen16ErrorLatch.await(10, TimeUnit.SECONDS)).isTrue();
+		assertThat(this.config.listen16ErrorLatch.await(30, TimeUnit.SECONDS)).isTrue();
 		assertThat(this.config.listen16Exception).isNotNull();
 		assertThat(this.config.listen16Message).isEqualTo("foobar");
 	}
@@ -717,7 +717,7 @@ public class EnableKafkaIntegrationTests {
 	@Test
 	public void testReceivePollResults() throws Exception {
 		this.template.send("annotated34", "allRecords");
-		assertThat(this.listener.latch21.await(10, TimeUnit.SECONDS)).isTrue();
+		assertThat(this.listener.latch21.await(30, TimeUnit.SECONDS)).isTrue();
 		assertThat(this.listener.consumerRecords).isNotNull();
 		assertThat(this.listener.consumerRecords.count()).isEqualTo(1);
 		assertThat(this.listener.consumerRecords.iterator().next().value()).isEqualTo("allRecords");
@@ -732,7 +732,7 @@ public class EnableKafkaIntegrationTests {
 	@Test
 	public void testKeyConversion() throws Exception {
 		this.bytesKeyTemplate.send("annotated36", "foo".getBytes(), "bar");
-		assertThat(this.listener.keyLatch.await(10, TimeUnit.SECONDS)).isTrue();
+		assertThat(this.listener.keyLatch.await(30, TimeUnit.SECONDS)).isTrue();
 		assertThat(this.listener.convertedKey).isEqualTo("foo");
 	}
 
