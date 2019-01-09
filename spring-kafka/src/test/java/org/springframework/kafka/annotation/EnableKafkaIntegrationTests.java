@@ -1604,7 +1604,8 @@ public class EnableKafkaIntegrationTests {
 			// empty
 		}
 
-		@KafkaListener(topics = "annotated36", containerFactory = "bytesStringListenerContainerFactory")
+		@KafkaListener(id = "bytesKey", topics = "annotated36",
+				containerFactory = "bytesStringListenerContainerFactory")
 		public void bytesKey(String in, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key) {
 			this.convertedKey = key;
 			this.keyLatch.countDown();
