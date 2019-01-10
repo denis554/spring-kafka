@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018 the original author or authors.
+ * Copyright 2017-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author Marius Bogoevici
  * @author Elliot Kennedy
  * @author Gary Russell
+ * @author Ivan Ponomarev
  *
  * @since 1.1.5
  */
@@ -55,7 +56,7 @@ public class JsonSerde<T> implements Serde<T> {
 		this((ObjectMapper) null);
 	}
 
-	public JsonSerde(Class<T> targetType) {
+	public JsonSerde(Class<? super T> targetType) {
 		this(targetType, null);
 	}
 
@@ -64,9 +65,9 @@ public class JsonSerde<T> implements Serde<T> {
 	}
 
 	@SuppressWarnings("unchecked")
-	public JsonSerde(@Nullable Class<T> targetTypeArg, @Nullable ObjectMapper objectMapperArg) {
+	public JsonSerde(@Nullable Class<? super T> targetTypeArg, @Nullable ObjectMapper objectMapperArg) {
 		ObjectMapper objectMapper = objectMapperArg;
-		Class<T> targetType = targetTypeArg;
+		Class<T> targetType = (Class<T>) targetTypeArg;
 		if (objectMapper == null) {
 			objectMapper = new ObjectMapper();
 			objectMapper.configure(MapperFeature.DEFAULT_VIEW_INCLUSION, false);
