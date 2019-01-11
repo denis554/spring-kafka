@@ -81,7 +81,7 @@ subprojects { subproject ->
 		log4jVersion = '2.11.1'
 		mockitoVersion = '2.23.4'
 		scalaVersion = '2.11'
-		springRetryVersion = '1.2.2.RELEASE'
+		springRetryVersion = '1.2.3.RELEASE'
 		springVersion = '5.1.4.RELEASE'
 		springDataCommonsVersion = '2.1.4.RELEASE'
 
