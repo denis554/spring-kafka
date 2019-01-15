@@ -94,6 +94,8 @@ The streams configuration bean must now be a `KafkaStreamsConfiguration` object 
 
 The `StreamsBuilderFactoryBean` has been moved from package `...core` to `...config`.
 
+The `KafkaStreamBrancher` has been introduced for better end-user experience when conditional branches are built on top of `KStream` instance.
+
 See <<kafka-streams>> and <<streams-config>> for more information.
 
 
