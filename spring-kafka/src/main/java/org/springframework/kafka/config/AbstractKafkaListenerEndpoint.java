@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2018 the original author or authors.
+ * Copyright 2014-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -268,7 +268,7 @@ public abstract class AbstractKafkaListenerEndpoint<K, V>
 		return this.replyTemplate;
 	}
 
-	protected RecordFilterStrategy<K, V> getRecordFilterStrategy() {
+	protected RecordFilterStrategy<? super K, ? super V> getRecordFilterStrategy() {
 		return this.recordFilterStrategy;
 	}
 
@@ -276,8 +276,9 @@ public abstract class AbstractKafkaListenerEndpoint<K, V>
 	 * Set a {@link RecordFilterStrategy} implementation.
 	 * @param recordFilterStrategy the strategy implementation.
 	 */
-	public void setRecordFilterStrategy(RecordFilterStrategy<K, V> recordFilterStrategy) {
-		this.recordFilterStrategy = recordFilterStrategy;
+	@SuppressWarnings("unchecked")
+	public void setRecordFilterStrategy(RecordFilterStrategy<? super K, ? super V> recordFilterStrategy) {
+		this.recordFilterStrategy = (RecordFilterStrategy<K, V>) recordFilterStrategy;
 	}
 
 	protected boolean isAckDiscarded() {
@@ -285,8 +286,7 @@ public abstract class AbstractKafkaListenerEndpoint<K, V>
 	}
 
 	/**
-	 * Set to true if the {@link #setRecordFilterStrategy(RecordFilterStrategy)
-	 * recordFilterStrategy} is in use.
+	 * Set to true if the {@link #setRecordFilterStrategy(RecordFilterStrategy)} is in use.
 	 * @param ackDiscarded the ackDiscarded.
 	 */
 	public void setAckDiscarded(boolean ackDiscarded) {
@@ -310,8 +310,7 @@ public abstract class AbstractKafkaListenerEndpoint<K, V>
 	}
 
 	/**
-	 * Set a callback to be used with the {@link #setRetryTemplate(RetryTemplate)
-	 * retryTemplate}.
+	 * Set a callback to be used with the {@link #setRetryTemplate(RetryTemplate)}.
 	 * @param recoveryCallback the callback.
 	 */
 	public void setRecoveryCallback(RecoveryCallback<? extends Object> recoveryCallback) {
