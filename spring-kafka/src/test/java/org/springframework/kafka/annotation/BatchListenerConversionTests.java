@@ -90,8 +90,6 @@ public class BatchListenerConversionTests {
 	private void doTest(Listener listener, String topic) throws InterruptedException {
 		this.template.send(new GenericMessage<>(
 				new Foo("bar"), Collections.singletonMap(KafkaHeaders.TOPIC, topic)));
-		this.template.send(new GenericMessage<>(
-				new Foo("baz"), Collections.singletonMap(KafkaHeaders.TOPIC, topic)));
 		assertThat(listener.latch1.await(10, TimeUnit.SECONDS)).isTrue();
 		assertThat(listener.latch2.await(10, TimeUnit.SECONDS)).isTrue();
 		assertThat(listener.received.size()).isGreaterThan(0);
@@ -106,8 +104,6 @@ public class BatchListenerConversionTests {
 		String topic = "blc3";
 		this.template.send(new GenericMessage<>(
 				new Foo("bar"), Collections.singletonMap(KafkaHeaders.TOPIC, topic)));
-		this.template.send(new GenericMessage<>(
-				new Foo("baz"), Collections.singletonMap(KafkaHeaders.TOPIC, topic)));
 		Listener3 listener = this.config.listener3();
 		assertThat(listener.latch1.await(10, TimeUnit.SECONDS)).isTrue();
 		assertThat(listener.received.size()).isGreaterThan(0);
@@ -121,8 +117,6 @@ public class BatchListenerConversionTests {
 		String topic = "blc4";
 		this.template.send(new GenericMessage<>(
 				new Foo("bar"), Collections.singletonMap(KafkaHeaders.TOPIC, topic)));
-		this.template.send(new GenericMessage<>(
-				new Foo("baz"), Collections.singletonMap(KafkaHeaders.TOPIC, topic)));
 		assertThat(listener.latch1.await(10, TimeUnit.SECONDS)).isTrue();
 		assertThat(listener.received.size()).isGreaterThan(0);
 		assertThat(listener.received.get(0)).isInstanceOf(Foo.class);
