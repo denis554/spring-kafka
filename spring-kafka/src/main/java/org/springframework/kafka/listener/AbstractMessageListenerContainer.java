@@ -367,9 +367,9 @@ public abstract class AbstractMessageListenerContainer<K, V>
 	}
 
 	protected void publishContainerStoppedEvent() {
-		ApplicationEventPublisher applicationEventPublisher = getApplicationEventPublisher();
-		if (applicationEventPublisher != null) {
-			applicationEventPublisher.publishEvent(new ContainerStoppedEvent(this, parentOrThis()));
+		ApplicationEventPublisher eventPublisher = getApplicationEventPublisher();
+		if (eventPublisher != null) {
+			eventPublisher.publishEvent(new ContainerStoppedEvent(this, parentOrThis()));
 		}
 	}
 

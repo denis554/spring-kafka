@@ -112,8 +112,8 @@ import org.springframework.util.concurrent.ListenableFutureCallback;
  * @author Yang Qiju
  * @author Tom van den Berge
  */
-public class KafkaMessageListenerContainer<K, V>
-		extends AbstractMessageListenerContainer<K, V> { // NOSONAR comment density
+public class KafkaMessageListenerContainer<K, V> // NOSONAR comment density
+		extends AbstractMessageListenerContainer<K, V> {
 
 	private static final int DEFAULT_ACK_TIME = 5000;
 
@@ -383,6 +383,8 @@ public class KafkaMessageListenerContainer<K, V>
 
 	private final class ListenerConsumer implements SchedulingAwareRunnable, ConsumerSeekCallback {
 
+		private static final String UNCHECKED = "unchecked";
+
 		private static final String RAWTYPES = "rawtypes";
 
 		private static final String RAW_TYPES = RAWTYPES;
@@ -486,7 +488,7 @@ public class KafkaMessageListenerContainer<K, V>
 
 		private volatile long lastPoll = System.currentTimeMillis();
 
-		@SuppressWarnings("unchecked")
+		@SuppressWarnings(UNCHECKED)
 		ListenerConsumer(GenericMessageListener<?> listener, ListenerType listenerType) {
 			Assert.state(!this.isAnyManualAck || !this.autoCommit,
 					() -> "Consumer cannot be configured for auto commit for ackMode "
@@ -947,7 +949,7 @@ public class KafkaMessageListenerContainer<K, V>
 			}
 		}
 
-		@SuppressWarnings({ "unchecked", RAW_TYPES })
+		@SuppressWarnings({ UNCHECKED, RAW_TYPES })
 		private void invokeBatchListenerInTx(final ConsumerRecords<K, V> records,
 				final List<ConsumerRecord<K, V>> recordList) {
 			try {
@@ -1100,7 +1102,7 @@ public class KafkaMessageListenerContainer<K, V>
 		 * Invoke the listener with each record in a separate transaction.
 		 * @param records the records.
 		 */
-		@SuppressWarnings({ "unchecked", RAW_TYPES })
+		@SuppressWarnings({ UNCHECKED, RAW_TYPES })
 		private void invokeRecordListenerInTx(final ConsumerRecords<K, V> records) {
 			Iterator<ConsumerRecord<K, V>> iterator = records.iterator();
 			while (iterator.hasNext()) {
@@ -1317,7 +1319,7 @@ public class KafkaMessageListenerContainer<K, V>
 			}
 		}
 
-		@SuppressWarnings({ "unchecked", RAW_TYPES })
+		@SuppressWarnings({ UNCHECKED, RAW_TYPES })
 		private void sendOffsetsToTransaction(Producer producer) {
 			handleAcks();
 			Map<TopicPartition, OffsetAndMetadata> commits = buildCommits();
@@ -1674,7 +1676,7 @@ public class KafkaMessageListenerContainer<K, V>
 								ListenerConsumer.this.transactionTemplate
 										.execute(new TransactionCallbackWithoutResult() {
 
-											@SuppressWarnings({"unchecked", RAWTYPES})
+											@SuppressWarnings({UNCHECKED, RAWTYPES})
 											@Override
 											protected void doInTransactionWithoutResult(TransactionStatus status) {
 												KafkaResourceHolder holder =
