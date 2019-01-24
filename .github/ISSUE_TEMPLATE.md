@@ -1,4 +1,8 @@
 <!--
+!!! To report Security Vulnerabilities, please go to https://pivotal.io/security !!!
+-->
+**Affects Version(s):** \<Spring for Apache Kafka version>
+<!--
 Thanks for raising a Spring for Apache Kafka issue. Please take the time to review the
 following categories as some of them do not apply here.
 
