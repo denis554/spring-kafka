@@ -1270,13 +1270,13 @@ public class KafkaMessageListenerContainer<K, V> // NOSONAR comment density
 				toHandle = new ListenerExecutionFailedException(toHandle.getMessage(), this.consumerGroupId,
 						toHandle.getCause());
 			}
-			else {
-				/*
-				 * TODO: in 2.3, wrap all exceptions (e.g. thrown by user implementations
-				 * of MessageListener) in LEFE with groupId. @KafkaListeners always throw
-				 * LEFE.
-				 */
-			}
+//			else {
+//				/*
+//				 * TODO: in 2.3, wrap all exceptions (e.g. thrown by user implementations
+//				 * of MessageListener) in LEFE with groupId. @KafkaListeners always throw
+//				 * LEFE.
+//				 */
+//			}
 			return toHandle;
 		}
 
