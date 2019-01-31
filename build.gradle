@@ -4,8 +4,7 @@ buildscript {
 		maven { url 'https://repo.spring.io/plugins-release' }
 	}
 	dependencies {
-		classpath 'io.spring.gradle:docbook-reference-plugin:0.3.1'
-		classpath 'org.asciidoctor:asciidoctor-gradle-plugin:1.5.8'
+		classpath 'org.asciidoctor:asciidoctorj-pdf:1.5.0-alpha.16'
 		classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
 		classpath "org.jetbrains.kotlin:kotlin-allopen:$kotlinVersion"
 	}
@@ -16,6 +15,7 @@ plugins {
 	id 'base'
 	id 'project-report'
 	id 'idea'
+	id 'org.asciidoctor.convert' version '1.5.9.2'
 }
 
 description = 'Spring Kafka'
@@ -29,7 +29,7 @@ ext {
 	linkScmUrl = 'https://github.com/spring-projects/spring-kafka'
 	linkScmConnection = 'https://github.com/spring-projects/spring-kafka.git'
 	linkScmDevConnection = 'git@github.com:spring-projects/spring-kafka.git'
-
+	docResourcesVersion = '0.1.0.RELEASE'
 }
 
 allprojects {
@@ -234,45 +234,58 @@ project ('spring-kafka-test') {
 	}
 }
 
-apply plugin: 'org.asciidoctor.convert'
+configurations {
+	docs
+}
+
+dependencies {
+	docs "io.spring.docresources:spring-doc-resources:${docResourcesVersion}@zip"
+}
+
+task prepareAsciidocBuild(type: Sync) {
+	dependsOn configurations.docs
+	from {
+		configurations.docs.collect { zipTree(it) }
+	}
+	from 'src/reference/asciidoc/'
+	into "$buildDir/asciidoc"
+}
 
 asciidoctor {
-	sourceDir = file("$docsDir")
+	dependsOn 'prepareAsciidocBuild'
+	sourceDir "$buildDir/asciidoc"
 	sources {
 		include 'index.adoc'
 	}
-	backends = ['html5', 'docbook']
-	logDocuments = true
-	options = [
-		doctype: 'book',
-	]
-	attributes = [
-		docinfo: '',
-		toc2: '',
-		'compat-mode': '',
-		imagesdir: '',
-		stylesdir: "stylesheets/",
-		stylesheet: 'golo.css',
-		'spring-kafka-version': "$version",
-		'source-highlighter': 'highlightjs'
-	]
+	resources {
+		from(sourceDir) {
+			include 'images/*', 'css/*', 'js/**'
+		}
+	}
+	backends = ['html5', 'pdf']
+	options doctype: 'book', eruby: 'erubis'
+	attributes  'icons': 'font',
+			'idprefix': '',
+			'idseparator': '-',
+			docinfo: 'shared',
+			sectanchors: '',
+			sectnums: '',
+			stylesdir: 'css/',
+			stylesheet: 'spring.css',
+			'linkcss': true,
+			'source-highlighter=highlight.js',
+			'highlightjsdir=js/highlight',
+			'highlightjs-theme=atom-one-dark-reasonable',
+			'project-version': project.version,
+			'allow-uri-read': ''
 }
 
-
-apply plugin: DocbookReferencePlugin
-
-reference {
-	sourceFileName = 'index.xml'
-	sourceDir = file("$buildDir/asciidoc/docbook")
-	pdfFilename = 'spring-kafka-reference.pdf'
-	expandPlaceholders = ''
+task reference(dependsOn: asciidoctor) {
+	group = 'Documentation'
+	description = 'Generate the reference documentation'
 }
 
-reference.dependsOn asciidoctor
-
-[asciidoctor, reference, referenceEpub, referenceHtmlMulti, referenceHtmlSingle, referencePdf].each {
-	it.onlyIf { "$System.env.NO_REFERENCE_TASK" != 'true' || project.hasProperty('ignoreEnvToStopReference') }
-}
+reference.onlyIf { "$System.env.NO_REFERENCE_TASK" != 'true' || project.hasProperty('ignoreEnvToStopReference') }
 
 sonarqube {
 	properties {
@@ -305,7 +318,7 @@ task api(type: Javadoc) {
 	destinationDir = new File(buildDir, "api")
 }
 
-task docsZip(type: Zip) {
+task docsZip(type: Zip, dependsOn: [reference]) {
 	group = 'Distribution'
 	classifier = 'docs'
 	description = "Builds -${classifier} archive containing api and reference " +
@@ -319,7 +332,12 @@ task docsZip(type: Zip) {
 		into 'api'
 	}
 
-	from (reference) {
+	from ('build/asciidoc/html5') {
+		into 'reference'
+	}
+
+	from ('build/asciidoc/pdf') {
+		include 'index.pdf'
 		into 'reference'
 	}
 }
