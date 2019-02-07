@@ -296,8 +296,6 @@ public abstract class AbstractKafkaListenerContainerFactory<C extends AbstractMe
 
 		endpoint.setupListenerContainer(instance, this.messageConverter);
 		initializeContainer(instance, endpoint);
-		instance.getContainerProperties().setGroupId(endpoint.getGroupId());
-		instance.getContainerProperties().setClientId(endpoint.getClientIdPrefix());
 
 		return instance;
 	}
@@ -370,6 +368,11 @@ public abstract class AbstractKafkaListenerContainerFactory<C extends AbstractMe
 		}
 		if (this.applicationEventPublisher != null) {
 			instance.setApplicationEventPublisher(this.applicationEventPublisher);
+		}
+		instance.getContainerProperties().setGroupId(endpoint.getGroupId());
+		instance.getContainerProperties().setClientId(endpoint.getClientIdPrefix());
+		if (endpoint.getConsumerProperties() != null) {
+			instance.getContainerProperties().setConsumerProperties(endpoint.getConsumerProperties());
 		}
 	}
 
