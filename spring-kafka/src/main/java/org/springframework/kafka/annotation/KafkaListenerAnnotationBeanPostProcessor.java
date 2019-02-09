@@ -442,19 +442,7 @@ public class KafkaListenerAnnotationBeanPostProcessor<K, V>
 		if (StringUtils.hasText(autoStartup)) {
 			endpoint.setAutoStartup(resolveExpressionAsBoolean(autoStartup, "autoStartup"));
 		}
-		String[] propertyStrings = kafkaListener.properties();
-		if (propertyStrings.length > 0) {
-			Properties properties = new Properties();
-			for (String property : propertyStrings) {
-				try {
-					properties.load(new StringReader(resolveExpressionAsString(property, "property")));
-				}
-				catch (IOException e) {
-					this.logger.error("Failed to load property " + property + ", continuing...", e);
-				}
-			}
-			endpoint.setConsumerProperties(properties);
-		}
+		resolveKafkaProperties(endpoint, kafkaListener.properties());
 
 		KafkaListenerContainerFactory<?> factory = null;
 		String containerFactoryBeanName = resolve(kafkaListener.containerFactory());
@@ -478,6 +466,21 @@ public class KafkaListenerAnnotationBeanPostProcessor<K, V>
 		this.registrar.registerEndpoint(endpoint, factory);
 		if (StringUtils.hasText(beanRef)) {
 			this.listenerScope.removeListener(beanRef);
+		}
+	}
+
+	private void resolveKafkaProperties(MethodKafkaListenerEndpoint<?, ?> endpoint, String[] propertyStrings) {
+		if (propertyStrings.length > 0) {
+			Properties properties = new Properties();
+			for (String property : propertyStrings) {
+				try {
+					properties.load(new StringReader(resolveExpressionAsString(property, "property")));
+				}
+				catch (IOException e) {
+					this.logger.error("Failed to load property " + property + ", continuing...", e);
+				}
+			}
+			endpoint.setConsumerProperties(properties);
 		}
 	}
 

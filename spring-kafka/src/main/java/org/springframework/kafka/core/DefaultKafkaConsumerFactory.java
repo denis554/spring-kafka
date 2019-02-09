@@ -130,24 +130,32 @@ public class DefaultKafkaConsumerFactory<K, V> implements ConsumerFactory<K, V> 
 			return createKafkaConsumer(this.configs);
 		}
 		else {
-			Map<String, Object> modifiedConfigs = new HashMap<>(this.configs);
-			if (groupId != null) {
-				modifiedConfigs.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-			}
-			if (shouldModifyClientId) {
-				modifiedConfigs.put(ConsumerConfig.CLIENT_ID_CONFIG,
-						(overrideClientIdPrefix ? clientIdPrefix
-								: modifiedConfigs.get(ConsumerConfig.CLIENT_ID_CONFIG)) + clientIdSuffix);
-			}
-			if (properties != null) {
-				properties.forEach((k, v) -> {
-					if (!k.equals(ConsumerConfig.CLIENT_ID_CONFIG) && !k.equals(ConsumerConfig.GROUP_ID_CONFIG)) {
-						modifiedConfigs.put((String) k, v);
-					}
-				});
-			}
-			return createKafkaConsumer(modifiedConfigs);
+			return createConsumerWithAdjustedProperties(groupId, clientIdPrefix, properties, overrideClientIdPrefix,
+					clientIdSuffix, shouldModifyClientId);
 		}
+	}
+
+	private KafkaConsumer<K, V> createConsumerWithAdjustedProperties(String groupId, String clientIdPrefix,
+			Properties properties, boolean overrideClientIdPrefix, String clientIdSuffix,
+			boolean shouldModifyClientId) {
+
+		Map<String, Object> modifiedConfigs = new HashMap<>(this.configs);
+		if (groupId != null) {
+			modifiedConfigs.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+		}
+		if (shouldModifyClientId) {
+			modifiedConfigs.put(ConsumerConfig.CLIENT_ID_CONFIG,
+					(overrideClientIdPrefix ? clientIdPrefix
+							: modifiedConfigs.get(ConsumerConfig.CLIENT_ID_CONFIG)) + clientIdSuffix);
+		}
+		if (properties != null) {
+			properties.forEach((k, v) -> {
+				if (!k.equals(ConsumerConfig.CLIENT_ID_CONFIG) && !k.equals(ConsumerConfig.GROUP_ID_CONFIG)) {
+					modifiedConfigs.put((String) k, v);
+				}
+			});
+		}
+		return createKafkaConsumer(modifiedConfigs);
 	}
 
 	protected KafkaConsumer<K, V> createKafkaConsumer(Map<String, Object> configs) {
