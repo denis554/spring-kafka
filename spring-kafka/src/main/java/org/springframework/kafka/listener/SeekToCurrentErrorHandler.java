@@ -111,7 +111,6 @@ public class SeekToCurrentErrorHandler implements ContainerAwareErrorHandler {
 	 * property.
 	 * @param commitRecovered true to commit.
 	 * @since 2.2.4
-	 * @see #setOffsetCommitCallback(OffsetCommitCallback)
 	 */
 	public void setCommitRecovered(boolean commitRecovered) {
 		this.commitRecovered = commitRecovered;
