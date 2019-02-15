@@ -55,13 +55,17 @@ import org.springframework.util.Assert;
  */
 public class StreamsBuilderFactoryBean extends AbstractFactoryBean<StreamsBuilder> implements SmartLifecycle {
 
+	/**
+	 * The default {@link Duration} of {@code 10 seconds} for close timeout.
+	 * @see KafkaStreams#close(Duration)
+	 */
+	public static final Duration DEFAULT_CLOSE_TIMEOUT = Duration.ofSeconds(10);
+
 	private static final Log logger = LogFactory.getLog(StreamsBuilderFactoryBean.class); // NOSONAR
 
 	private static final String STREAMS_CONFIG_MUST_NOT_BE_NULL = "'streamsConfig' must not be null";
 
 	private static final String CLEANUP_CONFIG_MUST_NOT_BE_NULL = "'cleanupConfig' must not be null";
-
-	private static final Duration DEFAULT_CLOSE_TIMEOUT = Duration.ofSeconds(10);
 
 	private KafkaClientSupplier clientSupplier = new DefaultKafkaClientSupplier();
 
@@ -237,7 +241,7 @@ public class StreamsBuilderFactoryBean extends AbstractFactoryBean<StreamsBuilde
 
 	/**
 	 * Specify the timeout in seconds for the {@link KafkaStreams#close(long, TimeUnit)} operation.
-	 * Defaults to {@value #DEFAULT_CLOSE_TIMEOUT} seconds.
+	 * Defaults to {@link #DEFAULT_CLOSE_TIMEOUT} seconds.
 	 * @param closeTimeout the timeout for close in seconds.
 	 * @see KafkaStreams#close(long, TimeUnit)
 	 */
