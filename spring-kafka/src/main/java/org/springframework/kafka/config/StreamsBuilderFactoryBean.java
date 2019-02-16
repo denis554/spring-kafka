@@ -19,7 +19,6 @@ package org.springframework.kafka.config;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -61,7 +60,7 @@ public class StreamsBuilderFactoryBean extends AbstractFactoryBean<StreamsBuilde
 	 */
 	public static final Duration DEFAULT_CLOSE_TIMEOUT = Duration.ofSeconds(10);
 
-	private static final Log logger = LogFactory.getLog(StreamsBuilderFactoryBean.class); // NOSONAR
+	private static final Log LOGGER = LogFactory.getLog(StreamsBuilderFactoryBean.class);
 
 	private static final String STREAMS_CONFIG_MUST_NOT_BE_NULL = "'streamsConfig' must not be null";
 
@@ -240,13 +239,13 @@ public class StreamsBuilderFactoryBean extends AbstractFactoryBean<StreamsBuilde
 	}
 
 	/**
-	 * Specify the timeout in seconds for the {@link KafkaStreams#close(long, TimeUnit)} operation.
+	 * Specify the timeout in seconds for the {@link KafkaStreams#close(Duration)} operation.
 	 * Defaults to {@link #DEFAULT_CLOSE_TIMEOUT} seconds.
 	 * @param closeTimeout the timeout for close in seconds.
-	 * @see KafkaStreams#close(long, TimeUnit)
+	 * @see KafkaStreams#close(Duration)
 	 */
 	public void setCloseTimeout(int closeTimeout) {
-		this.closeTimeout = Duration.ofSeconds(closeTimeout); // NOSONAR (sync)
+		this.closeTimeout = Duration.ofSeconds(closeTimeout);
 	}
 
 	@Override
@@ -292,8 +291,8 @@ public class StreamsBuilderFactoryBean extends AbstractFactoryBean<StreamsBuilde
 				Assert.state(this.streamsConfig != null || this.properties != null,
 						"'streamsConfig' or streams configuration properties must not be null");
 				Topology topology = getObject().build(); // NOSONAR
-				if (logger.isDebugEnabled()) {
-					logger.debug(topology.describe());
+				if (LOGGER.isDebugEnabled()) {
+					LOGGER.debug(topology.describe());
 				}
 				if (this.properties != null) {
 					this.kafkaStreams = new KafkaStreams(topology, this.properties, this.clientSupplier);
@@ -332,7 +331,7 @@ public class StreamsBuilderFactoryBean extends AbstractFactoryBean<StreamsBuilde
 				}
 			}
 			catch (Exception e) {
-				logger.error("Failed to stop streams", e);
+				LOGGER.error("Failed to stop streams", e);
 			}
 			finally {
 				this.running = false;
