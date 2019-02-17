@@ -245,7 +245,7 @@ public class StreamsBuilderFactoryBean extends AbstractFactoryBean<StreamsBuilde
 	 * @see KafkaStreams#close(Duration)
 	 */
 	public void setCloseTimeout(int closeTimeout) {
-		this.closeTimeout = Duration.ofSeconds(closeTimeout);
+		this.closeTimeout = Duration.ofSeconds(closeTimeout); // NOSONAR (sync)
 	}
 
 	@Override
