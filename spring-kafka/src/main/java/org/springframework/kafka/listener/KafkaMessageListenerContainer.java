@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -417,7 +418,7 @@ public class KafkaMessageListenerContainer<K, V> // NOSONAR line count
 
 		private final boolean wantsFullRecords;
 
-		private final boolean autoCommit = KafkaMessageListenerContainer.this.consumerFactory.isAutoCommit();
+		private final boolean autoCommit;
 
 		private final boolean isManualAck = this.containerProperties.getAckMode().equals(AckMode.MANUAL);
 
@@ -493,15 +494,14 @@ public class KafkaMessageListenerContainer<K, V> // NOSONAR line count
 
 		@SuppressWarnings(UNCHECKED)
 		ListenerConsumer(GenericMessageListener<?> listener, ListenerType listenerType) {
-			Assert.state(!this.isAnyManualAck || !this.autoCommit,
-					() -> "Consumer cannot be configured for auto commit for ackMode "
-							+ this.containerProperties.getAckMode());
+			Properties consumerProperties = new Properties(this.containerProperties.getConsumerProperties());
+			this.autoCommit = determineAutoCommit(consumerProperties);
 			this.consumer =
 					KafkaMessageListenerContainer.this.consumerFactory.createConsumer(
 							this.consumerGroupId,
 							this.containerProperties.getClientId(),
 							KafkaMessageListenerContainer.this.clientIdSuffix,
-							this.containerProperties.getConsumerProperties());
+							consumerProperties);
 
 			this.transactionTemplate = determineTransactionTemplate();
 			subscribeOrAssignTopics(this.consumer);
@@ -570,6 +570,27 @@ public class KafkaMessageListenerContainer<K, V> // NOSONAR line count
 			return this.transactionManager != null
 					? new TransactionTemplate(this.transactionManager)
 					: null;
+		}
+
+		private boolean determineAutoCommit(Properties consumerProperties) {
+			boolean autoCommit;
+			String autoCommitOverride = consumerProperties.getProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG);
+			if (!KafkaMessageListenerContainer.this.consumerFactory.getConfigurationProperties()
+							.containsKey(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG)
+					&& autoCommitOverride == null) {
+				consumerProperties.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+				autoCommit = false;
+			}
+			else if (autoCommitOverride != null) {
+				autoCommit = Boolean.parseBoolean(autoCommitOverride);
+			}
+			else {
+				autoCommit = KafkaMessageListenerContainer.this.consumerFactory.isAutoCommit();
+			}
+			Assert.state(!this.isAnyManualAck || !autoCommit,
+					() -> "Consumer cannot be configured for auto commit for ackMode "
+							+ this.containerProperties.getAckMode());
+			return autoCommit;
 		}
 
 		private Duration determineSyncCommitTimeout() {
