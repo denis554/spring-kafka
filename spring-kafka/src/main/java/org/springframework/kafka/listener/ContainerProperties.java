@@ -649,7 +649,6 @@ public class ContainerProperties {
 	 * @see #setGroupId(String)
 	 * @see #setClientId(String)
 	 */
-	@Nullable
 	public Properties getConsumerProperties() {
 		return this.consumerProperties;
 	}

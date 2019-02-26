@@ -383,6 +383,8 @@ public class KafkaMessageListenerContainer<K, V> // NOSONAR line count
 
 	private final class ListenerConsumer implements SchedulingAwareRunnable, ConsumerSeekCallback {
 
+		private static final int SIXTY = 60;
+
 		private static final String UNCHECKED = "unchecked";
 
 		private static final String RAWTYPES = "rawtypes";
@@ -501,12 +503,7 @@ public class KafkaMessageListenerContainer<K, V> // NOSONAR line count
 							KafkaMessageListenerContainer.this.clientIdSuffix,
 							this.containerProperties.getConsumerProperties());
 
-			if (this.transactionManager != null) {
-				this.transactionTemplate = new TransactionTemplate(this.transactionManager);
-			}
-			else {
-				this.transactionTemplate = null;
-			}
+			this.transactionTemplate = determineTransactionTemplate();
 			subscribeOrAssignTopics(this.consumer);
 			GenericErrorHandler<?> errHandler = KafkaMessageListenerContainer.this.getGenericErrorHandler();
 			this.genericListener = listener;
@@ -568,6 +565,13 @@ public class KafkaMessageListenerContainer<K, V> // NOSONAR line count
 			}
 		}
 
+		@Nullable
+		private TransactionTemplate determineTransactionTemplate() {
+			return this.transactionManager != null
+					? new TransactionTemplate(this.transactionManager)
+					: null;
+		}
+
 		private Duration determineSyncCommitTimeout() {
 			if (this.containerProperties.getSyncCommitTimeout() != null) {
 				return this.containerProperties.getSyncCommitTimeout();
@@ -589,14 +593,12 @@ public class KafkaMessageListenerContainer<K, V> // NOSONAR line count
 					return Duration.ofMillis(Long.parseLong((String) timeout));
 				}
 				else {
-					if (timeout != null) {
-						if (this.logger.isWarnEnabled()) {
-							this.logger.warn("Unexpected type: " + timeout.getClass().getName() + " in property '"
-								+ ConsumerConfig.DEFAULT_API_TIMEOUT_MS_CONFIG
-								+ "'; defaulting to 60 seconds for sync commit timeouts");
-						}
+					if (timeout != null && this.logger.isWarnEnabled()) {
+						this.logger.warn("Unexpected type: " + timeout.getClass().getName() + " in property '"
+							+ ConsumerConfig.DEFAULT_API_TIMEOUT_MS_CONFIG
+							+ "'; defaulting to 60 seconds for sync commit timeouts");
 					}
-					return Duration.ofSeconds(60);
+					return Duration.ofSeconds(SIXTY);
 				}
 			}
 
