@@ -573,24 +573,24 @@ public class KafkaMessageListenerContainer<K, V> // NOSONAR line count
 		}
 
 		private boolean determineAutoCommit(Properties consumerProperties) {
-			boolean autoCommit;
+			boolean isAutoCommit;
 			String autoCommitOverride = consumerProperties.getProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG);
 			if (!KafkaMessageListenerContainer.this.consumerFactory.getConfigurationProperties()
 							.containsKey(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG)
 					&& autoCommitOverride == null) {
 				consumerProperties.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
-				autoCommit = false;
+				isAutoCommit = false;
 			}
 			else if (autoCommitOverride != null) {
-				autoCommit = Boolean.parseBoolean(autoCommitOverride);
+				isAutoCommit = Boolean.parseBoolean(autoCommitOverride);
 			}
 			else {
-				autoCommit = KafkaMessageListenerContainer.this.consumerFactory.isAutoCommit();
+				isAutoCommit = KafkaMessageListenerContainer.this.consumerFactory.isAutoCommit();
 			}
-			Assert.state(!this.isAnyManualAck || !autoCommit,
+			Assert.state(!this.isAnyManualAck || !isAutoCommit,
 					() -> "Consumer cannot be configured for auto commit for ackMode "
 							+ this.containerProperties.getAckMode());
-			return autoCommit;
+			return isAutoCommit;
 		}
 
 		private Duration determineSyncCommitTimeout() {
