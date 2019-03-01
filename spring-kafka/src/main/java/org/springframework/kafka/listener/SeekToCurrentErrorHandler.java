@@ -46,6 +46,8 @@ import org.springframework.util.Assert;
  * replayed.
  *
  * @author Gary Russell
+ * @author Artem Bilan
+ *
  * @since 2.0.1
  *
  */
@@ -99,7 +101,9 @@ public class SeekToCurrentErrorHandler implements ContainerAwareErrorHandler {
 	 * @param maxFailures the maxFailures; a negative value is treated as infinity.
 	 * @since 2.2
 	 */
-	public SeekToCurrentErrorHandler(@Nullable BiConsumer<ConsumerRecord<?, ?>, Exception> recoverer, int maxFailures) {
+	public SeekToCurrentErrorHandler(@Nullable BiConsumer<ConsumerRecord<?, ?>, Exception> recoverer,
+			int maxFailures) {
+
 		this.failureTracker = new FailedRecordTracker(recoverer, maxFailures, LOGGER);
 		this.classifier = configureDefaultClassifier();
 	}
@@ -250,13 +254,14 @@ public class SeekToCurrentErrorHandler implements ContainerAwareErrorHandler {
 		classified.put(MethodArgumentResolutionException.class, false);
 		classified.put(NoSuchMethodException.class, false);
 		classified.put(ClassCastException.class, false);
-		ExtendedBinaryExceptionClassifier exceptionClassifier = new ExtendedBinaryExceptionClassifier(classified, true);
-		return exceptionClassifier;
+		return new ExtendedBinaryExceptionClassifier(classified, true);
 	}
 
 	/**
 	 * Extended to provide visibility to the current classified exceptions.
+	 *
 	 * @author Gary Russell
+	 *
 	 * @since 2.3
 	 *
 	 */
