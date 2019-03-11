@@ -57,4 +57,19 @@ public class FailedRecordTrackerTests {
 		assertThat(recovered.get()).isTrue();
 	}
 
+	@Test
+	public void testSuccessAfterFailure() {
+		FailedRecordTracker tracker = new FailedRecordTracker(null, 2, mock(Log.class));
+		ConsumerRecord<?, ?> record = new ConsumerRecord<>("foo", 0, 0L, "bar", "baz");
+		assertThat(tracker.skip(record, new RuntimeException())).isFalse();
+		record = new ConsumerRecord<>("bar", 0, 0L, "bar", "baz");
+		assertThat(tracker.skip(record, new RuntimeException())).isFalse();
+		record = new ConsumerRecord<>("bar", 1, 0L, "bar", "baz");
+		assertThat(tracker.skip(record, new RuntimeException())).isFalse();
+		record = new ConsumerRecord<>("bar", 1, 1L, "bar", "baz");
+		assertThat(tracker.skip(record, new RuntimeException())).isFalse();
+		record = new ConsumerRecord<>("bar", 1, 1L, "bar", "baz");
+		assertThat(tracker.skip(record, new RuntimeException())).isTrue();
+	}
+
 }
