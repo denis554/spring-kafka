@@ -480,11 +480,11 @@ public class KafkaMessageListenerContainer<K, V> // NOSONAR line count
 
 		private boolean taskSchedulerExplicitlySet;
 
-		volatile boolean consumerPaused;
-
 		private long lastReceive = System.currentTimeMillis();
 
 		private long lastAlertAt = this.lastReceive;
+
+		private volatile boolean consumerPaused;
 
 		private volatile long lastPoll = System.currentTimeMillis();
 
