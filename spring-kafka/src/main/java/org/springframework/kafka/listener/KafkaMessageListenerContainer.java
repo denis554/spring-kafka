@@ -239,7 +239,7 @@ public class KafkaMessageListenerContainer<K, V> // NOSONAR line count
 
 	@Override
 	public boolean isContainerPaused() {
-		return isPaused() && this.listenerConsumer != null && this.listenerConsumer.consumerPaused;
+		return isPaused() && this.listenerConsumer != null && this.listenerConsumer.isConsumerPaused();
 	}
 
 	@Override
@@ -558,6 +558,10 @@ public class KafkaMessageListenerContainer<K, V> // NOSONAR line count
 				// update the property so we can use it directly from code elsewhere
 				this.containerProperties.setSyncCommitTimeout(this.syncCommitTimeout);
 			}
+		}
+
+		boolean isConsumerPaused() {
+			return this.consumerPaused;
 		}
 
 		@Nullable
