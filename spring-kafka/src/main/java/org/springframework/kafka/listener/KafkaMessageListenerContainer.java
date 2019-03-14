@@ -16,7 +16,6 @@
 
 package org.springframework.kafka.listener;
 
-import java.lang.reflect.Type;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -145,7 +144,10 @@ public class KafkaMessageListenerContainer<K, V> // NOSONAR line count
 	 * @param consumerFactory the consumer factory.
 	 * @param containerProperties the container properties.
 	 * @param topicPartitions the topics/partitions; duplicates are eliminated.
+	 * @deprecated - the topicPartitions should be provided in the
+	 * {@link ContainerProperties}.
 	 */
+	@Deprecated
 	public KafkaMessageListenerContainer(ConsumerFactory<? super K, ? super V> consumerFactory,
 			ContainerProperties containerProperties, TopicPartitionInitialOffset... topicPartitions) {
 
@@ -237,7 +239,7 @@ public class KafkaMessageListenerContainer<K, V> // NOSONAR line count
 
 	@Override
 	public boolean isContainerPaused() {
-		return isPaused() && this.listenerConsumer.consumerPaused;
+		return isPaused() && this.listenerConsumer != null && this.listenerConsumer.consumerPaused;
 	}
 
 	@Override
@@ -266,13 +268,11 @@ public class KafkaMessageListenerContainer<K, V> // NOSONAR line count
 		checkAckMode(containerProperties);
 
 		Object messageListener = containerProperties.getMessageListener();
-		Assert.state(messageListener != null, "A MessageListener is required");
 		if (containerProperties.getConsumerTaskExecutor() == null) {
 			SimpleAsyncTaskExecutor consumerExecutor = new SimpleAsyncTaskExecutor(
 					(getBeanName() == null ? "" : getBeanName()) + "-C-");
 			containerProperties.setConsumerTaskExecutor(consumerExecutor);
 		}
-		Assert.state(messageListener instanceof GenericMessageListener, "Listener must be a GenericListener");
 		GenericMessageListener<?> listener = (GenericMessageListener<?>) messageListener;
 		ListenerType listenerType = determineListenerType(listener);
 		this.listenerConsumer = new ListenerConsumer(listener, listenerType);
@@ -480,7 +480,7 @@ public class KafkaMessageListenerContainer<K, V> // NOSONAR line count
 
 		private boolean taskSchedulerExplicitlySet;
 
-		private boolean consumerPaused;
+		volatile boolean consumerPaused;
 
 		private long lastReceive = System.currentTimeMillis();
 
@@ -546,12 +546,11 @@ public class KafkaMessageListenerContainer<K, V> // NOSONAR line count
 				this.taskScheduler = threadPoolTaskScheduler;
 			}
 			this.monitorTask = this.taskScheduler.scheduleAtFixedRate(this::checkConsumer,
-					this.containerProperties.getMonitorInterval() * 1000); // NOSONAR magic #
+					Duration.ofSeconds(this.containerProperties.getMonitorInterval()));
 			if (this.containerProperties.isLogContainerConfig()) {
 				this.logger.info(this);
 			}
-			Map<String, Object> props =
-					KafkaMessageListenerContainer.this.consumerFactory.getConfigurationProperties();
+			Map<String, Object> props = KafkaMessageListenerContainer.this.consumerFactory.getConfigurationProperties();
 			this.checkNullKeyForExceptions = checkDeserializer(findDeserializerClass(props, false));
 			this.checkNullValueForExceptions = checkDeserializer(findDeserializerClass(props, true));
 			this.syncCommitTimeout = determineSyncCommitTimeout();
@@ -642,7 +641,8 @@ public class KafkaMessageListenerContainer<K, V> // NOSONAR line count
 					subscribingConsumer.subscribe(this.containerProperties.getTopicPattern(), rebalanceListener);
 				}
 				else {
-					subscribingConsumer.subscribe(Arrays.asList(this.containerProperties.getTopics()), rebalanceListener);
+					subscribingConsumer.subscribe(Arrays.asList(this.containerProperties.getTopics()),
+							rebalanceListener);
 				}
 			}
 			else {
@@ -717,22 +717,14 @@ public class KafkaMessageListenerContainer<K, V> // NOSONAR line count
 
 		private void validateErrorHandler(boolean batch) {
 			GenericErrorHandler<?> errHandler = KafkaMessageListenerContainer.this.getGenericErrorHandler();
-			if (this.errorHandler == null) {
+			if (errHandler == null) {
 				return;
 			}
-			Type[] genericInterfaces = errHandler.getClass().getGenericInterfaces();
-			boolean ok = false;
-			for (Type t : genericInterfaces) {
-				if (t.equals(ErrorHandler.class)) {
-					ok = !batch;
-					break;
-				}
-				else if (t.equals(BatchErrorHandler.class)) {
-					ok = batch;
-					break;
-				}
-			}
-			Assert.state(ok, "Error handler is not compatible with the message listener, expecting an instance of "
+			Class<?> clazz = errHandler.getClass();
+			Assert.state(batch
+						? BatchErrorHandler.class.isAssignableFrom(clazz)
+						: ErrorHandler.class.isAssignableFrom(clazz),
+					"Error handler is not compatible with the message listener, expecting an instance of "
 					+ (batch ? "BatchErrorHandler" : "ErrorHandler") + " not " + errHandler.getClass().getName());
 		}
 
@@ -821,7 +813,7 @@ public class KafkaMessageListenerContainer<K, V> // NOSONAR line count
 							.flatMap(p -> records.records(p).stream())
 							// map to same format as send metadata toString()
 							.map(r -> r.topic() + "-" + r.partition() + "@" + r.offset())
-							.collect(Collectors.toList()));
+							.collect(Collectors.toList()).toString());
 				}
 			}
 		}
@@ -1022,7 +1014,7 @@ public class KafkaMessageListenerContainer<K, V> // NOSONAR line count
 						if (ListenerConsumer.this.kafkaTxManager != null) {
 							producer = ((KafkaResourceHolder) TransactionSynchronizationManager
 									.getResource(ListenerConsumer.this.kafkaTxManager.getProducerFactory()))
-									.getProducer(); // NOSONAR nullable
+										.getProducer(); // NOSONAR nullable
 						}
 						RuntimeException aborted = doInvokeBatchListener(records, recordList, producer);
 						if (aborted != null) {
@@ -1097,7 +1089,7 @@ public class KafkaMessageListenerContainer<K, V> // NOSONAR line count
 					this.logger.error("Error handler threw an exception", ee);
 					return ee;
 				}
-				catch (Error er) { //NOSONAR
+				catch (Error er) { // NOSONAR
 					this.logger.error("Error handler threw an error", er);
 					throw er;
 				}
@@ -1114,7 +1106,8 @@ public class KafkaMessageListenerContainer<K, V> // NOSONAR line count
 				this.batchListener.onMessage(records,
 						this.isAnyManualAck
 								? new ConsumerBatchAcknowledgment(records)
-								: null, this.consumer);
+								: null,
+						this.consumer);
 			}
 			else {
 				doInvokeBatchOnMessage(records, recordList);
@@ -1202,7 +1195,7 @@ public class KafkaMessageListenerContainer<K, V> // NOSONAR line count
 							if (ListenerConsumer.this.kafkaTxManager != null) {
 								producer = ((KafkaResourceHolder) TransactionSynchronizationManager
 										.getResource(ListenerConsumer.this.kafkaTxManager.getProducerFactory()))
-										.getProducer(); // NOSONAR
+												.getProducer(); // NOSONAR
 							}
 							RuntimeException aborted = doInvokeRecordListener(record, producer, iterator);
 							if (aborted != null) {
@@ -1290,7 +1283,7 @@ public class KafkaMessageListenerContainer<K, V> // NOSONAR line count
 					this.logger.error("Error handler threw an exception", ee);
 					return ee;
 				}
-				catch (Error er) { //NOSONAR
+				catch (Error er) { // NOSONAR
 					this.logger.error("Error handler threw an error", er);
 					throw er;
 				}
@@ -1777,7 +1770,7 @@ public class KafkaMessageListenerContainer<K, V> // NOSONAR line count
 								ListenerConsumer.this.transactionTemplate
 										.execute(new TransactionCallbackWithoutResult() {
 
-											@SuppressWarnings({UNCHECKED, RAWTYPES})
+											@SuppressWarnings({ UNCHECKED, RAWTYPES })
 											@Override
 											protected void doInTransactionWithoutResult(TransactionStatus status) {
 												KafkaResourceHolder holder =
