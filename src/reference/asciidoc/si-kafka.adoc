@@ -9,6 +9,8 @@ It provides the following components:
 
 * <<si-outbound>>
 * <<si-inbound>>
+* <<si-outbound-gateway>>
+* <<si-inbound-gateway>>
 
 [[si-outbound]]
 ==== Outbound Channel Adapter
