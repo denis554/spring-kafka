@@ -133,7 +133,7 @@ subprojects { subproject ->
 
 	checkstyle {
 		configFile = file("${rootDir}/src/checkstyle/checkstyle.xml")
-		toolVersion = "8.17"
+		toolVersion = "8.18"
 	}
 
 	jacocoTestReport {
