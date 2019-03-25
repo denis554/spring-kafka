@@ -5,7 +5,7 @@ This section covers the changes made from version 2.2 to version 2.3.
 [[kafka-client-2.1]]
 ==== Kafka Client Version
 
-This version requires the 2.1.0 `kafka-clients` or higher.
+This version requires the 2.2.0 `kafka-clients` or higher.
 
 ==== Listener Container Changes
 

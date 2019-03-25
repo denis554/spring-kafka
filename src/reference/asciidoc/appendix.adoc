@@ -1,3 +1,5 @@
+////
+#Commented out until 2.3 is released
 [[deps-for-21x]]
 == Override Dependencies to use the 2.1.x kafka-clients with an Embedded Broker
 
@@ -48,6 +50,7 @@ When you use `spring-kafka-test` (version 2.2.x) with the 2.1.x `kafka-clients` 
 </dependency>
 ----
 ====
+////
 
 [appendix]
 [[history]]

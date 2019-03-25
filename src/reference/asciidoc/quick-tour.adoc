@@ -33,8 +33,8 @@ compile 'org.springframework.kafka:spring-kafka:{project-version}'
 
 This quick tour works with the following versions:
 
-* Apache Kafka Clients 2.0.0
-* Spring Framework 5.1.x
+* Apache Kafka Clients 2.2.0
+* Spring Framework 5.2.x
 * Minimum Java version: 8
 
 ==== A Very, Very Quick Example
