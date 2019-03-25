@@ -82,11 +82,15 @@ import org.springframework.util.Assert;
  * @author Gary Russell
  * @author Murali Reddy
  * @author Nakul Mishra
+ * @author Artem Bilan
  */
 public class DefaultKafkaProducerFactory<K, V> implements ProducerFactory<K, V>, ApplicationContextAware,
 		ApplicationListener<ContextStoppedEvent>, DisposableBean {
 
-	private static final Duration DEFAULT_PHYSICAL_CLOSE_TIMEOUT = Duration.ofSeconds(30);
+	/**
+	 * The default close timeout duration as 30 seconds.
+	 */
+	public static final Duration DEFAULT_PHYSICAL_CLOSE_TIMEOUT = Duration.ofSeconds(30);
 
 	private static final Log logger = LogFactory.getLog(DefaultKafkaProducerFactory.class); // NOSONAR
 
@@ -149,7 +153,7 @@ public class DefaultKafkaProducerFactory<K, V> implements ProducerFactory<K, V>,
 
 	/**
 	 * The time to wait when physically closing the producer (when {@link #stop()} or {@link #destroy()} is invoked).
-	 * Specified in seconds; default {@value #DEFAULT_PHYSICAL_CLOSE_TIMEOUT}.
+	 * Specified in seconds; default {@link #DEFAULT_PHYSICAL_CLOSE_TIMEOUT}.
 	 * @param physicalCloseTimeout the timeout in seconds.
 	 * @since 1.0.7
 	 */

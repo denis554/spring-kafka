@@ -52,12 +52,16 @@ import org.springframework.kafka.KafkaException;
  * in the application context.
  *
  * @author Gary Russell
+ * @author Artem Bilan
  *
  * @since 1.3
  */
 public class KafkaAdmin implements ApplicationContextAware, SmartInitializingSingleton {
 
-	private static final Duration DEFAULT_CLOSE_TIMEOUT = Duration.ofSeconds(10);
+	/**
+	 * The default close timeout duration as 10 seconds.
+	 */
+	public static final Duration DEFAULT_CLOSE_TIMEOUT = Duration.ofSeconds(10);
 
 	private static final int DEFAULT_OPERATION_TIMEOUT = 30;
 
@@ -92,7 +96,7 @@ public class KafkaAdmin implements ApplicationContextAware, SmartInitializingSin
 	}
 
 	/**
-	 * Set the close timeout in seconds. Defaults to {@value #DEFAULT_CLOSE_TIMEOUT} seconds.
+	 * Set the close timeout in seconds. Defaults to {@link #DEFAULT_CLOSE_TIMEOUT} seconds.
 	 * @param closeTimeout the timeout.
 	 */
 	public void setCloseTimeout(int closeTimeout) {
