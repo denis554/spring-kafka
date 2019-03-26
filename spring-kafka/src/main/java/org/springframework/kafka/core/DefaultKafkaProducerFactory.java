@@ -536,11 +536,11 @@ public class DefaultKafkaProducerFactory<K, V> implements ProducerFactory<K, V>,
 		@SuppressWarnings("deprecation")
 		@Deprecated
 		public void close(long timeout, @Nullable TimeUnit unit) {
-			close(Duration.ofMillis(unit.toMillis(timeout)));
+			close(unit == null ? null : Duration.ofMillis(unit.toMillis(timeout)));
 		}
 
 		@Override
-		public void close(Duration timeout) {
+		public void close(@Nullable Duration timeout) {
 			if (this.cache != null) {
 				if (this.txFailed) {
 					if (logger.isWarnEnabled()) {
