@@ -36,6 +36,7 @@ import org.junit.Test;
 
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.kafka.support.KafkaUtils;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 
@@ -46,7 +47,7 @@ import org.springframework.messaging.MessageHeaders;
 public class BatchMessageConverterTests {
 
 	@Test
-	public void testBatchConverters() throws Exception {
+	public void testBatchConverters() {
 		BatchMessageConverter batchMessageConverter = new BatchMessagingMessageConverter();
 
 		MessageHeaders headers = testGuts(batchMessageConverter);
@@ -89,8 +90,8 @@ public class BatchMessageConverterTests {
 
 		Acknowledgment ack = mock(Acknowledgment.class);
 		Consumer<?, ?> consumer = mock(Consumer.class);
-		Message<?> message = batchMessageConverter.toMessage(consumerRecords, ack, consumer,
-				String.class);
+		KafkaUtils.setConsumerGroupId("test.g");
+		Message<?> message = batchMessageConverter.toMessage(consumerRecords, ack, consumer, String.class);
 
 		assertThat(message.getPayload())
 				.isEqualTo(Arrays.asList("value1", "value2", "value3"));
@@ -109,6 +110,8 @@ public class BatchMessageConverterTests {
 				.isEqualTo(Arrays.asList(1487694048607L, 1487694048608L, 1487694048609L));
 		assertThat(headers.get(KafkaHeaders.ACKNOWLEDGMENT)).isSameAs(ack);
 		assertThat(headers.get(KafkaHeaders.CONSUMER)).isSameAs(consumer);
+		assertThat(headers.get(KafkaHeaders.GROUP_ID)).isEqualTo("test.g");
+		KafkaUtils.clearConsumerGroupId();
 		return headers;
 	}
 

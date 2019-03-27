@@ -24,6 +24,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -46,24 +48,7 @@ public abstract class AbstractKafkaHeaderMapper implements KafkaHeaderMapper {
 
 	protected final Log logger = LogFactory.getLog(getClass()); // NOSONAR
 
-	private static final List<SimplePatternBasedHeaderMatcher> NEVER_MAPPED = Arrays.asList(
-			new SimplePatternBasedHeaderMatcher("!" + KafkaHeaders.ACKNOWLEDGMENT),
-			new SimplePatternBasedHeaderMatcher("!" + KafkaHeaders.CONSUMER),
-			new SimplePatternBasedHeaderMatcher("!" + KafkaHeaders.MESSAGE_KEY),
-			new SimplePatternBasedHeaderMatcher("!" + KafkaHeaders.OFFSET),
-			new SimplePatternBasedHeaderMatcher("!" + KafkaHeaders.PARTITION_ID),
-			new SimplePatternBasedHeaderMatcher("!" + KafkaHeaders.RAW_DATA),
-			new SimplePatternBasedHeaderMatcher("!" + KafkaHeaders.RECEIVED_MESSAGE_KEY),
-			new SimplePatternBasedHeaderMatcher("!" + KafkaHeaders.RECEIVED_PARTITION_ID),
-			new SimplePatternBasedHeaderMatcher("!" + KafkaHeaders.RECEIVED_TIMESTAMP),
-			new SimplePatternBasedHeaderMatcher("!" + KafkaHeaders.RECEIVED_TOPIC),
-			new SimplePatternBasedHeaderMatcher("!" + KafkaHeaders.TIMESTAMP),
-			new SimplePatternBasedHeaderMatcher("!" + KafkaHeaders.TIMESTAMP_TYPE),
-			new SimplePatternBasedHeaderMatcher("!" + KafkaHeaders.BATCH_CONVERTED_HEADERS),
-			new SimplePatternBasedHeaderMatcher("!" + KafkaHeaders.NATIVE_HEADERS),
-			new SimplePatternBasedHeaderMatcher("!" + KafkaHeaders.TOPIC));
-
-	protected final List<SimplePatternBasedHeaderMatcher> matchers = new ArrayList<>(NEVER_MAPPED); // NOSONAR
+	private final List<HeaderMatcher> matchers = new ArrayList<>();
 
 	private final Map<String, Boolean> rawMappedtHeaders = new HashMap<>();
 
@@ -73,8 +58,38 @@ public abstract class AbstractKafkaHeaderMapper implements KafkaHeaderMapper {
 
 	public AbstractKafkaHeaderMapper(String... patterns) {
 		Assert.notNull(patterns, "'patterns' must not be null");
+		this.matchers.add(new NeverMatchHeaderMatcher(
+				KafkaHeaders.ACKNOWLEDGMENT,
+				KafkaHeaders.CONSUMER,
+				KafkaHeaders.MESSAGE_KEY,
+				KafkaHeaders.OFFSET,
+				KafkaHeaders.PARTITION_ID,
+				KafkaHeaders.RAW_DATA,
+				KafkaHeaders.RECEIVED_MESSAGE_KEY,
+				KafkaHeaders.RECEIVED_PARTITION_ID,
+				KafkaHeaders.RECEIVED_TIMESTAMP,
+				KafkaHeaders.RECEIVED_TOPIC,
+				KafkaHeaders.TIMESTAMP,
+				KafkaHeaders.TIMESTAMP_TYPE,
+				KafkaHeaders.BATCH_CONVERTED_HEADERS,
+				KafkaHeaders.NATIVE_HEADERS,
+				KafkaHeaders.TOPIC,
+				KafkaHeaders.GROUP_ID));
 		for (String pattern : patterns) {
 			this.matchers.add(new SimplePatternBasedHeaderMatcher(pattern));
+		}
+	}
+
+	/**
+	 * Subclasses can invoke this to add custom {@link HeaderMatcher}s.
+	 * @param matchersToAdd the matchers to add.
+	 * @since 2.3
+	 */
+	protected final void addMatchers(HeaderMatcher... matchersToAdd) {
+		Assert.notNull(matchersToAdd, "'matchersToAdd' cannot be null");
+		Assert.noNullElements(matchersToAdd, "'matchersToAdd' cannot have null elements");
+		for (HeaderMatcher matcher : matchersToAdd) {
+			this.matchers.add(matcher);
 		}
 	}
 
@@ -137,7 +152,7 @@ public abstract class AbstractKafkaHeaderMapper implements KafkaHeaderMapper {
 	}
 
 	protected boolean matches(String header) {
-		for (SimplePatternBasedHeaderMatcher matcher : this.matchers) {
+		for (HeaderMatcher matcher : this.matchers) {
 			if (matcher.matchHeader(header)) {
 				return !matcher.isNegated();
 			}
@@ -201,14 +216,60 @@ public abstract class AbstractKafkaHeaderMapper implements KafkaHeaderMapper {
 
 
 	/**
+	 * A matcher for headers.
+	 * @since 2.3
+	 */
+	protected interface HeaderMatcher {
+
+		/**
+		 * Return true if the header matches.
+		 * @param headerName the header name.
+		 * @return true for a match.
+		 */
+		boolean matchHeader(String headerName);
+
+		/**
+		 * Return true if this matcher is a negative matcher.
+		 * @return true for a negative matcher.
+		 */
+		boolean isNegated();
+
+	}
+
+	/**
+	 * A matcher that never matches a set of headers.
+	 * @since 2.3
+	 */
+	protected static class NeverMatchHeaderMatcher implements HeaderMatcher {
+
+		private final Set<String> neverMatchHeaders;
+
+		protected NeverMatchHeaderMatcher(String... headers) {
+			this.neverMatchHeaders = Arrays.stream(headers)
+					.collect(Collectors.toSet());
+		}
+
+		@Override
+		public boolean matchHeader(String headerName) {
+			return this.neverMatchHeaders.contains(headerName);
+		}
+
+		@Override
+		public boolean isNegated() {
+			return true;
+		}
+
+	}
+
+	/**
 	 * A pattern-based header matcher that matches if the specified
 	 * header matches the specified simple pattern.
 	 * <p> The {@code negate == true} state indicates if the matching should be treated as "not matched".
 	 * @see org.springframework.util.PatternMatchUtils#simpleMatch(String, String)
 	 */
-	protected static class SimplePatternBasedHeaderMatcher {
+	protected static class SimplePatternBasedHeaderMatcher implements HeaderMatcher {
 
-		private static final Log logger = LogFactory.getLog(SimplePatternBasedHeaderMatcher.class); // NOSONAR
+		private static final Log LOGGER = LogFactory.getLog(SimplePatternBasedHeaderMatcher.class);
 
 		private final String pattern;
 
@@ -224,11 +285,12 @@ public abstract class AbstractKafkaHeaderMapper implements KafkaHeaderMapper {
 			this.negate = negate;
 		}
 
+		@Override
 		public boolean matchHeader(String headerName) {
 			String header = headerName.toLowerCase();
 			if (PatternMatchUtils.simpleMatch(this.pattern, header)) {
-				if (logger.isDebugEnabled()) {
-					logger.debug(
+				if (LOGGER.isDebugEnabled()) {
+					LOGGER.debug(
 							MessageFormat.format(
 									"headerName=[{0}] WILL " + (this.negate ? "NOT " : "")
 											+ "be mapped, matched pattern=" + (this.negate ? "!" : "") + "{1}",
@@ -239,6 +301,7 @@ public abstract class AbstractKafkaHeaderMapper implements KafkaHeaderMapper {
 			return false;
 		}
 
+		@Override
 		public boolean isNegated() {
 			return this.negate;
 		}

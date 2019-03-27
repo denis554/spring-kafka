@@ -117,19 +117,8 @@ public class MessagingMessageConverter implements RecordMessageConverter {
 			}
 			rawHeaders.put(KafkaHeaders.NATIVE_HEADERS, record.headers());
 		}
-		rawHeaders.put(KafkaHeaders.RECEIVED_MESSAGE_KEY, record.key());
-		rawHeaders.put(KafkaHeaders.RECEIVED_TOPIC, record.topic());
-		rawHeaders.put(KafkaHeaders.RECEIVED_PARTITION_ID, record.partition());
-		rawHeaders.put(KafkaHeaders.OFFSET, record.offset());
-		rawHeaders.put(KafkaHeaders.TIMESTAMP_TYPE, record.timestampType().name());
-		rawHeaders.put(KafkaHeaders.RECEIVED_TIMESTAMP, record.timestamp());
-
-		if (acknowledgment != null) {
-			rawHeaders.put(KafkaHeaders.ACKNOWLEDGMENT, acknowledgment);
-		}
-		if (consumer != null) {
-			rawHeaders.put(KafkaHeaders.CONSUMER, consumer);
-		}
+		commonHeaders(acknowledgment, consumer, rawHeaders, record.key(), record.topic(), record.partition(),
+				record.offset(), record.timestampType().name(), record.timestamp());
 
 		return MessageBuilder.createMessage(extractAndConvertValue(record, type), kafkaMessageHeaders);
 	}
